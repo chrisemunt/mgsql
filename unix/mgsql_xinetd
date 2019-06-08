@@ -1,0 +1,11 @@
+service mgsql_xinetd
+{
+	disable		= no
+	type		= UNLISTED
+	port		= 7041
+	socket_type	= stream
+	wait		= no
+	user		= root
+	server		= /usr/local/lib/yottadb/r122/mgsql_ydb
+}
+
