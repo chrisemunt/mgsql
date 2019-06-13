@@ -179,7 +179,7 @@ In a live environment a production-grade web server should be used.  For example
 
 ## Access to mgsql using ODBC
 
-The ODBC driver is in the **/odbc**.  Pre-built drivers for 32 and 64-bit Windows are in the **/odbc/x86** and **/odbc/x64** directories respectively.  To install both drivers copy the contents of **/odbc/x86** to:
+The ODBC driver is in the **/odbc** directory.  Pre-built drivers for 32 and 64-bit Windows are in the **/odbc/x86** and **/odbc/x64** directories respectively.  To install both drivers copy the contents of **/odbc/x86** to:
 
        C:\Program Files (x86)\mgsql\
 
@@ -187,7 +187,7 @@ And copy the contents of **/odbc/x64** to:
 
        C:\Program Files\mgsql\
 
-You will have to create the **/mgsql** sub-directory if it doesn't already exist.  To register both drivers, using Windows Explorer, double click on the following Registry files:
+You will have to create the **/mgsql** sub-directory if it doesn't already exist.  To register both drivers, using Windows Explorer, double click on each of the following Registry files:
 
        C:\Program Files (x86)\mgsql\mgodbc32.reg
        C:\Program Files\mgsql\mgodbc64.reg
