@@ -1,5 +1,5 @@
 Cache for Windows^INT^MGSQL
-%RO on 08 Jun 2019 01:00 AM
+%RO on 13 Jun 2019 01:00 AM
 %mgsql
 %mgsql ;(CM) MGSQL Front end
  ;
@@ -34,7 +34,8 @@ v() ; version and date
  ;s v="1.0",r=3,d="10 May 2019"
  ;s v="1.0",r=4,d="11 May 2019"
  ;s v="1.0",r=5,d="14 May 2019"
- s v="1.0",r=6,d="7 June 2019"
+ ;s v="1.0",r=6,d="7 June 2019"
+ s v="1.0",r=7,d="13 June 2019"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -67,13 +68,13 @@ exec1 ; exit
  ;
 exece ; error
  w !!,"error=",$$error^%mgsqls()
- q
+ q -1
  ;
 inetd ; entry point from [x]inetd
 xinetd ; someone is sure to use this label
  s $zt="inetde^%mgsql" ; new $ztrap set $ztrap="zgoto "_$zlevel_":inetde^%mgsql"
  s buf="" f  r *x q:x=10  s buf=buf_$c(x)
- i buf="xdbc" d main^%mgsqln q
+ i buf="xDBC" d main^%mgsqln q
  i buf?1U.E1"HTTP/"1N1"."1N1C s buf=buf_$c(10) d main^%mgsqlw q
  q
 inetde ; error
@@ -179,6 +180,12 @@ index ; create index
  s sql="create index x1 on admission ('x1', dadm, num)"
  s sql=sql_" /*! global=mgadm */"
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ q
+ ;
+delete ; delete records
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","delete from patient",.%zi,.%zo)
+ s ok=$$exec^%mgsql("","delete from admission",.%zi,.%zo)
  q
  ;
 insert ; insert records
@@ -441,6 +448,7 @@ endq1 ; kill sql variables and exit query
  q
  ;
 uniout ; output unique result
+ q
  s rec="",rdel="",test=1 f i=1:1:outsel q:'$d(^mgtmp($j,"sel",1,i))  s x=^(i),rec=rec_rdel_x,rdel="_"_$c(34)_"~"_$c(34)_"_"
  s %data=1,ptag=tagout d line^%mgsqlc3
  k test
@@ -506,7 +514,8 @@ idx ; index data
  q
  ;
 addline(grp,line) ; add line of code to routine
- n ln
+ n ln,lnr
+ s lnr=$i(@(%z("ccoder")_",grp)")),@(%z("ccoder")_",grp,lnr)")=line
  i line[%z("dsv")!(line[%z("dev")) d subvar
  i line[%z("dl") d subtag
  i line?1" s ".e,$p(line,"=",2)=$p($p(line," s ",2),"=",1) s line="" q
@@ -1005,7 +1014,7 @@ out ; set up output to intermediate file
  i $d(gvar(qnum)) s line=" g "_tag(qnum) d addline^%mgsqlc(grp,.line) q
  i $d(unique(qnum)),$d(term(qnum)) s line=term(qnum)_" g "_$s($d(endsq(qnum)):%z("dl")_%z("pt")_qnum_"x"_%z("dl"),1:tagout) d addline^%mgsqlc(grp,.line)
  i unique(qnum),qnum'=1 s line=" g "_tag(qnum) d addline^%mgsqlc(grp,.line) q
- i qnum=1,unique(1)=1,'$d(gvar(1)) s line=" g "_tag(qnum) d addline^%mgsqlc(grp,.line) q
+ ;;;i qnum=1,unique(1)=1,'$d(gvar(1)) s line=" g "_tag(qnum) d addline^%mgsqlc(grp,.line) q
  i $d(ord),$l(ord),qnum=1 g out2
  i qnum=1 g out1
  d outsq
@@ -1164,7 +1173,7 @@ a d vers^%mgsql("%mgsqlc3") q
 endsq ; code to be executed on leaving a sub-query
  i '$d(endsq(qnum)) g endsqx
  s line=%z("dl")_%z("pt")_qnum_"x"_%z("dl")
- i qnum=1,unique(1) d uniout^%mgsqlc g endsqx
+ ;;;i qnum=1,unique(1) d uniout^%mgsqlc g endsqx
  i $d(gvar(qnum)) d regrp g endsqx
  d endsq1
  i qnum'=1 s line=line_" q" d addline^%mgsqlc(grp,.line) g endsqx
@@ -1424,7 +1433,7 @@ addpre ; add line of code to subscript initialisation array
  q
  ;
 sort ; determine sort of data
- s cname=$p($p(y,%z("dsv"),2),".",2) s %d=$$col^%mgsqld(dbid,tname,cname) k cname s typ=$p(%d,"\",3) i $l(typ) s:other[%z("dev")&(typ="string") typ="mixed" q
+ s cname=$p($p(y,%z("dsv"),2),".",2) s %d=$$col^%mgsqld(dbid,tname,cname) k cname s typ=$p(%d,"\",11) i $l(typ) s:other[%z("dev")&(typ="string") typ="mixed" q
  i other?1"""".e s typ="string" q
  i other?.1"-".n.1"."1n.n s typ="numeric" q
  s typ="mixed"
@@ -1731,7 +1740,8 @@ main ; start
  s tname=update("delete"),alias=$p($p(tname," ",2),":",1),tname=$p(tname," ",1)
  k dtyp d xfid^%mgsqlct
  s line=" "_"k"_" %do,%dn,%dx" d addline^%mgsqlc(grp,.line)
- f i=1:1 q:'$d(xfid(0,i))  s cname=xfid(0,i,1) i cname?1a.e d data
+ s inop=$$pkey^%mgsqld(dbid,tname)
+ f i=1:1 q:'$d(xfid(inop,i))  s cname=xfid(inop,i,1) i cname?1a.e d data
  s %refile=0 d kill^%mgsqlci
  s line=" "_"g"_" "_%tagz d addline^%mgsqlc(grp,.line)
 exit ; exit
@@ -1752,7 +1762,7 @@ hilev ; kill file off at high level
  s ino="" f i=0:0 s ino=$o(xfid(ino)) q:ino=""  d hilev1
 hilev3 ; link
  s line=" "_"k"_" %do" d addline^%mgsqlc(grp,.line)
- s ino=$$pkey^%mgsqld(dbid,tname) f i=1:1 q:'$d(xfid(ino,i))  s cname=xfid(ino,i,1) i cname?1a.e q:'$d(update("attx",cname))  s val=update("attx",cname),key=key_com_val,com="," i val[%z("dev") s n=$p($$col^%mgsqld(dbid,tname,cname),"\",4) i $l(n) s line=" "_"s"_" %do("_n_")="_val d addline^%mgsqlc(grp,.line)
+ s ino=$$pkey^%mgsqld(dbid,tname) f i=1:1 q:'$d(xfid(ino,i))  s cname=xfid(ino,i,1) i cname?1a.e q:'$d(update("attx",cname))  s val=update("attx",cname),key=key_com_val,com="," i val[%z("dev") s n=$p($$col^%mgsqld(dbid,tname,cname),"\",5) i $l(n) s line=" "_"s"_" %do("_n_")="_val d addline^%mgsqlc(grp,.line)
  q
  ;
 hilev1 ; kill off single index
@@ -1843,7 +1853,7 @@ index3 ; process a single key attribute
  s cname=xfid(ino,kno,ano)
  i cname'?1a.e s pvar=cname g index4
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
- i $d(xfidx(cname)) s pvar=key(typo,cname) g index4
+ i $d(xfidx(cname)),$d(key(typo,cname)) s pvar=key(typo,cname) g index4
  i '$d(dat(typo,cname)) s dat(typo,cname)="%d"_pst_"("_dtyp(cname)_")"
  s pvar=dat(typo,cname)
 index4 s zo=zo_com1_pvar
@@ -1961,10 +1971,11 @@ setnew1 ; set all new attribute values
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
  s var=dat("n",cname)
  i '$d(dtyp(cname,"e")) q
- s r=dtyp(cname,"e"),typ=$p(r,"~",1),pce=$p(r,"~",2),smeth="d"
+ s r=dtyp(cname,"e"),typ=$p(r,"~",1),pce=$p(r,"~",2)
+ s smeth="d" i $g(dtyp(cname))="s" s smeth="s"
  i $l(var)<250,$d(out(pce,var)) q
  i smeth="d" s line=" "_"s"_" $p(%d,"_dlm_","_pce_")="_var
- i smeth="s" s line=" "_"s"_" "_xfid(0)_"("_pkey("n",0)_","_pce_")="_var
+ i smeth="s" s line=" "_"s"_" "_xfid(ino)_"("_pkey("n",ino)_","_pce_")="_var
  d addline^%mgsqlc(grp,.line)
  q
  ;
@@ -1972,10 +1983,10 @@ setnew2 ; for cases where primary key has potentially changed
  s cname="",com="" f  s cname=$o(key("o",cname)) q:cname=""  s line=line_com_key("n",cname)_"="_key("o",cname),com=","
  i $l(line) s line=" "_"i"_" "_line_" "_"g"_" "_%tdlm_%tagi_%tdlm d addline^%mgsqlc(grp,.line)
  s line=" "_"s"_" %s=""""" d addline^%mgsqlc(grp,.line)
- s line=%tdlm_%tagi_1_%tdlm_" "_"s"_" %s=$o("_xfid(0)_"("_pkey("o",0)_",%s)) "_"i"_" %s="""" "_"g"_" "_%tdlm_%tagi_2_%tdlm d addline^%mgsqlc(grp,.line)
- s line=" "_"s"_" %xx="_xfid(0)_"("_pkey("o",0)_",%s)" d addline^%mgsqlc(grp,.line)
- s subt="",glo=xfid(0),key=pkey("o",0)_",%s" d k
- s subt="",glo=xfid(0),key=pkey("n",0)_",%s",dat="%xx" d s
+ s line=%tdlm_%tagi_1_%tdlm_" "_"s"_" %s=$o("_xfid(inop)_"("_pkey("o",inop)_",%s)) "_"i"_" %s="""" "_"g"_" "_%tdlm_%tagi_2_%tdlm d addline^%mgsqlc(grp,.line)
+ s line=" "_"s"_" %xx="_xfid(inop)_"("_pkey("o",inop)_",%s)" d addline^%mgsqlc(grp,.line)
+ s subt="",glo=xfid(inop),key=pkey("o",inop)_",%s" d k
+ s subt="",glo=xfid(inop),key=pkey("n",inop)_",%s",dat="%xx" d s
  s line=" "_"g"_" "_%tdlm_%tagi_1_%tdlm d addline^%mgsqlc(grp,.line)
  s line=%tdlm_%tagi_2_%tdlm_" ;" d addline^%mgsqlc(grp,.line)
  d killold
@@ -1985,7 +1996,7 @@ setnew2 ; for cases where primary key has potentially changed
 setnew3 ; cram entire update into one line
  s (line,com)="" f  s cname=$o(key("o",cname)) q:cname=""  i cname?1a.e s line=line_com_"$l"_"("_key("o",cname)_")",com=","
  i $l(line) s line=" "_"i"_" "_line
- s line=line_" "_"s"_" "_xfid(0)_"("_pkey("n",0)_")="
+ s line=line_" "_"s"_" "_xfid(ino)_"("_pkey("n",ino)_")="
  i '$d(dat("n")) s line=line_"""""" d addline^%mgsqlc(grp,.line)
  s com="" f i=1:1 q:'$d(data(i))  s cname=data(i),line=line_com_$s($d(dat("n",cname)):dat("n",cname),1:""""""),com="_"_dlm_"_"
  d addline^%mgsqlc(grp,.line)
@@ -2279,12 +2290,17 @@ nxttname(dbid,tname) ; next table
  q tname
  ;
 col(dbid,tname,cname) ; column details
- n %d,type,type1,ano
+ n %d,type,type1,ano,sm
  s %d=$g(^mgsqld(0,dbid,"t",tname,"tc",cname))
+ s type=$p(%d,"\",2)
+ s type1="number" i type["varchar" s type1="string"
+ s $p(%d,"\\",11)=type1
+ q %d
  s type=$p(%d,"\",1)
  s ano=$p(%d,"\",2)
- s type1="number" i type["varchar" s type1="string" 
- s %d="\data\"_type1_"\"_ano_"\\"
+ s sm=$p(%d,"\",3)
+ s type1="number" i type["varchar" s type1="string"
+ s %d="\data\"_type1_"\"_ano_"\"_sm_"\"
  q %d
  ;
 dtype(dbid,tname,cname)
@@ -2408,17 +2424,29 @@ ctable(dbid,tname,cols) ; create table
  . q
  s ano=0
  f i=1:1 q:'$d(cols(i))  d
+ . s nnull=0
  . s cname=$p(cols(i)," ",1),atu=$$lcase^%mgsqls(cname) i atu="constraint" q
  . s type=$p(cols(i)," ",2),typeu=$$lcase^%mgsqls(type)
+ . f ii=3:1:$l(cols(i)," ") s name=$p(cols(i)," ",ii) d
+ . . i name="" q
+ . . s name=$$lcase^%mgsqls(name)
+ . . i name="not",$$lcase^%mgsqls($p(cols(i)," ",ii+1))="null" s nnull=1
+ . . i name="separate" s cols(i,name)=$p(cols(i)," ",ii+1)
+ . . i name="derived" s cols(i,name)=$p(cols(i)," ",ii+1)
+ . . q
  . s cons=$p(cols(i)," ",3,999),consu=$$lcase^%mgsqls(cons)
  . s nnull=0 i consu["not null" s nnull=1
  . s ano1=0 i '$d(idxx(pk,cname)) s ano=ano+1,ano1=ano
  . s cno=$p($g(olddata(cname)),"\",5)+0 i 'cno s cno=$$cno()
- . s sm="d"
+ . s sm="d" i $d(cols(i,"separate")) s sm="s"
  . s col(cname)=ano1_"\"_typeu_"\"_sm_"\"_nnull_"\"_cno
+ . s name="" f  s name=$o(cols(i,name)) q:name=""  s col(cname,name)=cols(i,name)
  . q
  s ^mgsqld(0,dbid,"t",tname,"t")=dlm_"\"_pk
- s cname="" f  s cname=$o(col(cname)) q:cname=""  s ^mgsqld(0,dbid,"t",tname,"tc",cname)=col(cname)
+ s cname="" f  s cname=$o(col(cname)) q:cname=""  d
+ . s ^mgsqld(0,dbid,"t",tname,"tc",cname)=col(cname)
+ . s name="" f  s name=$o(col(cname,name)) q:name=""  s ^mgsqld(0,dbid,"t",tname,"tc",cname,$e(name,1))=col(cname,name)
+ . q
  s in="" f i=1:1 s in=$o(idx(in)) q:in=""  d
  . s ^mgsqld(0,dbid,"t",tname,"ti",in)=idx(in)
  . f i=1:1 q:'$d(idx(in,i))  s ^mgsqld(0,dbid,"t",tname,"ti",in,i)=idx(in,i)
@@ -3067,7 +3095,7 @@ loop ; next command
  s $zt="loope^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":loope^%mgsqln"
  s dbid=$$schema^%mgsql("")
  s stmt=$$read(.head,.cmnd,.size,.data)
- d logevent^%mgsqls("stmt="_stmt_"; cmnd="_cmnd_"; data="_data,"start","ODBC")
+ ;d logevent^%mgsqls("stmt="_stmt_"; cmnd="_cmnd_"; data="_data,"start","ODBC")
  i cmnd="i" d info g loop
  i cmnd="a" d typ^%mgsqln2  g loop
  i cmnd="s" d sql g loop
@@ -3141,7 +3169,7 @@ sql ; sql
  n %zi,%zo,at,tname,r,sn,dtyp,i,x,line,param
  s $zt="sqle^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":sqle^%mgsqln"
  d sqline(data,.line,.param)
- d logarray^%mgsqls(.line,"sql() array","ODBC")
+ ;d logarray^%mgsqls(.line,"sql()","ODBC")
  s error=""
  d sql1 i $l(error) g sqlerror
  i $d(info("sp")) d  g sql2
@@ -3207,10 +3235,8 @@ fetch ; get data
  s line="",eod=0
  f cn=1:1 q:'$d(^mgsqls($j,stmt,0,rn,cn))  d
  . s val=$g(^mgsqls($j,stmt,0,rn,cn))
- . ; d logevent^%mgsqls(val,"Fetch","ODBC")
  . s line=line_$$esize($l(val),4,$$base())_val
  . q
- ; d logevent^%mgsqls(line,"Fetch "_stmt_":"_rn,"ODBC")
 fetchx ; dispatch result
  d send(line,$l(line),stmt,"f",eod) ; send data
  q
@@ -3224,15 +3250,12 @@ read(head,cmnd,size,data) ; read
  s $zt="reade^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":reade^%mgsqln"
  s cmnd="",data="",size=0
  s head=$$recv(14,0)
- ;d logevent^%mgsqls($l(head)_":"_head,"******* read *******","ODBC")
  i head="" g reade
- s size=+$e(head,1,4)
+ s size=$$dsize($e(head,1,4),4,$$base())
  s cmnd=$e(head,14)
- s stmt=+$e(head,10,13)
- ;i 'size d logevent^%mgsqls("no data "_$l(head),head,"ODBC")
+ s stmt=$$dsize($e(head,10,13),4,$$base())
  i 'size q stmt
  s data=$$recv(size,0)
- ;d logevent^%mgsqls($l(data)_":"_data,$l(head)_":"_head,"ODBC")
  q stmt
 reade ; error
  d logerror^%mgsqls($$error^%mgsqls(),"read error")
@@ -3247,21 +3270,22 @@ recv(len,timeout)
 send(data,len,stmt,type,eod) ; send data
  n head
  s len=$l(data)
- s head=$$esize(len,4,$$base())
- s head=head_$e("00000000",1,8-$l(stmt))_stmt_eod_type
+ s head=$$esize(len,4,$$base())_"0000"_$$esize(stmt,4,$$base())_eod_type
  i $$isydb^%mgsqls() g sendy
  w head_data d flush^%mgsqls()
  q
-sendy ; yottie
+sendy ; yottadb
  w head_data
  q
  ;
 esize(dsize,len,base)
+ q $c(dsize#256)_$c(((dsize\256)#256))_$c(((dsize\(256**2))#256))_$c(((dsize\(256**3))#256))
  n esize
  s esize=+dsize f  q:$l(esize)=4  s esize="0"_esize
  q esize
  ;
 dsize(esize,len,base)
+ q ($a(esize,4)*(256**3))+($a(esize,3)*(256**2))+($a(esize,2)*256)+$a(esize,1)
  s dsize=+esize
  q dsize
  ;
@@ -3531,7 +3555,7 @@ tab ; tables
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"tab() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"tab() array","ODBC")
  s error=""
  ; CatalogName=%s\r\nSchemaName=%s\r\nTableName=%s\r\nTableType=%s\r\n\r\n"
  s tname="TABLES"
@@ -3618,7 +3642,7 @@ col ; table columns
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,0,stmt)
- d logarray^%mgsqls(.nv,"col() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"col() array","ODBC")
  s error=""
  s tname="TABLE_COLUMNS"
  s cn=0
@@ -3655,7 +3679,7 @@ col ; table columns
  . s cname1=$g(%ind(pk,kn))
  . i 'cname1?1a.e q
  . s r=$$col^%mgsqld(dbid,tname,cname1)
- . s desc=$p(r,"\",1)
+ . s desc=""
  . s ord=ord+1,knm=ord s col(ord)=cname1,col(ord,"k")=1,col(ord,"d")=desc
  . s colx(cname1)=ord
  . q
@@ -3722,7 +3746,7 @@ stt ; table statistics
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"stt() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"stt() array","ODBC")
  s error=""
  s tname="TABLE_STATISTICS"
  s cn=0
@@ -3758,7 +3782,7 @@ pky ; table primary key
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"pky() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"pky() array","ODBC")
  s error=""
  s tname="TABLE_PRIMARY_KEY"
  s cn=0
@@ -3806,7 +3830,7 @@ fky ; table foreign key
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"fky() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"fky() array","ODBC")
  s error=""
  s tname="TABLE_PRIMARY_KEY"
  s cn=0
@@ -3871,7 +3895,7 @@ prc ; procedures
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"prc() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"prc() array","ODBC")
  s error=""
  s tname="PROCEDURES"
  s cn=0
@@ -3933,7 +3957,7 @@ pcc ; procedure columns
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"pcc() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"pcc() array","ODBC")
  s error=""
  s tname="PROCEDURE_COLUMNS"
  s cn=0
@@ -4091,6 +4115,7 @@ typ ; data types
  s cols=cols_$c(13,10)
  ;
  s rn=0
+ ;g vchar
  s rn=rn+1
  s cn=0
  s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="BIT"
@@ -4376,7 +4401,7 @@ typ ; data types
  s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
  s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
  s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- ;
+vchar ;
  s rn=rn+1
  s cn=0
  s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="VARCHAR"
@@ -5636,6 +5661,9 @@ ts() ; time stamp
 mv() ; missing value
  q ""
  ;
+age(mdate) ; calculate age
+ q (+$h-mdate)\365.25
+ ;
 ddate(mdate,format) ; decode M date
  n d,m,y,ddate
  s ddate=$zd(mdate,1)
@@ -5645,6 +5673,9 @@ ddate(mdate,format) ; decode M date
  i $$isydb(),y<100 d
  . i mdate<58074 s y=y+1900
  . i mdate'<58074 s y=y+2000
+ . q
+ i '$$isydb(),y<100 d
+ . i mdate<58074 s y=y+1900
  . q
  s ddate=y_"-"_m_"-"_d
  q ddate
@@ -5753,6 +5784,7 @@ main(dbid,line,error) ; verify query
  i '$d(sql(0,1)),$d(sql("txp",0)) s unique=1 g exit
  i '$d(sql(0,1)) s error="no sql script !!!",error(5)="HY000" g exit
  d upd(dbid,.sql,.error) i $l(error) g exit
+ ;i $d(update("delete")),hilev g exit
  i $p(sql(0,1)," ",1)="call" d sp(dbid,.sql,.error) g exit
  f qnum=1:1:qnummax d verify(dbid,.sql,qnum,.error) i $l(error) q
  i $l(error) g exit
@@ -5793,6 +5825,7 @@ gvars(dbid,vars) ; initialize global variables
  s vars("ctg")="^mgtemp"
  s vars("cts")="$j"
  s vars("ccode")="^mgsqlx(1,dbid,qid,""m"""
+ s vars("ccoder")="^mgsqlx(1,dbid,qid,""mr"""
  q
  ;
 sqidx ; index subqueries against parents
@@ -5808,8 +5841,9 @@ sqidx ; index subqueries against parents
 unique ; determine whether unique result is to be returned
  i qnum=1,$d(update) s (unique(1),unique)=1 q
  s unique=0
- f i=1:1:qnum s unique(i)=1,x=^mgtmp($j,"sel",i) i x'?1n.n2u,x'="last" d
- . f j=1:1 q:'$d(^mgtmp($j,"outsel",i,j))  s x=^(j) i '$d(^mgtmp($j,"wsel",x)),x[%z("dsv"),$p(x,%z("dsv"),2)'?.n1a.u.1"_".u1"("1e.e1")" s unique(i)=0 q
+ f i=1:1:qnum s unique(i)=0
+ ;;;f i=1:1:qnum s unique(i)=1,x=^mgtmp($j,"sel",i) i x'?1n.n2u,x'="last" d
+ ;;;. f j=1:1 q:'$d(^mgtmp($j,"outsel",i,j))  s x=^(j) i '$d(^mgtmp($j,"wsel",x)),x[%z("dsv"),$p(x,%z("dsv"),2)'?.n1a.u.1"_".u1"("1e.e1")" s unique(i)=0 q
  i $d(gvar(1)) s (unique(1),unique)=0 q
  q
  ;
@@ -5976,7 +6010,7 @@ where2 ; validate sql column
  . i '$d(^mgtmp($j,"vx",qnum,x)) s error="column '"_x_"' ('where'/'having' statement) is not part of derived table "_alias,error(5)="42S22" q
  . q
  s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname) d remap^%mgsqlv2 i '%defk,'%defd,'%defm s error="column '"_x_"' ('where'/'having' statement) is not part of table "_tname,error(5)="42S22" q
- s %d=$$col^%mgsqld(dbid,tname,cname) s typ=$p(%d,"\",3)
+ s %d=$$col^%mgsqld(dbid,tname,cname) s typ=$p(%d,"\",11)
 where22 i qnum'["g" s item=%z("dsv")_f_"."_cname_%z("dsv"),snum=$$addselx^%mgsqlv2(qnum,item) s ^mgtmp($j,"wsel",item)=""
  i qnum["g" s item=%z("dsv")_f_"."_cname_%z("dsv"),snum=$$addselx^%mgsqlv2(qnum,item) s ^mgtmp($j,"wsel",item)=""
  i fun="" q
@@ -6383,7 +6417,7 @@ deletex s update("delete")=tname i $l(alias) s update("delete")=update("delete")
  q
  ;
 delete1 ; assess possibility of doing high level kill
- s hilev=0
+ s hilev=0 q  ; don't do this for now
  i '$l(exp) s hilev=1 q
  d eq i $l(error) s error="",hilev=0 q
  i 'eq q
@@ -7216,7 +7250,8 @@ test ; test harness
 a d vers^%mgsql("%mgsqlx") q
  ;
 main(dbid,line,info,error) ; compile query
- n ddl,rou,qid,sql
+ ;n ddl,rou,qid,sql
+ n (%z,dbid,line,info,error)
  s $zt="maine^%mgsqlx" ; new $ztrap set $ztrap="zgoto "_$zlevel_":maine^%mgsqlx"
  ;k ^mgsqlx
  s rou="",error=""
@@ -7228,7 +7263,7 @@ main(dbid,line,info,error) ; compile query
  k ^mgsqlx(1,dbid,qid,"m")
  ; Don't recompile if already compiled
  i $d(^mgsqlx(1,dbid,qid,"m")) g exit
- d comp(dbid,rou,.line,.error)
+ d comp(dbid,qid,rou,.sql,.line,.error)
 main1 d save
  g exit
 maine ; error
@@ -7326,7 +7361,7 @@ verify(dbid,line,error) ; verify query and execute any DDL commands
  i $e(error,1,4)="\sp\" s ddl=2,error=$e(error,5,999)
  q ddl
  ;
-comp(dbid,rou,line,error) ; compile query
+comp(dbid,qid,rou,sql,line,error) ; compile query
  n i,ok,var
  k ^mgsqlx(1,dbid,qid,"var")
  d delcalls(dbid,qid)
@@ -7383,16 +7418,17 @@ so(%zi,%zo) ; server: open
  ;
 ss(%zi,%zo,rn) ; server: row of data
  n i
- i $g(%zi("stmt"))'="" d  q 0
+ i $g(%zi("stmt"))'="" d  k %zo(rn) q 0
  . f i=1:1 q:'$d(%zo(rn,i))  i $g(%zo(0,i,0))="date" s %zo(rn,i)=$$ddate^%mgsqls($g(%zo(rn,i)),1)
  . m ^mgsqls($j,%zi("stmt"),0,rn)=%zo(rn)
  . q
  w ! f i=1:1 q:'$d(%zo(rn,i))  d
  . i i>1 w ","
- . i $g(%zo(0,i,0))="date" w $$ddate^%mgsqls($g(%zo(rn,i)),1) k %zo(rn,i) q
+ . i $g(%zo(0,i,0))="date" w $$ddate^%mgsqls($g(%zo(rn,i)),1) q
  . i $g(%zo(rn,i))["," w """"_$g(%zo(rn,i))_"""" q
  . w $g(%zo(rn,i))
  . q
+ k %zo(rn)
  q 0
  ;
 sc(%zi,%zo) ; server: close
