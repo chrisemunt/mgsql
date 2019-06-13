@@ -31,7 +31,8 @@ v() ; version and date
  ;s v="1.0",r=3,d="10 May 2019"
  ;s v="1.0",r=4,d="11 May 2019"
  ;s v="1.0",r=5,d="14 May 2019"
- s v="1.0",r=6,d="7 June 2019"
+ ;s v="1.0",r=6,d="7 June 2019"
+ s v="1.0",r=7,d="13 June 2019"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -64,13 +65,13 @@ exec1 ; exit
  ;
 exece ; error
  w !!,"error=",$$error^%mgsqls()
- q
+ q -1
  ;
 inetd ; entry point from [x]inetd
 xinetd ; someone is sure to use this label
  new $ztrap set $ztrap="zgoto "_$zlevel_":inetde^%mgsql"
  s buf="" f  r *x q:x=10  s buf=buf_$c(x)
- i buf="xdbc" d main^%mgsqln q
+ i buf="xDBC" d main^%mgsqln q
  i buf?1U.E1"HTTP/"1N1"."1N1C s buf=buf_$c(10) d main^%mgsqlw q
  q
 inetde ; error
@@ -168,6 +169,12 @@ index ; create index
  s sql="create index x1 on admission ('x1', dadm, num)"
  s sql=sql_" /*! global=mgadm */"
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ q
+ ;
+delete ; delete records
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","delete from patient",.%zi,.%zo)
+ s ok=$$exec^%mgsql("","delete from admission",.%zi,.%zo)
  q
  ;
 insert ; insert records

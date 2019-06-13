@@ -74,7 +74,7 @@ index3 ; process a single key attribute
  s cname=xfid(ino,kno,ano)
  i cname'?1a.e s pvar=cname g index4
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
- i $d(xfidx(cname)) s pvar=key(typo,cname) g index4
+ i $d(xfidx(cname)),$d(key(typo,cname)) s pvar=key(typo,cname) g index4
  i '$d(dat(typo,cname)) s dat(typo,cname)="%d"_pst_"("_dtyp(cname)_")"
  s pvar=dat(typo,cname)
 index4 s zo=zo_com1_pvar
@@ -192,10 +192,11 @@ setnew1 ; set all new attribute values
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
  s var=dat("n",cname)
  i '$d(dtyp(cname,"e")) q
- s r=dtyp(cname,"e"),typ=$p(r,"~",1),pce=$p(r,"~",2),smeth="d"
+ s r=dtyp(cname,"e"),typ=$p(r,"~",1),pce=$p(r,"~",2)
+ s smeth="d" i $g(dtyp(cname))="s" s smeth="s"
  i $l(var)<250,$d(out(pce,var)) q
  i smeth="d" s line=" "_"s"_" $p(%d,"_dlm_","_pce_")="_var
- i smeth="s" s line=" "_"s"_" "_xfid(0)_"("_pkey("n",0)_","_pce_")="_var
+ i smeth="s" s line=" "_"s"_" "_xfid(ino)_"("_pkey("n",ino)_","_pce_")="_var
  d addline^%mgsqlc(grp,.line)
  q
  ;
@@ -203,10 +204,10 @@ setnew2 ; for cases where primary key has potentially changed
  s cname="",com="" f  s cname=$o(key("o",cname)) q:cname=""  s line=line_com_key("n",cname)_"="_key("o",cname),com=","
  i $l(line) s line=" "_"i"_" "_line_" "_"g"_" "_%tdlm_%tagi_%tdlm d addline^%mgsqlc(grp,.line)
  s line=" "_"s"_" %s=""""" d addline^%mgsqlc(grp,.line)
- s line=%tdlm_%tagi_1_%tdlm_" "_"s"_" %s=$o("_xfid(0)_"("_pkey("o",0)_",%s)) "_"i"_" %s="""" "_"g"_" "_%tdlm_%tagi_2_%tdlm d addline^%mgsqlc(grp,.line)
- s line=" "_"s"_" %xx="_xfid(0)_"("_pkey("o",0)_",%s)" d addline^%mgsqlc(grp,.line)
- s subt="",glo=xfid(0),key=pkey("o",0)_",%s" d k
- s subt="",glo=xfid(0),key=pkey("n",0)_",%s",dat="%xx" d s
+ s line=%tdlm_%tagi_1_%tdlm_" "_"s"_" %s=$o("_xfid(inop)_"("_pkey("o",inop)_",%s)) "_"i"_" %s="""" "_"g"_" "_%tdlm_%tagi_2_%tdlm d addline^%mgsqlc(grp,.line)
+ s line=" "_"s"_" %xx="_xfid(inop)_"("_pkey("o",inop)_",%s)" d addline^%mgsqlc(grp,.line)
+ s subt="",glo=xfid(inop),key=pkey("o",inop)_",%s" d k
+ s subt="",glo=xfid(inop),key=pkey("n",inop)_",%s",dat="%xx" d s
  s line=" "_"g"_" "_%tdlm_%tagi_1_%tdlm d addline^%mgsqlc(grp,.line)
  s line=%tdlm_%tagi_2_%tdlm_" ;" d addline^%mgsqlc(grp,.line)
  d killold
@@ -216,7 +217,7 @@ setnew2 ; for cases where primary key has potentially changed
 setnew3 ; cram entire update into one line
  s (line,com)="" f  s cname=$o(key("o",cname)) q:cname=""  i cname?1a.e s line=line_com_"$l"_"("_key("o",cname)_")",com=","
  i $l(line) s line=" "_"i"_" "_line
- s line=line_" "_"s"_" "_xfid(0)_"("_pkey("n",0)_")="
+ s line=line_" "_"s"_" "_xfid(ino)_"("_pkey("n",ino)_")="
  i '$d(dat("n")) s line=line_"""""" d addline^%mgsqlc(grp,.line)
  s com="" f i=1:1 q:'$d(data(i))  s cname=data(i),line=line_com_$s($d(dat("n",cname)):dat("n",cname),1:""""""),com="_"_dlm_"_"
  d addline^%mgsqlc(grp,.line)

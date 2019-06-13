@@ -56,6 +56,7 @@ typ ; data types
  s cols=cols_$c(13,10)
  ;
  s rn=0
+ ;g vchar
  s rn=rn+1
  s cn=0
  s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="BIT"
@@ -341,7 +342,7 @@ typ ; data types
  s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
  s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
  s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- ;
+vchar ;
  s rn=rn+1
  s cn=0
  s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="VARCHAR"

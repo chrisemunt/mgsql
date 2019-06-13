@@ -135,7 +135,7 @@ addpre ; add line of code to subscript initialisation array
  q
  ;
 sort ; determine sort of data
- s cname=$p($p(y,%z("dsv"),2),".",2) s %d=$$col^%mgsqld(dbid,tname,cname) k cname s typ=$p(%d,"\",3) i $l(typ) s:other[%z("dev")&(typ="string") typ="mixed" q
+ s cname=$p($p(y,%z("dsv"),2),".",2) s %d=$$col^%mgsqld(dbid,tname,cname) k cname s typ=$p(%d,"\",11) i $l(typ) s:other[%z("dev")&(typ="string") typ="mixed" q
  i other?1"""".e s typ="string" q
  i other?.1"-".n.1"."1n.n s typ="numeric" q
  s typ="mixed"

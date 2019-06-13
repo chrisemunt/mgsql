@@ -163,7 +163,7 @@ deletex s update("delete")=tname i $l(alias) s update("delete")=update("delete")
  q
  ;
 delete1 ; assess possibility of doing high level kill
- s hilev=0
+ s hilev=0 q  ; don't do this for now
  i '$l(exp) s hilev=1 q
  d eq i $l(error) s error="",hilev=0 q
  i 'eq q

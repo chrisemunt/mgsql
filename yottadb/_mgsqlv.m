@@ -35,6 +35,7 @@ main(dbid,line,error) ; verify query
  i '$d(sql(0,1)),$d(sql("txp",0)) s unique=1 g exit
  i '$d(sql(0,1)) s error="no sql script !!!",error(5)="HY000" g exit
  d upd(dbid,.sql,.error) i $l(error) g exit
+ ;i $d(update("delete")),hilev g exit
  i $p(sql(0,1)," ",1)="call" d sp(dbid,.sql,.error) g exit
  f qnum=1:1:qnummax d verify(dbid,.sql,qnum,.error) i $l(error) q
  i $l(error) g exit
@@ -75,6 +76,7 @@ gvars(dbid,vars) ; initialize global variables
  s vars("ctg")="^mgtemp"
  s vars("cts")="$j"
  s vars("ccode")="^mgsqlx(1,dbid,qid,""m"""
+ s vars("ccoder")="^mgsqlx(1,dbid,qid,""mr"""
  q
  ;
 sqidx ; index subqueries against parents
@@ -90,8 +92,9 @@ sqidx ; index subqueries against parents
 unique ; determine whether unique result is to be returned
  i qnum=1,$d(update) s (unique(1),unique)=1 q
  s unique=0
- f i=1:1:qnum s unique(i)=1,x=^mgtmp($j,"sel",i) i x'?1n.n2u,x'="last" d
- . f j=1:1 q:'$d(^mgtmp($j,"outsel",i,j))  s x=^(j) i '$d(^mgtmp($j,"wsel",x)),x[%z("dsv"),$p(x,%z("dsv"),2)'?.n1a.u.1"_".u1"("1e.e1")" s unique(i)=0 q
+ f i=1:1:qnum s unique(i)=0
+ ;;;f i=1:1:qnum s unique(i)=1,x=^mgtmp($j,"sel",i) i x'?1n.n2u,x'="last" d
+ ;;;. f j=1:1 q:'$d(^mgtmp($j,"outsel",i,j))  s x=^(j) i '$d(^mgtmp($j,"wsel",x)),x[%z("dsv"),$p(x,%z("dsv"),2)'?.n1a.u.1"_".u1"("1e.e1")" s unique(i)=0 q
  i $d(gvar(1)) s (unique(1),unique)=0 q
  q
  ;

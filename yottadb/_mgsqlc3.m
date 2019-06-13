@@ -27,7 +27,7 @@ a d vers^%mgsql("%mgsqlc3") q
 endsq ; code to be executed on leaving a sub-query
  i '$d(endsq(qnum)) g endsqx
  s line=%z("dl")_%z("pt")_qnum_"x"_%z("dl")
- i qnum=1,unique(1) d uniout^%mgsqlc g endsqx
+ ;;;i qnum=1,unique(1) d uniout^%mgsqlc g endsqx
  i $d(gvar(qnum)) d regrp g endsqx
  d endsq1
  i qnum'=1 s line=line_" q" d addline^%mgsqlc(grp,.line) g endsqx

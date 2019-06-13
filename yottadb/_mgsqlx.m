@@ -25,7 +25,8 @@
 a d vers^%mgsql("%mgsqlx") q
  ;
 main(dbid,line,info,error) ; compile query
- n ddl,rou,qid,sql
+ ;n ddl,rou,qid,sql
+ n (%z,dbid,line,info,error)
  new $ztrap set $ztrap="zgoto "_$zlevel_":maine^%mgsqlx"
  ;k ^mgsqlx
  s rou="",error=""
@@ -37,7 +38,7 @@ main(dbid,line,info,error) ; compile query
  k ^mgsqlx(1,dbid,qid,"m")
  ; Don't recompile if already compiled
  i $d(^mgsqlx(1,dbid,qid,"m")) g exit
- d comp(dbid,rou,.line,.error)
+ d comp(dbid,qid,rou,.sql,.line,.error)
 main1 d save
  g exit
 maine ; error
@@ -135,7 +136,7 @@ verify(dbid,line,error) ; verify query and execute any DDL commands
  i $e(error,1,4)="\sp\" s ddl=2,error=$e(error,5,999)
  q ddl
  ;
-comp(dbid,rou,line,error) ; compile query
+comp(dbid,qid,rou,sql,line,error) ; compile query
  n i,ok,var
  k ^mgsqlx(1,dbid,qid,"var")
  d delcalls(dbid,qid)

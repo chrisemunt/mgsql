@@ -144,7 +144,7 @@ out ; set up output to intermediate file
  i $d(gvar(qnum)) s line=" g "_tag(qnum) d addline^%mgsqlc(grp,.line) q
  i $d(unique(qnum)),$d(term(qnum)) s line=term(qnum)_" g "_$s($d(endsq(qnum)):%z("dl")_%z("pt")_qnum_"x"_%z("dl"),1:tagout) d addline^%mgsqlc(grp,.line)
  i unique(qnum),qnum'=1 s line=" g "_tag(qnum) d addline^%mgsqlc(grp,.line) q
- i qnum=1,unique(1)=1,'$d(gvar(1)) s line=" g "_tag(qnum) d addline^%mgsqlc(grp,.line) q
+ ;;;i qnum=1,unique(1)=1,'$d(gvar(1)) s line=" g "_tag(qnum) d addline^%mgsqlc(grp,.line) q
  i $d(ord),$l(ord),qnum=1 g out2
  i qnum=1 g out1
  d outsq

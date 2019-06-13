@@ -30,7 +30,7 @@ tab ; tables
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"tab() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"tab() array","ODBC")
  s error=""
  ; CatalogName=%s\r\nSchemaName=%s\r\nTableName=%s\r\nTableType=%s\r\n\r\n"
  s tname="TABLES"
@@ -117,7 +117,7 @@ col ; table columns
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,0,stmt)
- d logarray^%mgsqls(.nv,"col() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"col() array","ODBC")
  s error=""
  s tname="TABLE_COLUMNS"
  s cn=0
@@ -154,7 +154,7 @@ col ; table columns
  . s cname1=$g(%ind(pk,kn))
  . i 'cname1?1a.e q
  . s r=$$col^%mgsqld(dbid,tname,cname1)
- . s desc=$p(r,"\",1)
+ . s desc=""
  . s ord=ord+1,knm=ord s col(ord)=cname1,col(ord,"k")=1,col(ord,"d")=desc
  . s colx(cname1)=ord
  . q
@@ -221,7 +221,7 @@ stt ; table statistics
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"stt() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"stt() array","ODBC")
  s error=""
  s tname="TABLE_STATISTICS"
  s cn=0
@@ -257,7 +257,7 @@ pky ; table primary key
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"pky() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"pky() array","ODBC")
  s error=""
  s tname="TABLE_PRIMARY_KEY"
  s cn=0
@@ -305,7 +305,7 @@ fky ; table foreign key
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"fky() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"fky() array","ODBC")
  s error=""
  s tname="TABLE_PRIMARY_KEY"
  s cn=0
@@ -370,7 +370,7 @@ prc ; procedures
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"prc() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"prc() array","ODBC")
  s error=""
  s tname="PROCEDURES"
  s cn=0
@@ -432,7 +432,7 @@ pcc ; procedure columns
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
  k ^mgsqls($j,stmt)
- d logarray^%mgsqls(.nv,"pcc() array","ODBC")
+ ;d logarray^%mgsqls(.nv,"pcc() array","ODBC")
  s error=""
  s tname="PROCEDURE_COLUMNS"
  s cn=0

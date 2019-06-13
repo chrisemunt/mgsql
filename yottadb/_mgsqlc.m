@@ -178,6 +178,7 @@ endq1 ; kill sql variables and exit query
  q
  ;
 uniout ; output unique result
+ q
  s rec="",rdel="",test=1 f i=1:1:outsel q:'$d(^mgtmp($j,"sel",1,i))  s x=^(i),rec=rec_rdel_x,rdel="_"_$c(34)_"~"_$c(34)_"_"
  s %data=1,ptag=tagout d line^%mgsqlc3
  k test
@@ -243,7 +244,8 @@ idx ; index data
  q
  ;
 addline(grp,line) ; add line of code to routine
- n ln
+ n ln,lnr
+ s lnr=$i(@(%z("ccoder")_",grp)")),@(%z("ccoder")_",grp,lnr)")=line
  i line[%z("dsv")!(line[%z("dev")) d subvar
  i line[%z("dl") d subtag
  i line?1" s ".e,$p(line,"=",2)=$p($p(line," s ",2),"=",1) s line="" q

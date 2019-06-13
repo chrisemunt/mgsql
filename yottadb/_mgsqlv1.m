@@ -68,7 +68,7 @@ where2 ; validate sql column
  . i '$d(^mgtmp($j,"vx",qnum,x)) s error="column '"_x_"' ('where'/'having' statement) is not part of derived table "_alias,error(5)="42S22" q
  . q
  s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname) d remap^%mgsqlv2 i '%defk,'%defd,'%defm s error="column '"_x_"' ('where'/'having' statement) is not part of table "_tname,error(5)="42S22" q
- s %d=$$col^%mgsqld(dbid,tname,cname) s typ=$p(%d,"\",3)
+ s %d=$$col^%mgsqld(dbid,tname,cname) s typ=$p(%d,"\",11)
 where22 i qnum'["g" s item=%z("dsv")_f_"."_cname_%z("dsv"),snum=$$addselx^%mgsqlv2(qnum,item) s ^mgtmp($j,"wsel",item)=""
  i qnum["g" s item=%z("dsv")_f_"."_cname_%z("dsv"),snum=$$addselx^%mgsqlv2(qnum,item) s ^mgtmp($j,"wsel",item)=""
  i fun="" q

@@ -34,7 +34,7 @@ loop ; next command
  new $ztrap set $ztrap="zgoto "_$zlevel_":loope^%mgsqln"
  s dbid=$$schema^%mgsql("")
  s stmt=$$read(.head,.cmnd,.size,.data)
- d logevent^%mgsqls("stmt="_stmt_"; cmnd="_cmnd_"; data="_data,"start","ODBC")
+ ;d logevent^%mgsqls("stmt="_stmt_"; cmnd="_cmnd_"; data="_data,"start","ODBC")
  i cmnd="i" d info g loop
  i cmnd="a" d typ^%mgsqln2  g loop
  i cmnd="s" d sql g loop
@@ -108,7 +108,7 @@ sql ; sql
  n %zi,%zo,at,tname,r,sn,dtyp,i,x,line,param
  new $ztrap set $ztrap="zgoto "_$zlevel_":sqle^%mgsqln"
  d sqline(data,.line,.param)
- d logarray^%mgsqls(.line,"sql() array","ODBC")
+ ;d logarray^%mgsqls(.line,"sql()","ODBC")
  s error=""
  d sql1 i $l(error) g sqlerror
  i $d(info("sp")) d  g sql2
@@ -174,10 +174,8 @@ fetch ; get data
  s line="",eod=0
  f cn=1:1 q:'$d(^mgsqls($j,stmt,0,rn,cn))  d
  . s val=$g(^mgsqls($j,stmt,0,rn,cn))
- . ; d logevent^%mgsqls(val,"Fetch","ODBC")
  . s line=line_$$esize($l(val),4,$$base())_val
  . q
- ; d logevent^%mgsqls(line,"Fetch "_stmt_":"_rn,"ODBC")
 fetchx ; dispatch result
  d send(line,$l(line),stmt,"f",eod) ; send data
  q
@@ -191,15 +189,12 @@ read(head,cmnd,size,data) ; read
  new $ztrap set $ztrap="zgoto "_$zlevel_":reade^%mgsqln"
  s cmnd="",data="",size=0
  s head=$$recv(14,0)
- ;d logevent^%mgsqls($l(head)_":"_head,"******* read *******","ODBC")
  i head="" g reade
- s size=+$e(head,1,4)
+ s size=$$dsize($e(head,1,4),4,$$base())
  s cmnd=$e(head,14)
- s stmt=+$e(head,10,13)
- ;i 'size d logevent^%mgsqls("no data "_$l(head),head,"ODBC")
+ s stmt=$$dsize($e(head,10,13),4,$$base())
  i 'size q stmt
  s data=$$recv(size,0)
- ;d logevent^%mgsqls($l(data)_":"_data,$l(head)_":"_head,"ODBC")
  q stmt
 reade ; error
  d logerror^%mgsqls($$error^%mgsqls(),"read error")
@@ -214,21 +209,22 @@ recv(len,timeout)
 send(data,len,stmt,type,eod) ; send data
  n head
  s len=$l(data)
- s head=$$esize(len,4,$$base())
- s head=head_$e("00000000",1,8-$l(stmt))_stmt_eod_type
+ s head=$$esize(len,4,$$base())_"0000"_$$esize(stmt,4,$$base())_eod_type
  i $$isydb^%mgsqls() g sendy
  w head_data d flush^%mgsqls()
  q
-sendy ; yottie
+sendy ; yottadb
  w head_data
  q
  ;
 esize(dsize,len,base)
+ q $c(dsize#256)_$c(((dsize\256)#256))_$c(((dsize\(256**2))#256))_$c(((dsize\(256**3))#256))
  n esize
  s esize=+dsize f  q:$l(esize)=4  s esize="0"_esize
  q esize
  ;
 dsize(esize,len,base)
+ q ($a(esize,4)*(256**3))+($a(esize,3)*(256**2))+($a(esize,2)*256)+$a(esize,1)
  s dsize=+esize
  q dsize
  ;

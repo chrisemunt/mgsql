@@ -129,6 +129,9 @@ ts() ; time stamp
 mv() ; missing value
  q ""
  ;
+age(mdate) ; calculate age
+ q (+$h-mdate)\365.25
+ ;
 ddate(mdate,format) ; decode M date
  n d,m,y,ddate
  s ddate=$zd(mdate,1)
@@ -138,6 +141,9 @@ ddate(mdate,format) ; decode M date
  i $$isydb(),y<100 d
  . i mdate<58074 s y=y+1900
  . i mdate'<58074 s y=y+2000
+ . q
+ i '$$isydb(),y<100 d
+ . i mdate<58074 s y=y+1900
  . q
  s ddate=y_"-"_m_"-"_d
  q ddate

@@ -39,12 +39,17 @@ nxttname(dbid,tname) ; next table
  q tname
  ;
 col(dbid,tname,cname) ; column details
- n %d,type,type1,ano
+ n %d,type,type1,ano,sm
  s %d=$g(^mgsqld(0,dbid,"t",tname,"tc",cname))
+ s type=$p(%d,"\",2)
+ s type1="number" i type["varchar" s type1="string"
+ s $p(%d,"\\",11)=type1
+ q %d
  s type=$p(%d,"\",1)
  s ano=$p(%d,"\",2)
- s type1="number" i type["varchar" s type1="string" 
- s %d="\data\"_type1_"\"_ano_"\\"
+ s sm=$p(%d,"\",3)
+ s type1="number" i type["varchar" s type1="string"
+ s %d="\data\"_type1_"\"_ano_"\"_sm_"\"
  q %d
  ;
 dtype(dbid,tname,cname)
@@ -168,17 +173,29 @@ ctable(dbid,tname,cols) ; create table
  . q
  s ano=0
  f i=1:1 q:'$d(cols(i))  d
+ . s nnull=0
  . s cname=$p(cols(i)," ",1),atu=$$lcase^%mgsqls(cname) i atu="constraint" q
  . s type=$p(cols(i)," ",2),typeu=$$lcase^%mgsqls(type)
+ . f ii=3:1:$l(cols(i)," ") s name=$p(cols(i)," ",ii) d
+ . . i name="" q
+ . . s name=$$lcase^%mgsqls(name)
+ . . i name="not",$$lcase^%mgsqls($p(cols(i)," ",ii+1))="null" s nnull=1
+ . . i name="separate" s cols(i,name)=$p(cols(i)," ",ii+1)
+ . . i name="derived" s cols(i,name)=$p(cols(i)," ",ii+1)
+ . . q
  . s cons=$p(cols(i)," ",3,999),consu=$$lcase^%mgsqls(cons)
  . s nnull=0 i consu["not null" s nnull=1
  . s ano1=0 i '$d(idxx(pk,cname)) s ano=ano+1,ano1=ano
  . s cno=$p($g(olddata(cname)),"\",5)+0 i 'cno s cno=$$cno()
- . s sm="d"
+ . s sm="d" i $d(cols(i,"separate")) s sm="s"
  . s col(cname)=ano1_"\"_typeu_"\"_sm_"\"_nnull_"\"_cno
+ . s name="" f  s name=$o(cols(i,name)) q:name=""  s col(cname,name)=cols(i,name)
  . q
  s ^mgsqld(0,dbid,"t",tname,"t")=dlm_"\"_pk
- s cname="" f  s cname=$o(col(cname)) q:cname=""  s ^mgsqld(0,dbid,"t",tname,"tc",cname)=col(cname)
+ s cname="" f  s cname=$o(col(cname)) q:cname=""  d
+ . s ^mgsqld(0,dbid,"t",tname,"tc",cname)=col(cname)
+ . s name="" f  s name=$o(col(cname,name)) q:name=""  s ^mgsqld(0,dbid,"t",tname,"tc",cname,$e(name,1))=col(cname,name)
+ . q
  s in="" f i=1:1 s in=$o(idx(in)) q:in=""  d
  . s ^mgsqld(0,dbid,"t",tname,"ti",in)=idx(in)
  . f i=1:1 q:'$d(idx(in,i))  s ^mgsqld(0,dbid,"t",tname,"ti",in,i)=idx(in,i)

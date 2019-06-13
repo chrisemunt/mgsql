@@ -30,16 +30,17 @@ so(%zi,%zo) ; server: open
  ;
 ss(%zi,%zo,rn) ; server: row of data
  n i
- i $g(%zi("stmt"))'="" d  q 0
+ i $g(%zi("stmt"))'="" d  k %zo(rn) q 0
  . f i=1:1 q:'$d(%zo(rn,i))  i $g(%zo(0,i,0))="date" s %zo(rn,i)=$$ddate^%mgsqls($g(%zo(rn,i)),1)
  . m ^mgsqls($j,%zi("stmt"),0,rn)=%zo(rn)
  . q
  w ! f i=1:1 q:'$d(%zo(rn,i))  d
  . i i>1 w ","
- . i $g(%zo(0,i,0))="date" w $$ddate^%mgsqls($g(%zo(rn,i)),1) k %zo(rn,i) q
+ . i $g(%zo(0,i,0))="date" w $$ddate^%mgsqls($g(%zo(rn,i)),1) q
  . i $g(%zo(rn,i))["," w """"_$g(%zo(rn,i))_"""" q
  . w $g(%zo(rn,i))
  . q
+ k %zo(rn)
  q 0
  ;
 sc(%zi,%zo) ; server: close

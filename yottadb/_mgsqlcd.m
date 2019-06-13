@@ -29,7 +29,8 @@ main ; start
  s tname=update("delete"),alias=$p($p(tname," ",2),":",1),tname=$p(tname," ",1)
  k dtyp d xfid^%mgsqlct
  s line=" "_"k"_" %do,%dn,%dx" d addline^%mgsqlc(grp,.line)
- f i=1:1 q:'$d(xfid(0,i))  s cname=xfid(0,i,1) i cname?1a.e d data
+ s inop=$$pkey^%mgsqld(dbid,tname)
+ f i=1:1 q:'$d(xfid(inop,i))  s cname=xfid(inop,i,1) i cname?1a.e d data
  s %refile=0 d kill^%mgsqlci
  s line=" "_"g"_" "_%tagz d addline^%mgsqlc(grp,.line)
 exit ; exit
@@ -50,7 +51,7 @@ hilev ; kill file off at high level
  s ino="" f i=0:0 s ino=$o(xfid(ino)) q:ino=""  d hilev1
 hilev3 ; link
  s line=" "_"k"_" %do" d addline^%mgsqlc(grp,.line)
- s ino=$$pkey^%mgsqld(dbid,tname) f i=1:1 q:'$d(xfid(ino,i))  s cname=xfid(ino,i,1) i cname?1a.e q:'$d(update("attx",cname))  s val=update("attx",cname),key=key_com_val,com="," i val[%z("dev") s n=$p($$col^%mgsqld(dbid,tname,cname),"\",4) i $l(n) s line=" "_"s"_" %do("_n_")="_val d addline^%mgsqlc(grp,.line)
+ s ino=$$pkey^%mgsqld(dbid,tname) f i=1:1 q:'$d(xfid(ino,i))  s cname=xfid(ino,i,1) i cname?1a.e q:'$d(update("attx",cname))  s val=update("attx",cname),key=key_com_val,com="," i val[%z("dev") s n=$p($$col^%mgsqld(dbid,tname,cname),"\",5) i $l(n) s line=" "_"s"_" %do("_n_")="_val d addline^%mgsqlc(grp,.line)
  q
  ;
 hilev1 ; kill off single index
