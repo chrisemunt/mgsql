@@ -1,0 +1,15 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\ODBC\ODBCINST.INI\MGSQL ODBC x86]
+"Driver"="C:\\Program Files (x86)\\mgsql\\mgodbc.dll"
+"Setup"="C:\\Program Files (x86)\\mgsql\\mgodbc.dll"
+"APILevel"="1"
+"ConnectFunctions"="YYN"
+"DEBUG"=dword:00000000
+"DriverODBCVer"="03.50"
+"FileUsage"="0"
+"SQLLevel"="1"
+"UsageCount"=dword:00000001
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\ODBC\ODBCINST.INI\ODBC Drivers]
+"MG ODBC"="Installed"
