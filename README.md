@@ -3,9 +3,9 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-7 June 2019, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+13 June 2019, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.0; Revision 6 (7 June 2019)
+* Current Release: Version: 1.0; Revision 7 (13 June 2019)
 
 ## Overview
 
@@ -179,7 +179,45 @@ In a live environment a production-grade web server should be used.  For example
 
 ## Access to mgsql using ODBC
 
-*Check back soon! ...*
+The ODBC driver is in the **/odbc**.  Pre-built drivers for 32 and 64-bit Windows are in the **/odbc/x86** and **/odbc/x64** directories respectively.  To install both drivers copy the contents of **/odbc/x86** to:
+
+       C:\Program Files (x86)\mgsql\
+
+And copy the contents of **/odbc/x64** to:
+
+       C:\Program Files\mgsql\
+
+You will have to create the **/mgsql** sub-directory if it doesn't already exist.  To register both drivers, using Windows Explorer, double click on the following Registry files:
+
+       C:\Program Files (x86)\mgsql\mgodbc32.reg
+       C:\Program Files\mgsql\mgodbc64.reg
+
+You can now configure an ODBC Data Source using the Windows Administrative tools for ODBC Data sources (accessed via the Windows Control Panel:
+
+       Control Panel\System and Security\Administrative Tools\ODBC Data Sources
+
+Under the **System DSN** tab. select **Add...** and choose one of the **mgsql** drivers as appropriate:
+
+       MGSQL ODBC x86
+       MGSQL ODBC x64
+
+Complete the **mgodbc** configuration dialogue box and save:
+
+* **Name:** Your Data Source Name (DSN).
+* **Description:** An optional description.
+* **Server:** IP Address of your M server.
+* **TCP Port:** TCP Port (the default is 7041).
+* **Directory or UCI:** M UCI (leave blank for YottaDB).
+* **Event Log File:** Log file (including full path).
+* **Event Log Level:** Log level (a comma separated list of log directives).
+
+Log Level Directives:
+
+* **e:** Log Errors.
+* **ft:** Log ODBC function call trace.
+* **nt:** Log all network buffers sent and received.
+
+The data source created can now be used in Windows applications.
 
 ## Resources used by mgsql
 
@@ -191,6 +229,8 @@ In a live environment a production-grade web server should be used.  For example
 * **^mglog**: The event Log.
 * **^mgtmp**: A temporary file used by the SQL compiler.
 * **^mgtemp**: A temporary sort file used when executing SQL queries.
+
+* **mgsql** will generate M Routines prefixed by 'x'.
 
 ## License
 
