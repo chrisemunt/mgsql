@@ -1,0 +1,87 @@
+LIBRARY		"mgodbc"
+
+HEAPSIZE	   4096
+
+EXPORTS
+   SQLAllocConnect      @1
+   SQLAllocEnv          @2
+   SQLAllocHandle       @3
+   SQLAllocStmt         @4
+   SQLBindCol           @5
+   SQLBindParameter     @6
+   SQLBrowseConnect     @7
+   SQLBulkOperations    @8
+   SQLCancel            @9
+   SQLCloseCursor       @10
+   SQLColAttribute      @11
+   SQLColAttributes     @12
+   SQLColumnPrivileges  @13
+   SQLColumns           @14
+   SQLConnect           @15
+   SQLCopyDesc          @16
+   SQLDataSources       @17
+   SQLDescribeCol       @18
+   SQLDescribeParam     @19
+   SQLDisconnect        @20
+   SQLDriverConnect     @21
+   SQLDrivers           @22
+   SQLEndTran           @23
+   SQLError             @24
+   SQLExecDirect        @25
+   SQLExecute           @26
+   SQLExtendedFetch     @27
+   SQLFetch             @28
+   SQLFetchScroll       @29
+   SQLForeignKeys       @30
+   SQLFreeConnect       @31
+   SQLFreeEnv           @32
+   SQLFreeHandle        @33
+   SQLFreeStmt          @34
+   SQLGetConnectAttr    @35
+   SQLGetConnectOption  @36
+   SQLGetCursorName     @37
+   SQLGetData           @38
+   SQLGetDescField      @39
+   SQLGetDescRec        @40
+   SQLGetDiagField      @41
+   SQLGetDiagRec        @42
+   SQLGetEnvAttr        @43
+   SQLGetFunctions      @44
+   SQLGetInfo           @45
+   SQLGetStmtAttr       @46
+   SQLGetStmtOption     @47
+   SQLGetTypeInfo       @48
+   SQLMoreResults       @49
+   SQLNativeSql         @50
+   SQLNumParams         @51
+   SQLNumResultCols     @52
+   SQLParamData         @53
+   SQLParamOptions      @54
+   SQLPrepare           @55
+   SQLPrimaryKeys       @56
+   SQLProcedureColumns  @57
+   SQLProcedures        @58
+   SQLPutData           @59
+   SQLRowCount          @60
+   SQLSetConnectAttr    @61
+   SQLSetConnectOption  @62
+   SQLSetCursorName     @63
+   SQLSetDescField      @64
+   SQLSetDescRec        @65
+   SQLSetEnvAttr        @66
+   SQLSetParam          @67
+   SQLSetPos            @68
+   SQLSetScrollOptions  @69
+   SQLSetStmtAttr       @70
+   SQLSetStmtOption     @71
+   SQLSpecialColumns    @72
+   SQLStatistics        @73
+   SQLTablePrivileges   @74
+   SQLTables            @75
+   SQLTransact          @76
+
+   ConfigDSN            @77
+   ConfigDriver         @78
+   ConfigTranslator     @79
+
+   DllMain              @80
