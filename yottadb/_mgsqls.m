@@ -134,6 +134,7 @@ age(mdate) ; calculate age
  ;
 ddate(mdate,format) ; decode M date
  n d,m,y,ddate
+ i mdate="" q ""
  s ddate=$zd(mdate,1)
  s d=$p(ddate,"/",2)
  s m=$p(ddate,"/",1)
@@ -150,6 +151,7 @@ ddate(mdate,format) ; decode M date
  ;
 edate(ddate,format) ; encode M date
  n dd,dj,djstr,dl,dlm,dm,dy,i,mdate,x,y,ok
+ i ddate="" q ""
  s ddate=$$ltrim(ddate)
  i ddate?8n s dy=$e(ddate,1,4),dm=$e(ddate,5,6),dd=$e(ddate,7,8) g edate1
  i ddate?4n1"-"2n1"-"2n s dy=$p(ddate,"-",1),dm=$p(ddate,"-",2),dd=$p(ddate,"-",3) g edate1
@@ -188,12 +190,14 @@ edate1 s mdate=""
  ;
 dtime(mtime,format) ; decode M time
  n h,m,s
+ i mtime="" q ""
  i mtime["," s mtime=$p(mtime,",",2)
  s h=mtime\3600,s=mtime-(h*3600),m=s\60,s=s#60
  q $s(h<10:"0",1:"")_h_":"_$s(m<10:"0",1:"")_m_":"_$s(s<10:"0",1:"")_s
  ;
 etime(dtime,format) ; encode M time
  n h,m,s
+ i etime="" q ""
  s h=$p(dtime,":",1),m=$p(dtime,":",2),s=$p(dtime,":",3)
  q (h*3600)+(m*60)+s
  ;

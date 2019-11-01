@@ -25,7 +25,7 @@
 a d vers^%mgsql("%mgsqlp") q
  ;
 main(sql,line,error) ; entry
- n sql2,wrk,string
+ n sql2,wrk
  s error=""
  k ^mgtmp($j,"translate")
 main1 ; re-entry
@@ -33,9 +33,9 @@ main1 ; re-entry
  ;k wrk,blk,tmp,sql,log,declare
  s error=""
  d cmnd(.sql2)
- d rips(.line,.wrk,.string,.error) i $l(error) g exit
+ d rips(.line,.wrk,.error) i $l(error) g exit
  s qnummax=$$cdel(.sql2,.wrk,.error) i $l(error) g exit
- d main^%mgsqlp1(qnummax,.sql2,.wrk,.string,.sql,.error) i $l(error) g exit
+ d main^%mgsqlp1(qnummax,.sql2,.wrk,.sql,.error) i $l(error) g exit
  i $g(sql(1,2))="from "_%z("dq")_2_%z("dq")_" t0" d cog i ok g main1
 exit k tmp,blk
  q qnummax
@@ -53,7 +53,7 @@ cmnd(sql2) ; sql2 commands
  f x="cursor","eof","last","notnull","rollback" s sql2(x)=7
  q
  ;
-rips(line,wrk,string,error) ; rip out all literals and comments
+rips(line,wrk,error) ; rip out all literals and comments
  n ln,ln1,ln2,cn,cn1,cn2,char,charp,charn,txt,instring,sno,qno,mrk
  s ln="" f  s ln=$o(line(ln)) q:ln=""  s wrk(ln)=line(ln)
  s sno=0
@@ -67,10 +67,10 @@ rips2 s cn=cn+1,charp=char,char=$e(txt,cn),charn=$e(txt,cn+1) i char="" g rips1
  i 'instring,(charp_char)=" ;"!((charp_char_charn)=" --") s txt=$e(txt,1,cn-2) k wrk(ln) s:$l(txt) wrk(ln)=txt g rips2 ; remove comment
  i char=$c(34),'instring s sno=sno+1,qno=0,instring=1,sno(0,sno,0,0)=ln,sno(0,sno,0,1)=cn
  i char=$c(34),instring s qno=qno+1
- i char'=$c(34),instring,'(qno#2) s string(sno)=string,instring=0,string="" g rips3
+ i char'=$c(34),instring,'(qno#2) s ^mgtmp($j,"string",sno)=string,instring=0,string="" g rips3
  i instring s string=string_char,sno(0,sno,1,0)=ln,sno(0,sno,1,1)=cn
  g rips2
-rips3 i instring,'(qno#2) s string(sno)=string,instring=0,string=""
+rips3 i instring,'(qno#2) s ^mgtmp($j,"string",sno)=string,instring=0,string=""
  i instring s error="statement contains unterminated literal",error(5)="HY000" g ripsx
  s sno=$o(sno(0,"")) i '$l(sno) g ripsx
  s mrk=%z("ds")_sno_%z("ds")
@@ -83,6 +83,10 @@ rips3 i instring,'(qno#2) s string(sno)=string,instring=0,string=""
  g rips0
 ripsx ; exit
  q
+ ;
+rstring(line) ; put strings back into line
+ f  q:line'[%z("ds")  s line=$p(line,%z("ds"),1)_^mgtmp($j,"string",$p(line,%z("ds"),2))_$p(line,%z("ds"),3,9999)
+ q line
  ;
 cdel(sql2,wrk,error) ; find and mark main commands
  n ln,lnd,dec,pn,wrd,wrd0,wrd1,pst,pre,txt,txt1,txtn,qnum

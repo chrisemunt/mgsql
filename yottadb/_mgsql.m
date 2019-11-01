@@ -26,13 +26,14 @@ a d vers("%mgsql") q
  ; 
 v() ; version and date
  n v,r,d
- s v="1.0",r=1,d="1 December 2018"
+ ;s v="1.0",r=1,d="1 December 2018"
  ;s v="1.0",r=2,d="26 March 2019"
  ;s v="1.0",r=3,d="10 May 2019"
  ;s v="1.0",r=4,d="11 May 2019"
  ;s v="1.0",r=5,d="14 May 2019"
  ;s v="1.0",r=6,d="7 June 2019"
- s v="1.0",r=7,d="13 June 2019"
+ ;s v="1.0",r=7,d="13 June 2019"
+ s v="1.0",r=8,d="1 November 2019"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -45,7 +46,7 @@ vers(this) ; version information
  ;
 exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
- ;k ^mgsqlx
+ ;k ^mgsqlx,^mgtmp
  new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
  s error=""
  s dbid=$$schema(dbid)
@@ -248,6 +249,11 @@ sel7 ; select all patients who have been admitted more that 3 times
 sel8 ; select all patient records but just show each patient's surname
  k %zi,%zo
  s ok=$$exec^%mgsql("","select a.num,$p(a.name,"" "",2) from patient a",.%zi,.%zo)
+ q
+ ;
+sel9 ; select all patients and any associated admission records, but only those for ward 'B3'
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","select a.num,a.name,b.num,b.dadm,b.ward from patient a left join admission b on a.num = b.num and b.ward = 'B3'")
  q
  ;
 proc ; create stored procedures

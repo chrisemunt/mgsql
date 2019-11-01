@@ -25,7 +25,7 @@
 a d vers^%mgsql("%mgsqlv5") q
  ;
 from(dbid,sql,qnum,arg,error) ; validate 'from' statement
- n tnum,nord,xord,i,x,tname,alias,args,index
+ n tnum,nord,xord,i,x,tname,alias,args,index,on
  s ^mgtmp($j,"from","i","x",qnum)=0
  s arg=$$arg^%mgsqle(arg,.args)
  s tnum=0 f i=1:1:args s tname=args(i) i tname'="" d from1(dbid,qnum,.tnum,tname) i $l(error) q
@@ -38,16 +38,29 @@ fromx i $l(error) s error(0)="from",error(1)=qnum q
  s nord=0
  s x="" f  s x=$o(^mgtmp($j,"from","z",qnum,"o",0,x),xord) q:x=""  d from4(x,xord,.nord)
  f nord=1:1 q:'$d(^mgtmp($j,"from","z",qnum,"ord",nord))  s x=^mgtmp($j,"from","z",qnum,"ord",nord),^mgtmp($j,"from","z",qnum,"ord",nord)=$p(^mgtmp($j,"from",qnum,x),"~",2)
+fromxx ; compile 'on' predicates
+ f i=1:1 q:'$d(^mgtmp($j,"from","on",qnum,i))  s on=$g(^mgtmp($j,"from","on",qnum,i)) d  i $l(error) q
+ . n qnumo
+ . s qnumo=qnum_"gon"_i d where^%mgsqlv1(dbid,sql,qnumo,on,.error) i $l(error) q
+ . q
  q
  ;
 from1(dbid,qnum,tnum,tname) ; validate each table selected from
- n %ref,i,ii,x,y,z,z1,zz,ino,inof,exp,pn,nat,jtyp,ok
+ n %ref,i,ii,j,x,y,z,z1,zz,ino,inof,exp,pn,nat,jtyp,ok,com
  f x="inner","left","right","full" s jtyp(x)=""
  s (exp,pn,obr,cbr)=0,y="",com="" f i=1:1:$l(tname," ") s x=$$trim^%mgsqls($p(tname," ",i)) i $l(x) d
  . i x["(" s obr=obr+1
  . i x[")" s cbr=cbr+1
  . s y=y_com_x,com=" "
  . i obr=cbr s exp=exp+1,exp(exp)=y,y="",com="",(obr,cbr)=0
+ . q
+ f i=1:1 q:'$d(exp(i))  i exp(i)="on" d
+ . i '$d(exp(i+1)) q
+ . i exp(i+1)?1"(".e q
+ . s x="(",com="" f ii=i+1:1 q:'$d(exp(ii))  s y=exp(ii) i y'="" q:$d(jtyp(y))!(y="join")!(y="natural")!(y="inner")!(y="cross")  s x=x_com_y,com=" " k exp(ii)
+ . s x=x_")"
+ . s j=i+1,exp(j)=x
+ . f ii=ii:1 q:'$d(exp(ii))  s x=exp(ii) k exp(ii) s j=j+1,exp(j)=x
  . q
 from11 s pn=pn+1 i '$d(exp(pn)) q
  s tname=exp(pn),nat=0
@@ -136,21 +149,24 @@ fromv(dbid,tname,error) ; validate table
  q 1
  ;
 nat(dbid,qnum,tnum,tname,nat,exp,error) ; extract join parameters
- n i,ii,x,cname,on
+ n i,ii,x,cname,alias,on
  i nat q  ; data dictionary
  s on=""
  f i=pn+1:1 q:'$d(exp(i))  s x=exp(i) i x="using"!(x="on") s on=x q
  i on="" s error="if a join is not natural then qualify it with either an 'on' or 'using' statement",error(5)="HY000" q
  i '$d(exp(i+1)) s error="missing parameter(s) for 'on'/'using' statement",error(5)="HY000" q
- s x=exp(i+1)
- i x'?1"("1e.e1")" b  s error="syntax error in parameters to 'using' statement",error(5)="HY000" q
- s x=$p($p(x,"(",2),")",1)
  i on="on" g naton
+ s x=exp(i+1)
+ i x'?1"("1e.e1")" s error="syntax error in parameters to 'using' statement",error(5)="HY000" q
+ s x=$p($p(x,"(",2),")",1)
  f ii=1:1:$l(x,",") s cname=$$trim^%mgsqls($p(x,",",ii)) i $l(cname) s ^mgtmp($j,"from","z",qnum,"jn",tnum+1,cname)=""
  i '$d(^mgtmp($j,"from","z",qnum,"jn",tnum+1)) s error="no valid parameters for 'using' statement found",error(5)="HY000" q
  k exp(i),exp(i+1) f i=i+2:1 q:'$d(exp(i))  s exp(i-2)=exp(i) k exp(i)
  q
 naton ; 'on' statement
+ s x=exp(i+1)
+ i x?1"("1e.e1")" s x=$p($p(x,"(",2),")",1)
+ s ^mgtmp($j,"from","on",qnum,$i(^mgtmp($j,"from","on",qnum)))=x
  f ii=1:1:$l(x," ") s cname=$$trim^%mgsqls($p(x," ",ii)),alias=$p(cname,".",1),cname=$p(cname,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
  k exp(i),exp(i+1) f i=i+2:1 q:'$d(exp(i))  s exp(i-2)=exp(i) k exp(i)
  q

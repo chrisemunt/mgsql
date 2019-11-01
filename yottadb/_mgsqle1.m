@@ -152,6 +152,7 @@ word2 s pn=pn+1 i pn>$l(lin," ") q
  s wrd=$s(wrd=">=":"'<",wrd="<=":"'>",wrd="and":"&",wrd="or":"!",wrd="not":"'",wrd="like":"?",wrd="not like":"'?",1:wrd)
  i $d(ops(wrd)) g word3
  i wrd?1"""".e1"""",($l(wrd,"""")#2) g word3
+ i wrd[%z("ds") g word3
  i wrd?.1"-".n.1"."1n.n g word3
  i $e(wrd)="[" s wrd=$e(wrd,2,999)
  i $e(wrd,$l(wrd))="]" s wrd=$e(wrd,1,$l(wrd)-1)

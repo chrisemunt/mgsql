@@ -250,6 +250,7 @@ addline(grp,line) ; add line of code to routine
  i line[%z("dl") d subtag
  i line?1" s ".e,$p(line,"=",2)=$p($p(line," s ",2),"=",1) s line="" q
  i line?1" set ".e,$p(line,"=",2)=$p($p(line," set ",2),"=",1) s line="" q
+ s line=$$rstring^%mgsqlp(line)
  i line="" q
  s ln=$i(@(%z("ccode")_",grp)"))
  s @(%z("ccode")_",grp,ln)")=line,line=""

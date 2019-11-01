@@ -99,7 +99,7 @@ reord ; reorder data for 'order by' clause
  s (keyo,como)="" f i=1:1:$l(ord,",") d reord1
  s tag=%z("dl")_%z("pt")_qnum_"o"_(i+1)_%z("dl"),ptag=%z("dl")_%z("pt")_qnum_"o"_i_%z("dl")
  s line=tag_" s "_%z("pv")_"n=$o("_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_%z("pv")_"n))"_" i "_%z("pv")_"n="""" g "_ptag d addline^%mgsqlc(grp,.line)
- s line=" s "_%z("vdata")_"="_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_%z("vdata")_")" b  d addline^%mgsqlc(grp,.line)
+ s line=" s "_%z("vdata")_"="_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_%z("vdata")_")" d addline^%mgsqlc(grp,.line)
  s %data=0,ptag=tag d line
  q
  ;

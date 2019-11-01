@@ -55,7 +55,7 @@ create(dbid,sql,error) ; validate 'create' statement
  ;
 create1 ; check individual items in index
  s cname=^mgtmp($j,"from","i",i)
- i cname?1n.n!(at?1""""1e.e1"""") q
+ i cname?1n.n!(at?1""""1e.e1"""")!(wrd[%z("ds")) q
  i cname'?1a.e s error="invalid item '"_cname_"' in index",error(5)="HY000" q
  s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname) i '%defk,'%defd s error="column '"_cname_"' not found in table '"_tname_"'",error(5)="42S22" q
  q
@@ -185,7 +185,7 @@ insv1 s pn=pn+1 i pn>$l(val,",") q
  f  q:($l(wrd,"""")#2)  s pn=pn+1,wrd=wrd_$p(val,",",pn)
  s an=an+1
  i wrd?.1"-".n.1"."1n.n g insv2
- i wrd?1"""".e1"""" g insv2
+ i wrd?1"""".e1""""!(wrd[%z("ds")) g insv2
  i wrd?1"'".e1"'" s wrd=$tr(wrd,"'","""") g insv2
  i wrd?1"{".e1"}" s wrd=$$trx^%mgsqlv(wrd) g insv2
  i wrd?1":"1a.e s inv($p(wrd,":",2))="",wrd=%z("dev")_$p(wrd,":",2)_%z("dev") g insv2
@@ -208,7 +208,7 @@ inss1 s pn=pn+1 i pn>$l(val,",") g inssx
  i wrd?.1"."1a.e g inss2
  i wrd?1":"1a.e s wrd=%z("dev")_$p(wrd,":",2)_%z("dev") g inss2
  i wrd?.1"-".n.1"."1n.n g inss2
- i wrd?1"""".e1"""" g inss2
+ i wrd?1"""".e1""""!(wrd[%z("ds")) g inss2
  s error="invalid item '"_wrd_"' in 'select' statement",error(5)="HY000" g inssx
 inss2 s update("val",an)=wrd,update("val")=an
  g inss1

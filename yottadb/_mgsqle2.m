@@ -141,7 +141,7 @@ betweenx ; exit
  ;
 like(wrd,error) ; form expression for sql style pattern-match
  n wrd1,chr,i
- i wrd'?1""""1e.e1"""" s error="invalid 'like' argument "_wrd,error(5)="HY000" q ""
+ i wrd'?1""""1e.e1"""",wrd'[%z("ds") s error="invalid 'like' argument "_wrd,error(5)="HY000" q ""
  s wrd1=$e(wrd,2,$l(wrd)-1),wrd=""
  f i=1:1:$l(wrd1) s chr=$e(wrd1,i) s wrd=wrd_$s(chr="_":"1e",chr="%":".e",1:1_$c(34)_chr_$c(34))
  q ""

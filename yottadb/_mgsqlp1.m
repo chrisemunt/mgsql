@@ -24,7 +24,7 @@
  ;
 a d vers^%mgsql("%mgsqlp1") q
  ;
-main(qnummax,sql2,wrk,string,sql,error) ; entry
+main(qnummax,sql2,wrk,sql,error) ; entry
  n blk
  d blks(qnummax,.sql2,.wrk,.blk,.error) i $l(error) g exit
  d subs(qnummax,.sql2,.blk,.error) i $l(error) g exit
@@ -34,7 +34,7 @@ main(qnummax,sql2,wrk,string,sql,error) ; entry
  d logb(qnummax,.sql2,.blk,.tmp,.error) i $l(error) g exit
  d sqlb(qnummax,.sql2,.blk,.tmp,.sql,.error) i $l(error) g exit
  d updx(qnummax,.sql2,.blk,.tmp,.sql,.error) i $l(error) g exit
- d puts(qnummax,.sql,.string,.error) i $l(error) g exit
+ d puts(qnummax,.sql,.error) i $l(error) g exit
  d unix(qnummax,.sql2,.blk,.sql,.error) i $l(error) g exit
 exit ; exit
  q
@@ -253,15 +253,10 @@ updx(qnummax,sql2,blk,tmp,sql,error) ; now remove update command from body of fo
  s sql(0,i)=$p(x," ",1,$l(x," ")-1),sql(0,i+1)=y
  q
  ;
-puts(qnummax,sql,string,error) ; put string back into text
+puts(qnummax,sql,error) ; tidy up lines of statement text
  n i,lnd,txt,qnum
- f qnum=0:1 q:'$d(sql(qnum))  f i=1:1 q:'$d(sql(qnum,i))  s txt=sql(qnum,i) d rems^%mgsqlp,remsc^%mgsqlp,puts1 s sql(qnum,i)=txt
+ f qnum=0:1 q:'$d(sql(qnum))  f i=1:1 q:'$d(sql(qnum,i))  s txt=sql(qnum,i) d rems^%mgsqlp,remsc^%mgsqlp s sql(qnum,i)=txt ;$$rstring^%mgsqlp(txt)
  q
- ;
-puts1 ; put strings back into text
- i txt'[%z("ds") q
- s txt=$p(txt,%z("ds"),1)_string($p(txt,%z("ds"),2))_$p(txt,%z("ds"),3,9999)
- g puts1
  ;
 unix(qnummax,sql2,blk,sql,error) ; extract work units for old compiler
  n i,ln,blkno,txt,txt1,qnum,qnum1

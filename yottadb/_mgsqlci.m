@@ -93,7 +93,7 @@ char ; get file characteristics
  s %retr=1,%onel=0 q
  i %upd q
  s sc=$$data^%mgsqld(dbid,tname,.%data)
- s %sep=0,%all=1 s cname="" f  s cname=$o(%data(cname)) q:cname=""  s %d=%data(cname) s:'$d(dat("n",cname)) %all=0 s ano=ano+1,data($p(%d,"\",2))=cname i $p(%d,"\",1)="s" s %sep=1
+ s %sep=0,%all=1 s cname="" f  s cname=$o(%data(cname)) q:cname=""  s %d=%data(cname) s:'$d(dat("n",cname)) %all=0 s ano=ano+1,data($p(%d,"\",1))=cname i $p(%d,"\",3)="s" s %sep=1
  i '$l($o(xfid(0))),%all,'%sep s %retr=0
  i ano<10,%all,'%sep s %onel=1
  q
@@ -128,11 +128,11 @@ getold1 ; get all old attribute values
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
  s pvar="%d("_dtyp(cname)_")"
  i '$d(dtyp(cname,"e")) q
- s r=dtyp(cname,"e"),typ=$p(r,"~",1),pce=$p(r,"~",2)
+ s r=dtyp(cname,"e"),smeth=$p(r,"\",3),pce=$p(r,"\",1)
  s out(pce,pvar)=""
  s ino=$$pkey^%mgsqld(dbid,tname)
- i typ="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%d,"_dlm_","_pce_")"
- i typ'="d" s line=" "_"s"_" "_pvar_"="""" "_"i"_" "_"$d"_"("_xfid(ino)_"("_pkey("o",ino)_","_pce_")) "_"s"_" "_pvar_"="_$s(xfid(ino)="^":"^("_pce_")",1:xfid(ino)_"("_pkey("o",ino)_","_pce_")")
+ i smeth="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%d,"_dlm_","_pce_")"
+ i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(ino)_"("_pkey("o",ino)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
  d addline^%mgsqlc(grp,.line)
  q
  ;
@@ -170,9 +170,9 @@ getnew1 ; get individual data item
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
  s pvar="%dx("_dtyp(cname)_")"
  i '$d(dtyp(cname,"e")) q
- s r=dtyp(cname,"e"),typ=$p(r,"~",1),pce=$p(r,"~",2)
- i typ="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%dx,"_dlm_","_pce_")"
- i typ'="d" s line=" "_"s"_" "_pvar_"="""" "_"i"_" "_"$d"_"("_xfid(0)_"("_pkey("n",0)_","_pce_")) "_"s"_" "_pvar_"="_$s(xfid(0)="^":"^("_pce_")",1:xfid(0)_"("_pkey("n",0)_","_pce_")")
+ s r=dtyp(cname,"e"),smeth=$p(r,"\",3),pce=$p(r,"\",1)
+ i smeth="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%dx,"_dlm_","_pce_")"
+ i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(0)_"("_pkey("n",0)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
  d addline^%mgsqlc(grp,.line)
  q
  ;
@@ -192,11 +192,10 @@ setnew1 ; set all new attribute values
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
  s var=dat("n",cname)
  i '$d(dtyp(cname,"e")) q
- s r=dtyp(cname,"e"),typ=$p(r,"~",1),pce=$p(r,"~",2)
- s smeth="d" i $g(dtyp(cname))="s" s smeth="s"
+ s r=dtyp(cname,"e"),smeth=$p(r,"\",3),pce=$p(r,"\",1)
  i $l(var)<250,$d(out(pce,var)) q
  i smeth="d" s line=" "_"s"_" $p(%d,"_dlm_","_pce_")="_var
- i smeth="s" s line=" "_"s"_" "_xfid(ino)_"("_pkey("n",ino)_","_pce_")="_var
+ i smeth="s" s line=" "_"s"_" "_xfid(ino)_"("_pkey("n",ino)_","_$$seps^%mgsqld(dbid,tname,cname)_")="_var
  d addline^%mgsqlc(grp,.line)
  q
  ;

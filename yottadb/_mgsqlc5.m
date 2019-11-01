@@ -50,16 +50,16 @@ data ; retrieve required data from file
  q
  ;
 data1 ; retrieve data item or just check if in parsed index
- n sm
+ n sm,ssubs,pce
  s ^mgtmp($j,"get",x)=""
  s sqat=x i $l(sqat,".")>2 s sqat=$p(sqat,".",1,2) i $d(data(qnum,tnum,sqat))#10 q
  i key0(qnum,tnum)[(%z("dsv")_sqat_%z("dsv")) q  ; primary key
- s p=$p(data(qnum,tnum,x),"\",1),sm=$p(data(qnum,tnum,x),"\",3)
- i '$l(p) s line=" s "_%z("dsv")_sqat_%z("dsv")_"=""""" g data1x
- i sm="d",$l(odel(qnum,tnum)) s line="$p"_"("_%z("vdata")_","_odel(qnum,tnum)_","_p_")"
+ s pce=$p(data(qnum,tnum,x),"\",1),sm=$p(data(qnum,tnum,x),"\",3),ssubs=$g(data(qnum,tnum,x,"s"))
+ i pce="" s line=" s "_%z("dsv")_sqat_%z("dsv")_"=""""" g data1x
+ i sm="d",$l(odel(qnum,tnum)) s line="$p"_"("_%z("vdata")_","_odel(qnum,tnum)_","_pce_")"
  i sm="d",'$l(odel(qnum,tnum)) s line=%z("vdata")
  i sm="s",$l(subt) s line=" s %ds=""""" d addline^%mgsqlc(grp,.line)
- i sm="s" s glo=zglo,key=zkey_","_p,dat="%ds",fail="" d g^%mgsqlci s line="%ds"
+ i sm="s" s glo=zglo,key=zkey_","_ssubs,dat="%ds",fail="" d g^%mgsqlci s line="%ds"
  i z[(%z("dsv")_x_%z("dsv")) s line=" "_"i"_" "_line_"'="_%z("dsv")_sqat_%z("dsv")_" "_"s"_" ^sqlerr("_$c(34)_tname_$c(34)_","_z_")="""" "_"g"_" "_tag(qnum)
  i z'[(%z("dsv")_x_%z("dsv")) s line=" "_"s"_" "_%z("dsv")_sqat_%z("dsv")_"="_line
 data1x d addline^%mgsqlc(grp,.line)

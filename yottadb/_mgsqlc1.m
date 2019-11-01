@@ -167,7 +167,7 @@ nopas1 ; build key and null subscript tests
  s trans=0 i '$d(^mgtmp($j,"from",2)),to'["(",to'[")",$l(to,%z("dsv"))'>3,$l(to,%z("dev"))'>3,'$d(^mgtmp($j,"outselx",1,y)),'$d(^mgtmp($j,"from","z",qnum,"pass",alias)) s trans=1,(sub,^mgtmp($j,"trans",$p(y,%z("dsv"),2)))=to
  i npn>i s key=key_com_sub
  i 'trans s lines=lines_coms_set,coms=","
- i to'[%z("dsv"),to'[%z("dev"),to?1""""1e.e1""""!(to?1n.n) q
+ i to'[%z("dsv"),to'[%z("dev"),to?1""""1e.e1""""!(to?1n.n)!(to[%z("ds")) q
  s linet=linet_or_"'$l("_sub_")",or="!"
  q
  ;
@@ -226,8 +226,17 @@ ojda ; process at end of parse, before get data
  q
  ;
 ojdz ; process after data retrieval
- n i,cname
+ n i,cname,alias,x
  s cname="" f  s cname=$o(joinx(qnum,cname)) q:cname=""  i $d(joinx(qnum,cname,alias)) d ojdz1
+ s x="" f  s x=$o(^mgtmp($j,"wher",x)) q:x=""  i (x+0)=qnum,x["gon" d
+ . s line="" f i=1:1 q:'$d(^mgtmp($j,"wher",x,i))  s line=line_^mgtmp($j,"wher",x,i)
+ . i $l(line) s line=" "_"i"_" '("_line_")"_" g "_tag(qnum) d addline^%mgsqlc(grp,.line)
+ . q
+ s cname="" f  s cname=$o(^mgtmp($j,"from","z",qnum,"join",cname)) q:cname=""  d
+ . k x
+ . s alias="" f i=1:1 s alias=$o(^mgtmp($j,"from","z",qnum,"join",cname,alias)) q:alias=""  s x(i)=alias_"."_cname
+ . i $d(x(2)) s line=" i "_%z("dsv")_x(1)_%z("dsv")_"'="_%z("dsv")_x(2)_%z("dsv")_" g "_tag(qnum) d addline^%mgsqlc(grp,.line)
+ . q
  s line=" "_"s"_" "_ojcnt_"="_ojcnt_"+1" d addline^%mgsqlc(grp,.line)
  s line=ojtagbp_" ;" d addline^%mgsqlc(grp,.line)
  q

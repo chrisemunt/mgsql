@@ -43,13 +43,7 @@ col(dbid,tname,cname) ; column details
  s %d=$g(^mgsqld(0,dbid,"t",tname,"tc",cname))
  s type=$p(%d,"\",2)
  s type1="number" i type["varchar" s type1="string"
- s $p(%d,"\\",11)=type1
- q %d
- s type=$p(%d,"\",1)
- s ano=$p(%d,"\",2)
- s sm=$p(%d,"\",3)
- s type1="number" i type["varchar" s type1="string"
- s %d="\data\"_type1_"\"_ano_"\"_sm_"\"
+ s $p(%d,"\",11)=type1
  q %d
  ;
 dtype(dbid,tname,cname)
@@ -99,6 +93,13 @@ item(dbid,tname,cname) ; entity data item
  n %d,sm,cno,nnull
  s %d=$g(^mgsqld(0,dbid,"t",tname,"tc",cname)) i %d="" q %d
  q %d
+ ;
+seps(dbid,tname,cname) ; trailing keys for separately subscripted items
+ n pce,smeth,ssubs
+ s %d=$$item(dbid,tname,cname),smeth=$p(%d,"\",3),pce=$p(%d,"\",1)
+ s ssubs="" i smeth="s" s ssubs=$g(^mgsqld(0,dbid,"t",tname,"tc",cname,"s"))
+ i ssubs="" s ssubs=pce
+ q ssubs
  ;
 defk(dbid,tname,cname) ; item defined in entity primary key
  n i,ino
@@ -157,7 +158,7 @@ pitem(dbid,pname,cname) ; process data item
  q %d
  ;
 ctable(dbid,tname,cols) ; create table
- n idx,idxx,col,i,ii,in,cname,ano,ano1,atu,pk,glo,dlm,olddata,cno,sm,type,typeu,nnull,cons,consu
+ n idx,idxx,col,i,ii,in,cname,ano,ano1,atu,pk,glo,dlm,olddata,cno,sm,type,typeu,nnull,cons,consu,subs
  s glo=$g(tname("global")) i $e(glo,1)'="^" s glo="^"_glo
  s dlm=$g(tname("delimiter")) s dlm=$a(dlm)
  i glo="" s glo="^"_tname
@@ -180,7 +181,14 @@ ctable(dbid,tname,cols) ; create table
  . . i name="" q
  . . s name=$$lcase^%mgsqls(name)
  . . i name="not",$$lcase^%mgsqls($p(cols(i)," ",ii+1))="null" s nnull=1
- . . i name="separate" s cols(i,name)=$p(cols(i)," ",ii+1)
+ . . i name="separate" s cols(i,name)="" d  i ($l(subs,"""")#2) s cols(i,name)=$$rstring^%mgsqlp(subs)
+ . . . n n,x
+ . . . s subs=""
+ . . . s x=$p(cols(i)," ",ii+1,999)
+ . . . i $e(x)="(" s x=$e(x,2,999) f n=1:1 s subs=$p(x,")",1,n) q:($l(subs,"""")#2)
+ . . . i subs'="" q
+ . . . f n=1:1 s subs=$p(x," ",1,n) q:($l(subs,"""")#2)
+ . . . q
  . . i name="derived" s cols(i,name)=$p(cols(i)," ",ii+1)
  . . q
  . s cons=$p(cols(i)," ",3,999),consu=$$lcase^%mgsqls(cons)
@@ -191,6 +199,7 @@ ctable(dbid,tname,cols) ; create table
  . s col(cname)=ano1_"\"_typeu_"\"_sm_"\"_nnull_"\"_cno
  . s name="" f  s name=$o(cols(i,name)) q:name=""  s col(cname,name)=cols(i,name)
  . q
+ ;b
  s ^mgsqld(0,dbid,"t",tname,"t")=dlm_"\"_pk
  s cname="" f  s cname=$o(col(cname)) q:cname=""  d
  . s ^mgsqld(0,dbid,"t",tname,"tc",cname)=col(cname)
@@ -198,7 +207,7 @@ ctable(dbid,tname,cols) ; create table
  . q
  s in="" f i=1:1 s in=$o(idx(in)) q:in=""  d
  . s ^mgsqld(0,dbid,"t",tname,"ti",in)=idx(in)
- . f i=1:1 q:'$d(idx(in,i))  s ^mgsqld(0,dbid,"t",tname,"ti",in,i)=idx(in,i)
+ . f i=1:1 q:'$d(idx(in,i))  s ^mgsqld(0,dbid,"t",tname,"ti",in,i)=$$rstring^%mgsqlp(idx(in,i))
  q 1
  ;
 dtable(dbid,tname) ; delete table
@@ -210,7 +219,7 @@ cindex(dbid,tname,ino,cols) ; create index
  s glo=$g(tname("global")) i $e(glo,1)'="^" s glo="^"_glo
  i glo="" s glo="^"_tname_ino
  s %ind(ino)=glo
- f i=1:1 q:'$d(cols(i))  s %ind(ino,i)=cols(i)
+ f i=1:1 q:'$d(cols(i))  s %ind(ino,i)=$$rstring^%mgsqlp(cols(i))
  s rc=$$indexw^%mgsqld(dbid,tname,ino,.%ind)
  q 1
  ;

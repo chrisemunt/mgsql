@@ -48,7 +48,11 @@ getf1 ; get file particulars for alias alias (fid)
  i ino'=0 d getf2
  f i=1:1 q:'$d(^mgtmp($j,"sel",qnum,i))  s x=$p(^mgtmp($j,"sel",qnum,i),%z("dsv"),2)  d getf11
  s y="" f  s y=$o(^mgtmp($j,"from","z",qnum,"join",y)) q:y=""  i $d(^mgtmp($j,"from","z",qnum,"join",y,alias)) s x=alias_"."_y d getf11
- s cname="" f  s cname=$o(^mgtmp($j,"join",qnum,alias,cname)) q:cname=""  s %d=$$item^%mgsqld(dbid,tname,cname) s data(qnum,tnum,alias_"."_at)=%d
+ s cname="" f  s cname=$o(^mgtmp($j,"join",qnum,alias,cname)) q:cname=""  d
+ . s %d=$$item^%mgsqld(dbid,tname,cname),%s=$$seps^%mgsqld(dbid,tname,cname)
+ . s data(qnum,tnum,alias_"."_at)=%d
+ . s data(qnum,tnum,alias_"."_at,"s")=%s
+ . q
  i $l(error) q
  k ino
  q
@@ -58,7 +62,9 @@ getf11 ; process data item to be retrieved/derived
  s cname=x,ext="",f=""
  i x["." s cname=$p(x,".",2),f=$p(x,".",1)
  i f'=alias,f'=alias_"g" q
- s %d=$$item^%mgsqld(dbid,tname,cname) d remap^%mgsqlv2 i (%d'="")!%defm s data(qnum,tnum,$p(x,".",1,2))=%d
+ s %d=$$item^%mgsqld(dbid,tname,cname),%s=$$seps^%mgsqld(dbid,tname,cname)
+ d remap^%mgsqlv2
+ i (%d'="")!%defm s data(qnum,tnum,$p(x,".",1,2))=%d,data(qnum,tnum,$p(x,".",1,2),"s")=%s
  q
  ;
 getf2 ; get details for primary key (for indexed search)
@@ -82,7 +88,7 @@ getfv ; emulate a proper file for dynamic views
  s (glb(qnum,tnum),glb0(qnum,tnum))=%z("ctg")
  s odel(qnum,tnum)="$c(1)"
  ; get details for view
- f i=1:1 q:'$d(^mgtmp($j,"v",vnum,i))  s cname=$g(^(i)) s data(qnum,tnum,alias_"."_at)="d\"_i_"\"
+ f i=1:1 q:'$d(^mgtmp($j,"v",vnum,i))  s cname=$g(^(i)) s data(qnum,tnum,alias_"."_at)=i_"\\d\",data(qnum,tnum,alias_"."_at,"s")=i
  q
  ;
 spl ; reference for sqlspool
@@ -112,6 +118,6 @@ dtyp ; get attribute details
  i $d(dtyp(cname)) q
  s %d=$$col^%mgsqld(dbid,tname,cname) s dtyp(cname)=$p(%d,"\",5)
  i $d(xfidx(cname)) q
- s %d=$$item^%mgsqld(dbid,tname,cname) i %d'="" s dtyp(cname,"e")=$p(%d,"\",2)_"~"_$p(%d,"\",1)
+ s %d=$$item^%mgsqld(dbid,tname,cname) i %d'="" s dtyp(cname,"e")=%d
  q
  ;
