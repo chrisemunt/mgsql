@@ -1,5 +1,5 @@
 Cache for Windows^INT^MGSQL
-%RO on 13 Jun 2019 01:00 AM
+%RO on 01 Nov 2019 01:00 AM
 %mgsql
 %mgsql ;(CM) MGSQL Front end
  ;
@@ -29,13 +29,14 @@ a d vers("%mgsql") q
  ; 
 v() ; version and date
  n v,r,d
- s v="1.0",r=1,d="1 December 2018"
+ ;s v="1.0",r=1,d="1 December 2018"
  ;s v="1.0",r=2,d="26 March 2019"
  ;s v="1.0",r=3,d="10 May 2019"
  ;s v="1.0",r=4,d="11 May 2019"
  ;s v="1.0",r=5,d="14 May 2019"
  ;s v="1.0",r=6,d="7 June 2019"
- s v="1.0",r=7,d="13 June 2019"
+ ;s v="1.0",r=7,d="13 June 2019"
+ s v="1.0",r=8,d="1 November 2019"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -48,7 +49,7 @@ vers(this) ; version information
  ;
 exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
- ;k ^mgsqlx
+ ;k ^mgsqlx,^mgtmp
  s $zt="exece^%mgsql" ; new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
  s error=""
  s dbid=$$schema(dbid)
@@ -259,6 +260,11 @@ sel7 ; select all patients who have been admitted more that 3 times
 sel8 ; select all patient records but just show each patient's surname
  k %zi,%zo
  s ok=$$exec^%mgsql("","select a.num,$p(a.name,"" "",2) from patient a",.%zi,.%zo)
+ q
+ ;
+sel9 ; select all patients and any associated admission records, but only those for ward 'B3'
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","select a.num,a.name,b.num,b.dadm,b.ward from patient a left join admission b on a.num = b.num and b.ward = 'B3'")
  q
  ;
 proc ; create stored procedures
@@ -520,6 +526,7 @@ addline(grp,line) ; add line of code to routine
  i line[%z("dl") d subtag
  i line?1" s ".e,$p(line,"=",2)=$p($p(line," s ",2),"=",1) s line="" q
  i line?1" set ".e,$p(line,"=",2)=$p($p(line," set ",2),"=",1) s line="" q
+ s line=$$rstring^%mgsqlp(line)
  i line="" q
  s ln=$i(@(%z("ccode")_",grp)"))
  s @(%z("ccode")_",grp,ln)")=line,line=""
@@ -750,7 +757,7 @@ nopas1 ; build key and null subscript tests
  s trans=0 i '$d(^mgtmp($j,"from",2)),to'["(",to'[")",$l(to,%z("dsv"))'>3,$l(to,%z("dev"))'>3,'$d(^mgtmp($j,"outselx",1,y)),'$d(^mgtmp($j,"from","z",qnum,"pass",alias)) s trans=1,(sub,^mgtmp($j,"trans",$p(y,%z("dsv"),2)))=to
  i npn>i s key=key_com_sub
  i 'trans s lines=lines_coms_set,coms=","
- i to'[%z("dsv"),to'[%z("dev"),to?1""""1e.e1""""!(to?1n.n) q
+ i to'[%z("dsv"),to'[%z("dev"),to?1""""1e.e1""""!(to?1n.n)!(to[%z("ds")) q
  s linet=linet_or_"'$l("_sub_")",or="!"
  q
  ;
@@ -809,8 +816,17 @@ ojda ; process at end of parse, before get data
  q
  ;
 ojdz ; process after data retrieval
- n i,cname
+ n i,cname,alias,x
  s cname="" f  s cname=$o(joinx(qnum,cname)) q:cname=""  i $d(joinx(qnum,cname,alias)) d ojdz1
+ s x="" f  s x=$o(^mgtmp($j,"wher",x)) q:x=""  i (x+0)=qnum,x["gon" d
+ . s line="" f i=1:1 q:'$d(^mgtmp($j,"wher",x,i))  s line=line_^mgtmp($j,"wher",x,i)
+ . i $l(line) s line=" "_"i"_" '("_line_")"_" g "_tag(qnum) d addline^%mgsqlc(grp,.line)
+ . q
+ s cname="" f  s cname=$o(^mgtmp($j,"from","z",qnum,"join",cname)) q:cname=""  d
+ . k x
+ . s alias="" f i=1:1 s alias=$o(^mgtmp($j,"from","z",qnum,"join",cname,alias)) q:alias=""  s x(i)=alias_"."_cname
+ . i $d(x(2)) s line=" i "_%z("dsv")_x(1)_%z("dsv")_"'="_%z("dsv")_x(2)_%z("dsv")_" g "_tag(qnum) d addline^%mgsqlc(grp,.line)
+ . q
  s line=" "_"s"_" "_ojcnt_"="_ojcnt_"+1" d addline^%mgsqlc(grp,.line)
  s line=ojtagbp_" ;" d addline^%mgsqlc(grp,.line)
  q
@@ -1245,7 +1261,7 @@ reord ; reorder data for 'order by' clause
  s (keyo,como)="" f i=1:1:$l(ord,",") d reord1
  s tag=%z("dl")_%z("pt")_qnum_"o"_(i+1)_%z("dl"),ptag=%z("dl")_%z("pt")_qnum_"o"_i_%z("dl")
  s line=tag_" s "_%z("pv")_"n=$o("_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_%z("pv")_"n))"_" i "_%z("pv")_"n="""" g "_ptag d addline^%mgsqlc(grp,.line)
- s line=" s "_%z("vdata")_"="_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_%z("vdata")_")" b  d addline^%mgsqlc(grp,.line)
+ s line=" s "_%z("vdata")_"="_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_%z("vdata")_")" d addline^%mgsqlc(grp,.line)
  s %data=0,ptag=tag d line
  q
  ;
@@ -1494,16 +1510,16 @@ data ; retrieve required data from file
  q
  ;
 data1 ; retrieve data item or just check if in parsed index
- n sm
+ n sm,ssubs,pce
  s ^mgtmp($j,"get",x)=""
  s sqat=x i $l(sqat,".")>2 s sqat=$p(sqat,".",1,2) i $d(data(qnum,tnum,sqat))#10 q
  i key0(qnum,tnum)[(%z("dsv")_sqat_%z("dsv")) q  ; primary key
- s p=$p(data(qnum,tnum,x),"\",1),sm=$p(data(qnum,tnum,x),"\",3)
- i '$l(p) s line=" s "_%z("dsv")_sqat_%z("dsv")_"=""""" g data1x
- i sm="d",$l(odel(qnum,tnum)) s line="$p"_"("_%z("vdata")_","_odel(qnum,tnum)_","_p_")"
+ s pce=$p(data(qnum,tnum,x),"\",1),sm=$p(data(qnum,tnum,x),"\",3),ssubs=$g(data(qnum,tnum,x,"s"))
+ i pce="" s line=" s "_%z("dsv")_sqat_%z("dsv")_"=""""" g data1x
+ i sm="d",$l(odel(qnum,tnum)) s line="$p"_"("_%z("vdata")_","_odel(qnum,tnum)_","_pce_")"
  i sm="d",'$l(odel(qnum,tnum)) s line=%z("vdata")
  i sm="s",$l(subt) s line=" s %ds=""""" d addline^%mgsqlc(grp,.line)
- i sm="s" s glo=zglo,key=zkey_","_p,dat="%ds",fail="" d g^%mgsqlci s line="%ds"
+ i sm="s" s glo=zglo,key=zkey_","_ssubs,dat="%ds",fail="" d g^%mgsqlci s line="%ds"
  i z[(%z("dsv")_x_%z("dsv")) s line=" "_"i"_" "_line_"'="_%z("dsv")_sqat_%z("dsv")_" "_"s"_" ^sqlerr("_$c(34)_tname_$c(34)_","_z_")="""" "_"g"_" "_tag(qnum)
  i z'[(%z("dsv")_x_%z("dsv")) s line=" "_"s"_" "_%z("dsv")_sqat_%z("dsv")_"="_line
 data1x d addline^%mgsqlc(grp,.line)
@@ -1872,7 +1888,7 @@ char ; get file characteristics
  s %retr=1,%onel=0 q
  i %upd q
  s sc=$$data^%mgsqld(dbid,tname,.%data)
- s %sep=0,%all=1 s cname="" f  s cname=$o(%data(cname)) q:cname=""  s %d=%data(cname) s:'$d(dat("n",cname)) %all=0 s ano=ano+1,data($p(%d,"\",2))=cname i $p(%d,"\",1)="s" s %sep=1
+ s %sep=0,%all=1 s cname="" f  s cname=$o(%data(cname)) q:cname=""  s %d=%data(cname) s:'$d(dat("n",cname)) %all=0 s ano=ano+1,data($p(%d,"\",1))=cname i $p(%d,"\",3)="s" s %sep=1
  i '$l($o(xfid(0))),%all,'%sep s %retr=0
  i ano<10,%all,'%sep s %onel=1
  q
@@ -1907,11 +1923,11 @@ getold1 ; get all old attribute values
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
  s pvar="%d("_dtyp(cname)_")"
  i '$d(dtyp(cname,"e")) q
- s r=dtyp(cname,"e"),typ=$p(r,"~",1),pce=$p(r,"~",2)
+ s r=dtyp(cname,"e"),smeth=$p(r,"\",3),pce=$p(r,"\",1)
  s out(pce,pvar)=""
  s ino=$$pkey^%mgsqld(dbid,tname)
- i typ="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%d,"_dlm_","_pce_")"
- i typ'="d" s line=" "_"s"_" "_pvar_"="""" "_"i"_" "_"$d"_"("_xfid(ino)_"("_pkey("o",ino)_","_pce_")) "_"s"_" "_pvar_"="_$s(xfid(ino)="^":"^("_pce_")",1:xfid(ino)_"("_pkey("o",ino)_","_pce_")")
+ i smeth="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%d,"_dlm_","_pce_")"
+ i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(ino)_"("_pkey("o",ino)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
  d addline^%mgsqlc(grp,.line)
  q
  ;
@@ -1949,9 +1965,9 @@ getnew1 ; get individual data item
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
  s pvar="%dx("_dtyp(cname)_")"
  i '$d(dtyp(cname,"e")) q
- s r=dtyp(cname,"e"),typ=$p(r,"~",1),pce=$p(r,"~",2)
- i typ="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%dx,"_dlm_","_pce_")"
- i typ'="d" s line=" "_"s"_" "_pvar_"="""" "_"i"_" "_"$d"_"("_xfid(0)_"("_pkey("n",0)_","_pce_")) "_"s"_" "_pvar_"="_$s(xfid(0)="^":"^("_pce_")",1:xfid(0)_"("_pkey("n",0)_","_pce_")")
+ s r=dtyp(cname,"e"),smeth=$p(r,"\",3),pce=$p(r,"\",1)
+ i smeth="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%dx,"_dlm_","_pce_")"
+ i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(0)_"("_pkey("n",0)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
  d addline^%mgsqlc(grp,.line)
  q
  ;
@@ -1971,11 +1987,10 @@ setnew1 ; set all new attribute values
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
  s var=dat("n",cname)
  i '$d(dtyp(cname,"e")) q
- s r=dtyp(cname,"e"),typ=$p(r,"~",1),pce=$p(r,"~",2)
- s smeth="d" i $g(dtyp(cname))="s" s smeth="s"
+ s r=dtyp(cname,"e"),smeth=$p(r,"\",3),pce=$p(r,"\",1)
  i $l(var)<250,$d(out(pce,var)) q
  i smeth="d" s line=" "_"s"_" $p(%d,"_dlm_","_pce_")="_var
- i smeth="s" s line=" "_"s"_" "_xfid(ino)_"("_pkey("n",ino)_","_pce_")="_var
+ i smeth="s" s line=" "_"s"_" "_xfid(ino)_"("_pkey("n",ino)_","_$$seps^%mgsqld(dbid,tname,cname)_")="_var
  d addline^%mgsqlc(grp,.line)
  q
  ;
@@ -2107,7 +2122,11 @@ getf1 ; get file particulars for alias alias (fid)
  i ino'=0 d getf2
  f i=1:1 q:'$d(^mgtmp($j,"sel",qnum,i))  s x=$p(^mgtmp($j,"sel",qnum,i),%z("dsv"),2)  d getf11
  s y="" f  s y=$o(^mgtmp($j,"from","z",qnum,"join",y)) q:y=""  i $d(^mgtmp($j,"from","z",qnum,"join",y,alias)) s x=alias_"."_y d getf11
- s cname="" f  s cname=$o(^mgtmp($j,"join",qnum,alias,cname)) q:cname=""  s %d=$$item^%mgsqld(dbid,tname,cname) s data(qnum,tnum,alias_"."_at)=%d
+ s cname="" f  s cname=$o(^mgtmp($j,"join",qnum,alias,cname)) q:cname=""  d
+ . s %d=$$item^%mgsqld(dbid,tname,cname),%s=$$seps^%mgsqld(dbid,tname,cname)
+ . s data(qnum,tnum,alias_"."_at)=%d
+ . s data(qnum,tnum,alias_"."_at,"s")=%s
+ . q
  i $l(error) q
  k ino
  q
@@ -2117,7 +2136,9 @@ getf11 ; process data item to be retrieved/derived
  s cname=x,ext="",f=""
  i x["." s cname=$p(x,".",2),f=$p(x,".",1)
  i f'=alias,f'=alias_"g" q
- s %d=$$item^%mgsqld(dbid,tname,cname) d remap^%mgsqlv2 i (%d'="")!%defm s data(qnum,tnum,$p(x,".",1,2))=%d
+ s %d=$$item^%mgsqld(dbid,tname,cname),%s=$$seps^%mgsqld(dbid,tname,cname)
+ d remap^%mgsqlv2
+ i (%d'="")!%defm s data(qnum,tnum,$p(x,".",1,2))=%d,data(qnum,tnum,$p(x,".",1,2),"s")=%s
  q
  ;
 getf2 ; get details for primary key (for indexed search)
@@ -2141,7 +2162,7 @@ getfv ; emulate a proper file for dynamic views
  s (glb(qnum,tnum),glb0(qnum,tnum))=%z("ctg")
  s odel(qnum,tnum)="$c(1)"
  ; get details for view
- f i=1:1 q:'$d(^mgtmp($j,"v",vnum,i))  s cname=$g(^(i)) s data(qnum,tnum,alias_"."_at)="d\"_i_"\"
+ f i=1:1 q:'$d(^mgtmp($j,"v",vnum,i))  s cname=$g(^(i)) s data(qnum,tnum,alias_"."_at)=i_"\\d\",data(qnum,tnum,alias_"."_at,"s")=i
  q
  ;
 spl ; reference for sqlspool
@@ -2171,7 +2192,7 @@ dtyp ; get attribute details
  i $d(dtyp(cname)) q
  s %d=$$col^%mgsqld(dbid,tname,cname) s dtyp(cname)=$p(%d,"\",5)
  i $d(xfidx(cname)) q
- s %d=$$item^%mgsqld(dbid,tname,cname) i %d'="" s dtyp(cname,"e")=$p(%d,"\",2)_"~"_$p(%d,"\",1)
+ s %d=$$item^%mgsqld(dbid,tname,cname) i %d'="" s dtyp(cname,"e")=%d
  q
  ;
 
@@ -2294,13 +2315,7 @@ col(dbid,tname,cname) ; column details
  s %d=$g(^mgsqld(0,dbid,"t",tname,"tc",cname))
  s type=$p(%d,"\",2)
  s type1="number" i type["varchar" s type1="string"
- s $p(%d,"\\",11)=type1
- q %d
- s type=$p(%d,"\",1)
- s ano=$p(%d,"\",2)
- s sm=$p(%d,"\",3)
- s type1="number" i type["varchar" s type1="string"
- s %d="\data\"_type1_"\"_ano_"\"_sm_"\"
+ s $p(%d,"\",11)=type1
  q %d
  ;
 dtype(dbid,tname,cname)
@@ -2350,6 +2365,13 @@ item(dbid,tname,cname) ; entity data item
  n %d,sm,cno,nnull
  s %d=$g(^mgsqld(0,dbid,"t",tname,"tc",cname)) i %d="" q %d
  q %d
+ ;
+seps(dbid,tname,cname) ; trailing keys for separately subscripted items
+ n pce,smeth,ssubs
+ s %d=$$item(dbid,tname,cname),smeth=$p(%d,"\",3),pce=$p(%d,"\",1)
+ s ssubs="" i smeth="s" s ssubs=$g(^mgsqld(0,dbid,"t",tname,"tc",cname,"s"))
+ i ssubs="" s ssubs=pce
+ q ssubs
  ;
 defk(dbid,tname,cname) ; item defined in entity primary key
  n i,ino
@@ -2408,7 +2430,7 @@ pitem(dbid,pname,cname) ; process data item
  q %d
  ;
 ctable(dbid,tname,cols) ; create table
- n idx,idxx,col,i,ii,in,cname,ano,ano1,atu,pk,glo,dlm,olddata,cno,sm,type,typeu,nnull,cons,consu
+ n idx,idxx,col,i,ii,in,cname,ano,ano1,atu,pk,glo,dlm,olddata,cno,sm,type,typeu,nnull,cons,consu,subs
  s glo=$g(tname("global")) i $e(glo,1)'="^" s glo="^"_glo
  s dlm=$g(tname("delimiter")) s dlm=$a(dlm)
  i glo="" s glo="^"_tname
@@ -2431,7 +2453,14 @@ ctable(dbid,tname,cols) ; create table
  . . i name="" q
  . . s name=$$lcase^%mgsqls(name)
  . . i name="not",$$lcase^%mgsqls($p(cols(i)," ",ii+1))="null" s nnull=1
- . . i name="separate" s cols(i,name)=$p(cols(i)," ",ii+1)
+ . . i name="separate" s cols(i,name)="" d  i ($l(subs,"""")#2) s cols(i,name)=$$rstring^%mgsqlp(subs)
+ . . . n n,x
+ . . . s subs=""
+ . . . s x=$p(cols(i)," ",ii+1,999)
+ . . . i $e(x)="(" s x=$e(x,2,999) f n=1:1 s subs=$p(x,")",1,n) q:($l(subs,"""")#2)
+ . . . i subs'="" q
+ . . . f n=1:1 s subs=$p(x," ",1,n) q:($l(subs,"""")#2)
+ . . . q
  . . i name="derived" s cols(i,name)=$p(cols(i)," ",ii+1)
  . . q
  . s cons=$p(cols(i)," ",3,999),consu=$$lcase^%mgsqls(cons)
@@ -2442,6 +2471,7 @@ ctable(dbid,tname,cols) ; create table
  . s col(cname)=ano1_"\"_typeu_"\"_sm_"\"_nnull_"\"_cno
  . s name="" f  s name=$o(cols(i,name)) q:name=""  s col(cname,name)=cols(i,name)
  . q
+ ;b
  s ^mgsqld(0,dbid,"t",tname,"t")=dlm_"\"_pk
  s cname="" f  s cname=$o(col(cname)) q:cname=""  d
  . s ^mgsqld(0,dbid,"t",tname,"tc",cname)=col(cname)
@@ -2449,7 +2479,7 @@ ctable(dbid,tname,cols) ; create table
  . q
  s in="" f i=1:1 s in=$o(idx(in)) q:in=""  d
  . s ^mgsqld(0,dbid,"t",tname,"ti",in)=idx(in)
- . f i=1:1 q:'$d(idx(in,i))  s ^mgsqld(0,dbid,"t",tname,"ti",in,i)=idx(in,i)
+ . f i=1:1 q:'$d(idx(in,i))  s ^mgsqld(0,dbid,"t",tname,"ti",in,i)=$$rstring^%mgsqlp(idx(in,i))
  q 1
  ;
 dtable(dbid,tname) ; delete table
@@ -2461,7 +2491,7 @@ cindex(dbid,tname,ino,cols) ; create index
  s glo=$g(tname("global")) i $e(glo,1)'="^" s glo="^"_glo
  i glo="" s glo="^"_tname_ino
  s %ind(ino)=glo
- f i=1:1 q:'$d(cols(i))  s %ind(ino,i)=cols(i)
+ f i=1:1 q:'$d(cols(i))  s %ind(ino,i)=$$rstring^%mgsqlp(cols(i))
  s rc=$$indexw^%mgsqld(dbid,tname,ino,.%ind)
  q 1
  ;
@@ -2798,6 +2828,7 @@ word2 s pn=pn+1 i pn>$l(lin," ") q
  s wrd=$s(wrd=">=":"'<",wrd="<=":"'>",wrd="and":"&",wrd="or":"!",wrd="not":"'",wrd="like":"?",wrd="not like":"'?",1:wrd)
  i $d(ops(wrd)) g word3
  i wrd?1"""".e1"""",($l(wrd,"""")#2) g word3
+ i wrd[%z("ds") g word3
  i wrd?.1"-".n.1"."1n.n g word3
  i $e(wrd)="[" s wrd=$e(wrd,2,999)
  i $e(wrd,$l(wrd))="]" s wrd=$e(wrd,1,$l(wrd)-1)
@@ -3033,7 +3064,7 @@ betweenx ; exit
  ;
 like(wrd,error) ; form expression for sql style pattern-match
  n wrd1,chr,i
- i wrd'?1""""1e.e1"""" s error="invalid 'like' argument "_wrd,error(5)="HY000" q ""
+ i wrd'?1""""1e.e1"""",wrd'[%z("ds") s error="invalid 'like' argument "_wrd,error(5)="HY000" q ""
  s wrd1=$e(wrd,2,$l(wrd)-1),wrd=""
  f i=1:1:$l(wrd1) s chr=$e(wrd1,i) s wrd=wrd_$s(chr="_":"1e",chr="%":".e",1:1_$c(34)_chr_$c(34))
  q ""
@@ -4976,7 +5007,7 @@ comp1 ; disallow all indices except chosen one
 a d vers^%mgsql("%mgsqlp") q
  ;
 main(sql,line,error) ; entry
- n sql2,wrk,string
+ n sql2,wrk
  s error=""
  k ^mgtmp($j,"translate")
 main1 ; re-entry
@@ -4984,9 +5015,9 @@ main1 ; re-entry
  ;k wrk,blk,tmp,sql,log,declare
  s error=""
  d cmnd(.sql2)
- d rips(.line,.wrk,.string,.error) i $l(error) g exit
+ d rips(.line,.wrk,.error) i $l(error) g exit
  s qnummax=$$cdel(.sql2,.wrk,.error) i $l(error) g exit
- d main^%mgsqlp1(qnummax,.sql2,.wrk,.string,.sql,.error) i $l(error) g exit
+ d main^%mgsqlp1(qnummax,.sql2,.wrk,.sql,.error) i $l(error) g exit
  i $g(sql(1,2))="from "_%z("dq")_2_%z("dq")_" t0" d cog i ok g main1
 exit k tmp,blk
  q qnummax
@@ -5004,7 +5035,7 @@ cmnd(sql2) ; sql2 commands
  f x="cursor","eof","last","notnull","rollback" s sql2(x)=7
  q
  ;
-rips(line,wrk,string,error) ; rip out all literals and comments
+rips(line,wrk,error) ; rip out all literals and comments
  n ln,ln1,ln2,cn,cn1,cn2,char,charp,charn,txt,instring,sno,qno,mrk
  s ln="" f  s ln=$o(line(ln)) q:ln=""  s wrk(ln)=line(ln)
  s sno=0
@@ -5018,10 +5049,10 @@ rips2 s cn=cn+1,charp=char,char=$e(txt,cn),charn=$e(txt,cn+1) i char="" g rips1
  i 'instring,(charp_char)=" ;"!((charp_char_charn)=" --") s txt=$e(txt,1,cn-2) k wrk(ln) s:$l(txt) wrk(ln)=txt g rips2 ; remove comment
  i char=$c(34),'instring s sno=sno+1,qno=0,instring=1,sno(0,sno,0,0)=ln,sno(0,sno,0,1)=cn
  i char=$c(34),instring s qno=qno+1
- i char'=$c(34),instring,'(qno#2) s string(sno)=string,instring=0,string="" g rips3
+ i char'=$c(34),instring,'(qno#2) s ^mgtmp($j,"string",sno)=string,instring=0,string="" g rips3
  i instring s string=string_char,sno(0,sno,1,0)=ln,sno(0,sno,1,1)=cn
  g rips2
-rips3 i instring,'(qno#2) s string(sno)=string,instring=0,string=""
+rips3 i instring,'(qno#2) s ^mgtmp($j,"string",sno)=string,instring=0,string=""
  i instring s error="statement contains unterminated literal",error(5)="HY000" g ripsx
  s sno=$o(sno(0,"")) i '$l(sno) g ripsx
  s mrk=%z("ds")_sno_%z("ds")
@@ -5034,6 +5065,10 @@ rips3 i instring,'(qno#2) s string(sno)=string,instring=0,string=""
  g rips0
 ripsx ; exit
  q
+ ;
+rstring(line) ; put strings back into line
+ f  q:line'[%z("ds")  s line=$p(line,%z("ds"),1)_^mgtmp($j,"string",$p(line,%z("ds"),2))_$p(line,%z("ds"),3,9999)
+ q line
  ;
 cdel(sql2,wrk,error) ; find and mark main commands
  n ln,lnd,dec,pn,wrd,wrd0,wrd1,pst,pre,txt,txt1,txtn,qnum
@@ -5197,7 +5232,7 @@ test2 ;
  ;
 a d vers^%mgsql("%mgsqlp1") q
  ;
-main(qnummax,sql2,wrk,string,sql,error) ; entry
+main(qnummax,sql2,wrk,sql,error) ; entry
  n blk
  d blks(qnummax,.sql2,.wrk,.blk,.error) i $l(error) g exit
  d subs(qnummax,.sql2,.blk,.error) i $l(error) g exit
@@ -5207,7 +5242,7 @@ main(qnummax,sql2,wrk,string,sql,error) ; entry
  d logb(qnummax,.sql2,.blk,.tmp,.error) i $l(error) g exit
  d sqlb(qnummax,.sql2,.blk,.tmp,.sql,.error) i $l(error) g exit
  d updx(qnummax,.sql2,.blk,.tmp,.sql,.error) i $l(error) g exit
- d puts(qnummax,.sql,.string,.error) i $l(error) g exit
+ d puts(qnummax,.sql,.error) i $l(error) g exit
  d unix(qnummax,.sql2,.blk,.sql,.error) i $l(error) g exit
 exit ; exit
  q
@@ -5426,15 +5461,10 @@ updx(qnummax,sql2,blk,tmp,sql,error) ; now remove update command from body of fo
  s sql(0,i)=$p(x," ",1,$l(x," ")-1),sql(0,i+1)=y
  q
  ;
-puts(qnummax,sql,string,error) ; put string back into text
+puts(qnummax,sql,error) ; tidy up lines of statement text
  n i,lnd,txt,qnum
- f qnum=0:1 q:'$d(sql(qnum))  f i=1:1 q:'$d(sql(qnum,i))  s txt=sql(qnum,i) d rems^%mgsqlp,remsc^%mgsqlp,puts1 s sql(qnum,i)=txt
+ f qnum=0:1 q:'$d(sql(qnum))  f i=1:1 q:'$d(sql(qnum,i))  s txt=sql(qnum,i) d rems^%mgsqlp,remsc^%mgsqlp s sql(qnum,i)=txt ;$$rstring^%mgsqlp(txt)
  q
- ;
-puts1 ; put strings back into text
- i txt'[%z("ds") q
- s txt=$p(txt,%z("ds"),1)_string($p(txt,%z("ds"),2))_$p(txt,%z("ds"),3,9999)
- g puts1
  ;
 unix(qnummax,sql2,blk,sql,error) ; extract work units for old compiler
  n i,ln,blkno,txt,txt1,qnum,qnum1
@@ -5666,6 +5696,7 @@ age(mdate) ; calculate age
  ;
 ddate(mdate,format) ; decode M date
  n d,m,y,ddate
+ i mdate="" q ""
  s ddate=$zd(mdate,1)
  s d=$p(ddate,"/",2)
  s m=$p(ddate,"/",1)
@@ -5682,6 +5713,7 @@ ddate(mdate,format) ; decode M date
  ;
 edate(ddate,format) ; encode M date
  n dd,dj,djstr,dl,dlm,dm,dy,i,mdate,x,y,ok
+ i ddate="" q ""
  s ddate=$$ltrim(ddate)
  i ddate?8n s dy=$e(ddate,1,4),dm=$e(ddate,5,6),dd=$e(ddate,7,8) g edate1
  i ddate?4n1"-"2n1"-"2n s dy=$p(ddate,"-",1),dm=$p(ddate,"-",2),dd=$p(ddate,"-",3) g edate1
@@ -5720,12 +5752,14 @@ edate1 s mdate=""
  ;
 dtime(mtime,format) ; decode M time
  n h,m,s
+ i mtime="" q ""
  i mtime["," s mtime=$p(mtime,",",2)
  s h=mtime\3600,s=mtime-(h*3600),m=s\60,s=s#60
  q $s(h<10:"0",1:"")_h_":"_$s(m<10:"0",1:"")_m_":"_$s(s<10:"0",1:"")_s
  ;
 etime(dtime,format) ; encode M time
  n h,m,s
+ i etime="" q ""
  s h=$p(dtime,":",1),m=$p(dtime,":",2),s=$p(dtime,":",3)
  q (h*3600)+(m*60)+s
  ;
@@ -6539,7 +6573,7 @@ create(dbid,sql,error) ; validate 'create' statement
  ;
 create1 ; check individual items in index
  s cname=^mgtmp($j,"from","i",i)
- i cname?1n.n!(at?1""""1e.e1"""") q
+ i cname?1n.n!(at?1""""1e.e1"""")!(wrd[%z("ds")) q
  i cname'?1a.e s error="invalid item '"_cname_"' in index",error(5)="HY000" q
  s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname) i '%defk,'%defd s error="column '"_cname_"' not found in table '"_tname_"'",error(5)="42S22" q
  q
@@ -6669,7 +6703,7 @@ insv1 s pn=pn+1 i pn>$l(val,",") q
  f  q:($l(wrd,"""")#2)  s pn=pn+1,wrd=wrd_$p(val,",",pn)
  s an=an+1
  i wrd?.1"-".n.1"."1n.n g insv2
- i wrd?1"""".e1"""" g insv2
+ i wrd?1"""".e1""""!(wrd[%z("ds")) g insv2
  i wrd?1"'".e1"'" s wrd=$tr(wrd,"'","""") g insv2
  i wrd?1"{".e1"}" s wrd=$$trx^%mgsqlv(wrd) g insv2
  i wrd?1":"1a.e s inv($p(wrd,":",2))="",wrd=%z("dev")_$p(wrd,":",2)_%z("dev") g insv2
@@ -6692,7 +6726,7 @@ inss1 s pn=pn+1 i pn>$l(val,",") g inssx
  i wrd?.1"."1a.e g inss2
  i wrd?1":"1a.e s wrd=%z("dev")_$p(wrd,":",2)_%z("dev") g inss2
  i wrd?.1"-".n.1"."1n.n g inss2
- i wrd?1"""".e1"""" g inss2
+ i wrd?1"""".e1""""!(wrd[%z("ds")) g inss2
  s error="invalid item '"_wrd_"' in 'select' statement",error(5)="HY000" g inssx
 inss2 s update("val",an)=wrd,update("val")=an
  g inss1
@@ -6738,7 +6772,7 @@ inssa ; select all items from table
 a d vers^%mgsql("%mgsqlv5") q
  ;
 from(dbid,sql,qnum,arg,error) ; validate 'from' statement
- n tnum,nord,xord,i,x,tname,alias,args,index
+ n tnum,nord,xord,i,x,tname,alias,args,index,on
  s ^mgtmp($j,"from","i","x",qnum)=0
  s arg=$$arg^%mgsqle(arg,.args)
  s tnum=0 f i=1:1:args s tname=args(i) i tname'="" d from1(dbid,qnum,.tnum,tname) i $l(error) q
@@ -6751,16 +6785,29 @@ fromx i $l(error) s error(0)="from",error(1)=qnum q
  s nord=0
  s x="" f  s x=$o(^mgtmp($j,"from","z",qnum,"o",0,x),xord) q:x=""  d from4(x,xord,.nord)
  f nord=1:1 q:'$d(^mgtmp($j,"from","z",qnum,"ord",nord))  s x=^mgtmp($j,"from","z",qnum,"ord",nord),^mgtmp($j,"from","z",qnum,"ord",nord)=$p(^mgtmp($j,"from",qnum,x),"~",2)
+fromxx ; compile 'on' predicates
+ f i=1:1 q:'$d(^mgtmp($j,"from","on",qnum,i))  s on=$g(^mgtmp($j,"from","on",qnum,i)) d  i $l(error) q
+ . n qnumo
+ . s qnumo=qnum_"gon"_i d where^%mgsqlv1(dbid,sql,qnumo,on,.error) i $l(error) q
+ . q
  q
  ;
 from1(dbid,qnum,tnum,tname) ; validate each table selected from
- n %ref,i,ii,x,y,z,z1,zz,ino,inof,exp,pn,nat,jtyp,ok
+ n %ref,i,ii,j,x,y,z,z1,zz,ino,inof,exp,pn,nat,jtyp,ok,com
  f x="inner","left","right","full" s jtyp(x)=""
  s (exp,pn,obr,cbr)=0,y="",com="" f i=1:1:$l(tname," ") s x=$$trim^%mgsqls($p(tname," ",i)) i $l(x) d
  . i x["(" s obr=obr+1
  . i x[")" s cbr=cbr+1
  . s y=y_com_x,com=" "
  . i obr=cbr s exp=exp+1,exp(exp)=y,y="",com="",(obr,cbr)=0
+ . q
+ f i=1:1 q:'$d(exp(i))  i exp(i)="on" d
+ . i '$d(exp(i+1)) q
+ . i exp(i+1)?1"(".e q
+ . s x="(",com="" f ii=i+1:1 q:'$d(exp(ii))  s y=exp(ii) i y'="" q:$d(jtyp(y))!(y="join")!(y="natural")!(y="inner")!(y="cross")  s x=x_com_y,com=" " k exp(ii)
+ . s x=x_")"
+ . s j=i+1,exp(j)=x
+ . f ii=ii:1 q:'$d(exp(ii))  s x=exp(ii) k exp(ii) s j=j+1,exp(j)=x
  . q
 from11 s pn=pn+1 i '$d(exp(pn)) q
  s tname=exp(pn),nat=0
@@ -6849,21 +6896,24 @@ fromv(dbid,tname,error) ; validate table
  q 1
  ;
 nat(dbid,qnum,tnum,tname,nat,exp,error) ; extract join parameters
- n i,ii,x,cname,on
+ n i,ii,x,cname,alias,on
  i nat q  ; data dictionary
  s on=""
  f i=pn+1:1 q:'$d(exp(i))  s x=exp(i) i x="using"!(x="on") s on=x q
  i on="" s error="if a join is not natural then qualify it with either an 'on' or 'using' statement",error(5)="HY000" q
  i '$d(exp(i+1)) s error="missing parameter(s) for 'on'/'using' statement",error(5)="HY000" q
- s x=exp(i+1)
- i x'?1"("1e.e1")" b  s error="syntax error in parameters to 'using' statement",error(5)="HY000" q
- s x=$p($p(x,"(",2),")",1)
  i on="on" g naton
+ s x=exp(i+1)
+ i x'?1"("1e.e1")" s error="syntax error in parameters to 'using' statement",error(5)="HY000" q
+ s x=$p($p(x,"(",2),")",1)
  f ii=1:1:$l(x,",") s cname=$$trim^%mgsqls($p(x,",",ii)) i $l(cname) s ^mgtmp($j,"from","z",qnum,"jn",tnum+1,cname)=""
  i '$d(^mgtmp($j,"from","z",qnum,"jn",tnum+1)) s error="no valid parameters for 'using' statement found",error(5)="HY000" q
  k exp(i),exp(i+1) f i=i+2:1 q:'$d(exp(i))  s exp(i-2)=exp(i) k exp(i)
  q
 naton ; 'on' statement
+ s x=exp(i+1)
+ i x?1"("1e.e1")" s x=$p($p(x,"(",2),")",1)
+ s ^mgtmp($j,"from","on",qnum,$i(^mgtmp($j,"from","on",qnum)))=x
  f ii=1:1:$l(x," ") s cname=$$trim^%mgsqls($p(x," ",ii)),alias=$p(cname,".",1),cname=$p(cname,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
  k exp(i),exp(i+1) f i=i+2:1 q:'$d(exp(i))  s exp(i-2)=exp(i) k exp(i)
  q
