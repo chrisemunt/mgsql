@@ -3,9 +3,10 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-13 June 2019, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+1 November 2019, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.0; Revision 7 (13 June 2019)
+* Current Release: Version: 1.0; Revision 8 (1 November 2019)
+* [Release Notes](#RelNotes) can be found at the end of this document.
 
 ## Overview
 
@@ -248,3 +249,13 @@ Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.      
 
+## <a name="RelNotes"></a>Release Notes
+
+### v1.0.7 (13 June 2019)
+
+* Initial Release
+
+### v1.0.8 (1 November 2019)
+
+* Greater flexibility in mapping **mgsql** tables to existing M global structures.  The facilty for specifying trailing M global subscripts is extended (see the 'separate' keyword in table creation).
+* A fault in the processing of outer join queries qualified with an 'on' clause has been corrected.
