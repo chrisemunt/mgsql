@@ -3,9 +3,9 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-1 November 2019, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+15 January 2020, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.0; Revision 8 (1 November 2019)
+* Current Release: Version: 1.1; Revision 9 (15 January 2020)
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
 ## Overview
@@ -54,19 +54,23 @@ Link all the **mgsql** routines and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.0; Revision 6 (7 June 2019) %mgsql
+       Version: 1.1; Revision 9 (15 January 2020) %mgsql
 
 
 Note that the version of **mgsql** is successfully displayed.
 
 ### Other M systems
 
-Log in to the Manager UCI and, using the %RI utility (or similar) load the **mgsql** routines held in **/m/mgsql.ro**.  Change to your development UCI and check the installation:
+All routines are held in **/m/mgsql.ro** but for InterSystems Cache and IRIS, log in to the Manager UCI and install the **mgsql** routines held in either **/m/mgsql\_cache.xml** or **/m/mgsql\_iris.xml** as appropriate.  For example:
+
+       do $system.OBJ.Load("/m/zmgsi_mgsql.xml","ck")
+
+Change to your development UCI and check the installation:
 
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.0; Revision 6 (7 June 2019) %mgsql
+       Version: 1.1; Revision 9 (15 January 2020) %mgsql
 
 ## Executing SQL statements from the YottaDB/M command line
 
@@ -235,7 +239,7 @@ The data source created can now be used in Windows applications.
 
 ## License
 
-Copyright (c) 2018-2019 M/Gateway Developments Ltd,
+Copyright (c) 2018-2020 M/Gateway Developments Ltd,
 Surrey UK.                                                      
 All rights reserved.
  
@@ -257,5 +261,14 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 ### v1.0.8 (1 November 2019)
 
-* Greater flexibility in mapping **mgsql** tables to existing M global structures.  The facilty for specifying trailing M global subscripts is extended (see the 'separate' keyword in table creation).
+* Greater flexibility in mapping **mgsql** tables to existing M global structures.  The facility for specifying trailing M global subscripts is extended (see the 'separate' keyword in table creation).
 * A fault in the processing of outer join queries qualified with an 'on' clause has been corrected.
+
+### v1.1.9 (15 January 2020)
+
+* Introduce support for alternative date separators in the decode date function (**ddate^%mgsqls**).  Foe example, although the separator is '/' in the US locale, it is is "." in the Czech locale.
+* Introduce support for _Derived Fields_.  A _Derived Field_ is defined in the schema as an M extrinsic function and can take any number of values from the same row as input parameters.  For example, the calculation of a person's age from the stored 'date of birth' field can be implemented as a _Derived Field_ - the value of 'age' being dependant on the time of data retrieval.
+* The embedded functions **lower** and **upper** have been implemented (Convert string to lower or upper-case, respectively.
+* A fault that led to some SQL queries of the form '_update ... set ... where_' crashing has been corrected.
+* A fault that led to some secondary index names not being recognised has been corrected.
+* A fault that led to an error status (-1) being returned for some SQL DDL scripts even though the script completed successfully has been corrected.
