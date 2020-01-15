@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -25,16 +25,23 @@
 a d vers^%mgsql("%mgsqlc1") q
  ;
 subq ; compile sub-query data extraction
- k got
- d getf^%mgsqlct i $l(error) q
+ n %d,data,got,tnum
+ d table^%mgsqlct(dbid,qnum,.data,.error) i $l(error) q
  d temps
  s nxtun="" i $d(sql("union",qnum)) s nxtun=$o(sql("union",qnum))
- f tnum=1:1 q:'$d(^mgtmp($j,"from",qnum,tnum))  s tname=$p(^mgtmp($j,"from",qnum,tnum),"~",1),alias=$p(^mgtmp($j,"from",qnum,tnum),"~",2) d pass,data^%mgsqlc5 s got("f",alias)="" d corel^%mgsqlc5,kill
+ f tnum=1:1 q:'$d(^mgtmp($j,"from",qnum,tnum))  d
+ . s %d=^mgtmp($j,"from",qnum,tnum)
+ . s tname=$p(%d,"~",1),alias=$p(%d,"~",2)
+ . d parse(dbid,.sql,grp,qnum,tnum,.data,.got,.error)
+ . d data^%mgsqlc5(grp,qnum,tnum,.data,.got,.error)
+ . s got("f",alias)=""
+ . d corelate^%mgsqlc5(grp,qnum,.got)
+ . q
  d output^%mgsqlc2
 exit ; exit
  q
  ;
-dist() ; optimize select distinct
+dist(grp,qnum,tnum) ; optimize select distinct
  n done,x,got,ii
  s done=0
  i $g(^mgtmp($j,"sel",qnum))'="distinct" q done
@@ -44,226 +51,193 @@ dist() ; optimize select distinct
  i done s ^mgtmp($j,"dontgetdata",qnum,tnum)=1
  q done
  ;
-pass ; pass file
- s keyd=","
- s tag=%z("dl")_%z("pt")_qnum_tnum,tags=%z("dl")_%z("pt")_qnum_"s"_%z("dl")
- ; cmtaaa
- ;i $d(^mgtmp($j,"from","z",qnum)) d
- ;. s ^mgtmp($j,"from","z",qnum,"def",tnum)=%z("dsv")_"\#jndef\"_qnum_"\"_tnum_%z("dsv")
- ;. s line=" "_"s"_" "_^mgtmp($j,"from","z",qnum,"def",tnum)_"=0" d addline^%mgsqlc(grp,.line)
- ;. q
- ;
- i tnum=1 k ctag d
- . s line=tags_" ;"
- . s ^mgtmp($j,"s",qnum)=grp_"~"_$s($d(grpm(grp)):grpm(grp),1:1)
+parse(dbid,sql,grp,qnum,tnum,data,got,error) ; parse global
+ n cond,zkey,zglo,zgloz,tagn,x,key,kno
+ i tnum=1 s %zq("tagc")="" d
+ . s line=%z("dl")_%z("pt")_qnum_"s"_%z("dl")_" ;"
+ . s ^mgtmp($j,"s",qnum)=grp_"~"_"1"
  . d addline^%mgsqlc(grp,.line)
- . i $d(^mgtmp($j,"v",qnum)) s line=" s "_%z("dsv")_$g(^(qnum))_"."_"line-no"_%z("dsv")_"=0" d addline^%mgsqlc(grp,.line)
- . d prefun^%mgsqlc6
+ . d aginit^%mgsqlc6(grp,qnum,tnum)
  . q
- s z=^mgtmp($j,"key",qnum,tnum),zglo=glb(qnum,tnum),zgloz=$s(zglo[%z("dev"):""")",1:"")
- ;;i $d(seq(alias)) d sqseq^%mgsqlc4 i $d(seq(alias,"zcode","pre")) f i=1:1 q:'$d(seq(alias,"zcode","pre",i))  s line=seq(alias,"zcode","pre",i) d addline^%mgsqlc(grp,.line) s seq(alias,"il")=grp_"~"_(grpm(grp)-1)
- d order^%mgsqlc2
- i tnum=1 d endsq s tagx=$s($d(endsq(qnum))&'$d(sql("union",qnum)):%z("dl")_%z("pt")_qnum_"x"_%z("dl"),$l(nxtun):%z("dl")_%z("pt")_nxtun_"s"_%z("dl"),$d(sql("union",1))&($d(gvar(1))!$d(ord)):%z("dl")_%z("pt")_1_"x"_%z("dl"),1:tagout)
- k got("a") f i=1:1:$l(z,keyd) s y=$p(z,keyd,i) i y[%z("dsv") s dir="$o" s:$d(dir(y)) dir=dir(y) d pre^%mgsqlc4 s y=$p($p(z,keyd,i),%z("dsv"),2) i $l(y) s got("a",y)=""
- i qnum=1,tnum=1,$g(^mgtmp($j,"sel",qnum))="distinct" d dist^%mgsqlc2
- s key="",com="",ptagn="",tagn=1 i tnum=1,'$d(tag(qnum)) s tag(qnum)=tagx
- i $d(^mgtmp($j,"from","z",qnum,"pass",alias)) d oj
- s tagxx=tag(qnum)
- k ctag,got("a") f i=1:1:$l(z,keyd) s y=$p(z,keyd,i) d pass1,gota s:$d(ctag) tag(qnum)=ctag i $$dist() q
- i '$d(ctag) s ctag=tagx
- i ctag'=tagx s tag(qnum)=ctag
-pass4 ; set start pointer for sequence
- g passx
- ;i '$d(seq(alias,"il")) g passx
- ;n r,grp,grpm,line,x,or
- ;s (x,or)="" f i=1:1:$l(z,keyd) s y=$p(z,keyd,i) i y[%z("dsv") i $d(nopas(y)),'$d(pre(y,"pre",2)) s x=x_or_"'$l("_y_")",or="!"
- ;i $l(x) s x=" "_"g"_":"_x_" "_tagxx
- ;s r=seq(alias,"il"),grp=$p(r,"~",1),grpm(grp)=$p(r,"~",2),line=@(code_",grp,grpm(grp))")_x_" g "_$s(seq(alias,"ivt")[%z("dsv"):tag(qnum),1:seq(alias,"ivt"))
- ;d addline^%mgsqlc(grp,.line)
-passx ; clean-up
- k pre,nopas
+ s zkey=data(qnum,tnum,"key"),zglo=data(qnum,tnum,"glo"),zgloz=$s(zglo[%z("dev"):""")",1:"")
+ d order^%mgsqlc2(.sql,qnum,tnum,.data,.dir)
+ i tnum=1 s %zq("tagx")=%z("dl")_%z("pt")_qnum_"x"_%z("dl")
+ k got("a")
+ f kno=1:1:$l(zkey,",") s x=$p(zkey,",",kno) i x[%z("dsv") d
+ . s dir=$g(dir(x)) i dir="" s dir=1
+ . d pre^%mgsqlc4(dbid,qnum,tnum,x,.data,.dir,.got,.cond)
+ . s x=$p($p(zkey,",",kno),%z("dsv"),2)
+ . i x'="" s got("a",x)=""
+ . q
+ i qnum=1,tnum=1,$g(^mgtmp($j,"sel",qnum))="distinct" s zkey=$$dist^%mgsqlc2(qnum,tnum)
+ s (key,key(0))="",tagn=1 i tnum=1,'$d(%zq("tag",qnum)) s %zq("tag",qnum)=%zq("tagx")
+ i $d(^mgtmp($j,"from","z",qnum,"pass",alias)) d ojoin(grp,qnum,tnum,.data,.error)
+ k got("a")
+ s %zq("tagc")=""
+ f kno=1:1:$l(zkey,",") d  i $$dist(grp,qnum,tnum) q
+ . d parse1(grp,qnum,tnum,zkey,.kno,.got,.data,.cond,.key,.tagn)
+ . d gota(grp,qnum,tnum,zkey,kno,.got,.data)
+ . i %zq("tagc")'="" s %zq("tag",qnum)=%zq("tagc")
+ . q
+ i %zq("tagc")="" s %zq("tagc")=%zq("tagx")
+ i %zq("tagc")'=%zq("tagx") s %zq("tag",qnum)=%zq("tagc")
  q
  ;
-pass1 ; set up line(s) of code for this level of subscript
- s key=key_com_y,com=keyd
- i y'[%z("dsv") q
- s dir=$s($d(dir(y)):dir(y),1:"$o") d dir
- s ptag=tag(qnum)
- i $d(sqin(y)),$d(pre(y,"pre","nostrt")),'$d(corel(qnum)) g pass3
- i $d(nopas(y)),'$d(pre(y,"pre",2)) d nopas q
- i $d(seq(alias,"x",y,"pre")) g passeq
+parse1(grp,qnum,tnum,zkey,kno,got,data,cond,key,tagn) ; set up line(s) of code for this level of subscript
+ n var,reset
+ s var=$p(zkey,",",kno)
+ s key=key_key(0)_var,key(0)=","
+ i var'[%z("dsv") q
+ s dir=$g(dir(var)) i dir="" s dir=1
+ s %zq("tagp")=%zq("tag",qnum)
+ i $d(^mgtmp($j,"sqin",var)),$d(cond(var,"pre","nostrt")),'$d(^mgtmp($j,"corel",qnum)) g parse11
+ i $d(cond(var,"fixed")),'$d(cond(var,"pre",2)) d fixed(grp,qnum,tnum,zkey,.kno,.got,.data,.cond,.key) q
  ;
- ; i $d(pre(y,"pre",2)) d passor g pass2 q
- i $d(pre(y,"pre",2)),'$d(seq(alias)) d passor g pass2 q
+ i $d(cond(var,"pre",2)) d or(grp,qnum,tnum,zkey,.kno,.got,.data,.cond,.key,.tagn) g parse1x q
  ;
- i $d(pre(y,"pre",2)),$d(seq(alias)) d
- . k pre(y,"pre"),nopas(y)
- . s pre(y,"pre",1)=" "_"s"_" "_y_"="""""
- . s pre(y)=1
- . q
- ;
- s line=pre(y,"pre",1) d addline^%mgsqlc(grp,.line)
-passeq s ctag=tag_tagn_%z("dl")
- s (reset,comr)="" i qnum=1,unique(qnum),ptag=tagout d reset i $l(reset) s reset=" s "_reset
- s line=ctag_" "_"s"_" "_y_"="_dirf_"("_zglo_"("_key_")"_zgloz_dirp_") "_"i"_" "_y_"="_$c(34)_$c(34)_reset_" "_"g"_" "_ptag d addline^%mgsqlc(grp,.line)
- i $d(seq(alias,"ivt")),seq(alias,"ivt")=y s seq(alias,"ivt")=ctag
- i $d(pre(y,"post",1)) s line=pre(y,"post",1)_" "_"g"_" "_ptag d addline^%mgsqlc(grp,.line)
- i $d(seq(alias,"x",y,"post")) s line=seq(alias,"x",y,"post") i $l(line) s line=line_" "_"g"_" "_tagxx d addline^%mgsqlc(grp,.line)
-pass2 s ptagn=tagn,tagn=tagn+1
+ s line=cond(var,"pre",1) d addline^%mgsqlc(grp,.line)
+ s %zq("tagc")=%z("dl")_%z("pt")_qnum_tnum_tagn_%z("dl")
+ s (reset,reset(0))="" i qnum=1,$g(^mgtmp($j,"unique",qnum)),%zq("tagp")=%zq("tagout") d reset(qnum,.reset,.data) i $l(reset) s reset=" s "_reset
+ s line=%zq("tagc")_" "_"s"_" "_var_"="_"$o"_"("_zglo_"("_key_")"_zgloz_","_dir_") "_"i"_" "_var_"="_$c(34)_$c(34)_reset_" "_"g"_" "_%zq("tagp") d addline^%mgsqlc(grp,.line)
+ i $d(cond(var,"post",1)) s line=cond(var,"post",1)_" "_"g"_" "_%zq("tagp") d addline^%mgsqlc(grp,.line)
+ g parse1x
+parse11 ; generate optimal code for 'in' clause
+ s %zq("tagc")=%z("dl")_%z("pt")_qnum_tnum_tagn_%z("dl")
+ s line=cond(var,"pre",1) d addline^%mgsqlc(grp,.line)
+ s line=%zq("tagc")_" "_"s"_" "_var_"="_"$o"_"("_%z("ctg")_"("_%z("cts")_","_^mgtmp($j,"sqin",var)_","_var_")"_","_dir_") "_"i"_" "_var_"="""""_" "_"g"_" "_%zq("tagp") d addline^%mgsqlc(grp,.line)
+ s line=" "_"i"_" '"_"$d"_"("_zglo_"("_key_")"_zgloz_") "_"g"_" "_%zq("tagc") d addline^%mgsqlc(grp,.line)
+parse1x s tagn=tagn+1
  q
  ;
-pass3 ; generate optimal code for 'in' clause
- s ctag=tag_tagn_%z("dl")
- s line=pre(y,"pre",1) d addline^%mgsqlc(grp,.line)
- s line=ctag_" "_"s"_" "_y_"="_dirf_"("_%z("ctg")_"("_%z("cts")_","_sqin(y)_","_y_")"_dirp_") "_"i"_" "_y_"="""""_" "_"g"_" "_ptag d addline^%mgsqlc(grp,.line)
- s line=" "_"i"_" '"_"$d"_"("_zglo_"("_key_")"_zgloz_") "_"g"_" "_ctag d addline^%mgsqlc(grp,.line)
- g pass2
- ;
-passor ; generate code to handle 'or' predicate for subscript
+or(grp,qnum,tnum,zkey,kno,got,data,cond,key,tagn) ; generate code to handle 'or' predicate for subscript
+ n var,nxtag,pretag,pastag,datag,lcase,orn,tagv,tagvp
+ s var=$p(zkey,",",kno)
  s lcase="abcdefghijklmnopqrstuvwxyz"
- s orn=0,tagv=%z("pv")_"("_tnum_","_i_")",tagvp=%z("pv")_"("_tnum_","_i_",""p"")",datag=tag_tagn_"x"_%z("dl")
- s ^mgtmp($j,"passor","tagv",tagv)=""
-passor1 s orn=orn+1 i '$d(pre(y,"pre",orn)) g passorx
- s pretag=tag_tagn_"or"_orn_%z("dl"),pastag=tag_tagn_"or"_$e(lcase,orn)_%z("dl")
- s nxtag=$s($d(pre(y,"pre",orn+1)):tag_tagn_"or"_(orn+1)_%z("dl"),1:ptag)
- i $d(nopas(y,orn)) g passor2
+ s orn=0,tagv=%z("pv")_"("_tnum_","_i_")",tagvp=%z("pv")_"("_tnum_","_kno_",""p"")",datag=%z("dl")_%z("pt")_qnum_tnum_tagn_"x"_%z("dl")
+or1 s orn=orn+1 i '$d(cond(y,"pre",orn)) g orx
+ s pretag=%z("dl")_%z("pt")_qnum_tnum_tagn_"or"_orn_%z("dl"),pastag=%z("dl")_%z("pt")_qnum_tnum_tagn_"or"_$e(lcase,orn)_%z("dl")
+ s nxtag=$s($d(cond(y,"pre",orn+1)):tag_tagn_"or"_(orn+1)_%z("dl"),1:%zq("tagp"))
+ i $d(cond(var,"fixed",orn)) g or2
  ; generate code to pass on subscript
  s line="" i orn>1 s line=pretag_" ;" d addline^%mgsqlc(grp,.line)
- s line=line_pre(y,"pre",orn)_" s "_tagv_"="""_pastag_"""" d addline^%mgsqlc(grp,.line)
- s line=pastag_" s "_y_"="_dirf_"("_zglo_"("_key_")"_zgloz_dirp_") i "_y_"="_$c(34)_$c(34)_" g "_nxtag d addline^%mgsqlc(grp,.line)
- i $d(pre(y,"post",orn)) s line=pre(y,"post",orn)_" g "_nxtag d addline^%mgsqlc(grp,.line)
- i $d(pre(y,"pre",orn+1)) s line=" g "_datag d addline^%mgsqlc(grp,.line)
- g passor1
-passor2 ; generate code for definition test on subscript only
+ s line=line_cond(var,"pre",orn)_" s "_tagv_"="""_pastag_"""" d addline^%mgsqlc(grp,.line)
+ s line=pastag_" s "_var_"="_dirf_"("_zglo_"("_key_")"_zgloz_dirp_") i "_var_"="_$c(34)_$c(34)_" g "_nxtag d addline^%mgsqlc(grp,.line)
+ i $d(cond(var,"post",orn)) s line=cond(y,"post",orn)_" g "_nxtag d addline^%mgsqlc(grp,.line)
+ i $d(cond(var,"pre",orn+1)) s line=" g "_datag d addline^%mgsqlc(grp,.line)
+ g or1
+or2 ; generate code for definition test on subscript only
  s line="" i orn>1 s line=pretag_" ;" d addline^%mgsqlc(grp,.line)
- s line=line_pre(y,"pre",orn)_","_tagv_"="""_nxtag_"""" d addline^%mgsqlc(grp,.line)
- s line=" i '$l("_y_") g "_nxtag d addline^%mgsqlc(grp,.line)
+ s line=line_cond(var,"pre",orn)_","_tagv_"="""_nxtag_"""" d addline^%mgsqlc(grp,.line)
+ s line=" i '$l("_var_") g "_nxtag d addline^%mgsqlc(grp,.line)
  s line=" i '$d("_zglo_"("_key_")"_zgloz_") g "_nxtag d addline^%mgsqlc(grp,.line)
- i $d(pre(y,"pre",orn+1)) s line=" g "_datag d addline^%mgsqlc(grp,.line)
- g passor1
-passorx s line=datag_" ;" d addline^%mgsqlc(grp,.line)
- s ctag="@"_tagv
- k nxtag,pretag,pastag,datag,lcase,orn,tagv
+ i $d(cond(var,"pre",orn+1)) s line=" g "_datag d addline^%mgsqlc(grp,.line)
+ g or1
+orx s line=datag_" ;" d addline^%mgsqlc(grp,.line)
+ s %zq("tagc")="@"_tagv
  q
  ;
-nopas ; generate definition test for non-passed subscript(s)
- s (reset,comr)="" i qnum=1,unique(qnum) d reset
- s mxi=i,(lines,coms,linet,or)=""
- f npn=i:1:$l(z,keyd) s y=$p(z,keyd,npn) q:'$d(nopas(y))!$d(pre(y,"pre",2))  s mxi=npn d nopas1
- s def=1 i qnum=1,unique(1)=2,'$l(reset) s def=0
- s def=1 ;i def,$l(z,keyd)>mxi s def=0
- s qual="",goto=1 i qnum=1,unique(1)=2 s lines=lines_coms_%z("vdef")_"=1,%d=""""",reset=reset_comr_%z("vdef")_"=0",qual=%z("vdef")_",",goto=0
+fixed(grp,qnum,tnum,zkey,kno,got,data,cond,key) ; generate definition test for fixed subscript(s)
+ n reset,mxi,var,npn,lines,coms,linet,or,sub,trans,com,to,alias,qual,goto
+ s (reset,reset(0))="" i qnum=1,$g(^mgtmp($j,"unique",qnum)) d reset(qnum,.reset,.data)
+ s mxi=kno,(lines,coms,linet,or)=""
+ ; build key and null subscript tests
+ f npn=kno:1:$l(zkey,",") s var=$p(zkey,",",npn) q:'$d(cond(var,"fixed"))!$d(cond(var,"pre",2))  s mxi=npn d
+ . s sub=var,set=$p(cond(var,"pre",1)," ",3,999),to=$p(set,"=",2,999),alias=$p($p(var,%z("dsv"),2),".",1)
+ . s trans=0 i '$d(^mgtmp($j,"from",2)),to'["(",to'[")",$l(to,%z("dsv"))'>3,$l(to,%z("dev"))'>3,'$d(^mgtmp($j,"outselx",1,var)),'$d(^mgtmp($j,"from","z",qnum,"pass",alias)) s trans=1,(sub,^mgtmp($j,"trans",$p(var,%z("dsv"),2)))=to
+ . i npn>kno s key=key_com_sub
+ . i 'trans s lines=lines_coms_set,coms=","
+ . i to'[%z("dsv"),to'[%z("dev"),to?1""""1e.e1""""!(to?1n.n)!(to[%z("ds")) q
+ . s linet=linet_or_"'$l("_sub_")",or="!"
+ . q
+ s qual="",goto=1 i qnum=1,$g(^mgtmp($j,"unique",1))=2 s lines=lines_coms_%z("vdef")_"=1,%d=""""",reset=reset_reset(0)_%z("vdef")_"=0",qual=%z("vdef")_",",goto=0
  i $l(lines) s lines=" "_"s"_" "_lines
  i $l(linet) s linet=" "_"i"_" "_linet
  i $l(reset) s reset=" "_"s"_" "_reset
- s line=lines s:$l(linet) line=line_linet_reset_$s(goto:" "_"g"_" "_ptag,1:"") i $l(line) d addline^%mgsqlc(grp,.line)
- i def s line=" "_"i"_" "_qual_"'"_"$d"_"("_zglo_"("_$p(z,keyd,1,mxi)_")"_zgloz_")"_reset_$s(goto:" "_"g"_" "_ptag,1:"") d addline^%mgsqlc(grp,.line)
-nopasx s i=mxi
- k npn,mxi,coms,and,or,lines,linet
+ s line=lines
+ i linet'="" s line=line_linet_reset_$s(goto:" "_"g"_" "_%zq("tagp"),1:"")
+ i line'="" d addline^%mgsqlc(grp,.line)
+ s line=" "_"i"_" "_qual_"'"_"$d"_"("_zglo_"("_$p(zkey,",",1,mxi)_")"_zgloz_")"_reset_$s(goto:" "_"g"_" "_%zq("tagp"),1:"") d addline^%mgsqlc(grp,.line)
+fixedx s kno=mxi
  q
  ;
-nopas1 ; build key and null subscript tests
- s sub=y,set=$p(pre(y,"pre",1)," ",3,999),to=$p(set,"=",2,999)
- s trans=0 i '$d(^mgtmp($j,"from",2)),to'["(",to'[")",$l(to,%z("dsv"))'>3,$l(to,%z("dev"))'>3,'$d(^mgtmp($j,"outselx",1,y)),'$d(^mgtmp($j,"from","z",qnum,"pass",alias)) s trans=1,(sub,^mgtmp($j,"trans",$p(y,%z("dsv"),2)))=to
- i npn>i s key=key_com_sub
- i 'trans s lines=lines_coms_set,coms=","
- i to'[%z("dsv"),to'[%z("dev"),to?1""""1e.e1""""!(to?1n.n)!(to[%z("ds")) q
- s linet=linet_or_"'$l("_sub_")",or="!"
- q
- ;
-reset ; check for need to reset unique key outputs on failure
- n %noinc,line,lvar,pvar
- s %noinc=1
+reset(qnum,reset,data) ; check for need to reset unique key outputs on failure
+ n line,outsel,i,item
  s outsel=$g(^mgtmp($j,"sel",qnum))
- f j=1:1:outsel s x1=^mgtmp($j,"sel",qnum,j) d reset1
- i $l(reset) s line=reset d subvar^%mgsqlc s reset="("_line_")="""""
- k j,x1
+ f i=1:1:outsel s item=^mgtmp($j,"sel",qnum,i) d reset1(qnum,.reset,item,.data)
+ i $l(reset) s line=reset d subvar^%mgsqlc(.line) s reset="("_line_")="""""
  q
  ;
-reset1 ; determine whether data item needs to be reset
- n tnum,alias
- i x1["("!(x1'[%z("dsv")) q
- s xx1=$p(x1,%z("dsv"),2),alias=$p(xx1,".",1) i alias="" q
+reset1(qnum,reset,item,data) ; determine whether data item needs to be reset
+ n tnum,x,alias
+ i item["("!(item'[%z("dsv")) q
+ s x=$p(item,%z("dsv"),2),alias=$p(x,".",1) i alias="" q
  s tnum=^mgtmp($j,"from","x",qnum,alias)
- i $d(data(qnum,tnum,xx1)),^mgtmp($j,"key",qnum,tnum)'[x1 q
- s reset=reset_comr_x1,comr=","
+ i $d(data(qnum,tnum,"col",x)),data(qnum,tnum,"key")'[item q
+ s reset=reset_reset(0)_item,reset(0)=","
  q
  ;
-endsq ; determine whether an end-of-subquery subroutine needed
- k endsq(qnum)
- i qnum'=1,$d(sql("union",qnum)) q
- i qnum'=1 s endsq(qnum)="" q
- s endsq(qnum)="" q
- i $d(gvar(qnum))!$d(ord) s endsq(qnum)="" q
- q
- ;
-dir ; determine physical parse direction parameters
- i dir="$o" s dirf=dir,dirp="" q
- ;i dir="$zp" s dirf=dir,dirp="" q
- i dir="$zp" s dirf="$o",dirp=",-1" q
- q
- ;
-oj ; outer join
+ojoin(grp,qnum,tnum,data,error) ; outer join
  n i,taga,tagz,cname,kno
- s ojcnt=%z("dsv")_"\#oj\"_qnum_"\"_tnum_%z("dsv"),ojcnt(0)=1,ojcnt(1)=%z("dsv")_"\#ojcnt\"_qnum_"\"_tnum_%z("dsv")
- s ojtagbp=tag_"\ojbp"_%z("dl"),ojtagxx=tag_"\ojxx"_%z("dl"),ojtagbxx=tag_"\ojbxx"_%z("dl"),ojtagpxx=tag(qnum)
- s taga=tag_"\oja"_%z("dl"),tagz=tag_"\ojz"_%z("dl")
- s line=" "_"s"_" "_ojcnt_"=0"_","_ojcnt(1)_"=1"_" "_"g"_" "_tagz d addline^%mgsqlc(grp,.line)
- s line=taga_" "_"i"_" "_ojcnt_">0 "_"g"_" "_tag(qnum) d addline^%mgsqlc(grp,.line)
- s tag(qnum)=taga
- s line=" "_"s"_" "_ojcnt(1)_"=0" d addline^%mgsqlc(grp,.line)
- s kno=0 f i=1:1:$l(key0(qnum,tnum)) s cname=$p(key0(qnum,tnum),",",i) i cname[%z("dsv") s kno=kno+1,line=" "_"s"_" "_cname_"=""""" d addline^%mgsqlc(grp,.line) i kno=1 s ojkey1=cname
- s cname="" f  s cname=$o(data(qnum,tnum,cname)) q:cname=""  s line=" "_"s"_" "_%z("dsv")_cname_%z("dsv")_"=""""" d addline^%mgsqlc(grp,.line)
- s line=" "_"g"_" "_ojtagbp d addline^%mgsqlc(grp,.line)
+ s %zq("ojc")=%z("dsv")_"\#oj\"_qnum_"\"_tnum_%z("dsv")
+ s %zq("ojc0")=1
+ s %zq("ojc1")=%z("dsv")_"\#ojc\"_qnum_"\"_tnum_%z("dsv")
+ s %zq("ojtbp")=%z("dl")_%z("pt")_qnum_tnum_"\ojtbp"_%z("dl")
+ s %zq("ojtx")=%z("dl")_%z("pt")_qnum_tnum_"\ojtx"_%z("dl")
+ s %zq("ojtbx")=%z("dl")_%z("pt")_qnum_tnum_"\ojtbx"_%z("dl")
+ s %zq("ojtpx")=%zq("tag",qnum)
+ s taga=%z("dl")_%z("pt")_qnum_tnum_"\oja"_%z("dl"),tagz=%z("dl")_%z("pt")_qnum_tnum_"\ojz"_%z("dl")
+ s line=" "_"s"_" "_%zq("ojc")_"=0"_","_%zq("ojc1")_"=1"_" "_"g"_" "_tagz d addline^%mgsqlc(grp,.line)
+ s line=taga_" "_"i"_" "_%zq("ojc")_">0 "_"g"_" "_%zq("tag",qnum) d addline^%mgsqlc(grp,.line)
+ s %zq("tag",qnum)=taga
+ s line=" "_"s"_" "_%zq("ojc1")_"=0" d addline^%mgsqlc(grp,.line)
+ s kno=0 f i=1:1:$l(data(qnum,tnum,"pkey")) d
+ . s cname=$p(data(qnum,tnum,"pkey"),",",i)
+ . i cname'[%z("dsv") q
+ . s kno=kno+1,line=" "_"s"_" "_cname_"=""""" d addline^%mgsqlc(grp,.line)
+ . i kno=1 s %zq("ojkey")=cname
+ . q
+ s cname="" f  s cname=$o(data(qnum,tnum,"col",cname)) q:cname=""  s line=" "_"s"_" "_%z("dsv")_cname_%z("dsv")_"=""""" d addline^%mgsqlc(grp,.line)
+ s line=" "_"g"_" "_%zq("ojtbp") d addline^%mgsqlc(grp,.line)
  s line=tagz_" ;" d addline^%mgsqlc(grp,.line)
  q
  ;
-ojda ; process at end of parse, before get data
- s line=" g "_ojtagbxx d addline^%mgsqlc(grp,.line)
- s line=ojtagxx_" "_"g"_":'$l("_ojkey1_") "_ojtagpxx_" "_"g"_" "_tag(qnum) d addline^%mgsqlc(grp,.line)
- s line=ojtagbxx_" ;" d addline^%mgsqlc(grp,.line)
- s tag(qnum)=ojtagxx
+ojoinda(grp,qnum,tnum,data,error) ; process at end of parse, before get data
+ s line=" g "_%zq("ojtbx") d addline^%mgsqlc(grp,.line)
+ s line=%zq("ojtx")_" "_"g"_":'$l("_%zq("ojkey")_") "_%zq("ojtpx")_" "_"g"_" "_%zq("tag",qnum) d addline^%mgsqlc(grp,.line)
+ s line=%zq("ojtbx")_" ;" d addline^%mgsqlc(grp,.line)
+ s %zq("tag",qnum)=%zq("ojtx")
  q
  ;
-ojdz ; process after data retrieval
+ojoindz(grp,qnum,tnum,data,error) ; process after data retrieval
  n i,cname,alias,x
- s cname="" f  s cname=$o(joinx(qnum,cname)) q:cname=""  i $d(joinx(qnum,cname,alias)) d ojdz1
- s x="" f  s x=$o(^mgtmp($j,"wher",x)) q:x=""  i (x+0)=qnum,x["gon" d
- . s line="" f i=1:1 q:'$d(^mgtmp($j,"wher",x,i))  s line=line_^mgtmp($j,"wher",x,i)
- . i $l(line) s line=" "_"i"_" '("_line_")"_" g "_tag(qnum) d addline^%mgsqlc(grp,.line)
+ s x="" f  s x=$o(^mgtmp($j,"where",x)) q:x=""  i (x+0)=qnum,x["gon" d
+ . s line="" f i=1:1 q:'$d(^mgtmp($j,"where",x,i))  s line=line_^mgtmp($j,"where",x,i)
+ . i $l(line) s line=" "_"i"_" '("_line_")"_" g "_%zq("tag",qnum) d addline^%mgsqlc(grp,.line)
  . q
  s cname="" f  s cname=$o(^mgtmp($j,"from","z",qnum,"join",cname)) q:cname=""  d
  . k x
  . s alias="" f i=1:1 s alias=$o(^mgtmp($j,"from","z",qnum,"join",cname,alias)) q:alias=""  s x(i)=alias_"."_cname
- . i $d(x(2)) s line=" i "_%z("dsv")_x(1)_%z("dsv")_"'="_%z("dsv")_x(2)_%z("dsv")_" g "_tag(qnum) d addline^%mgsqlc(grp,.line)
+ . i $d(x(2)) s line=" i "_%z("dsv")_x(1)_%z("dsv")_"'="_%z("dsv")_x(2)_%z("dsv")_" g "_%zq("tag",qnum) d addline^%mgsqlc(grp,.line)
  . q
- s line=" "_"s"_" "_ojcnt_"="_ojcnt_"+1" d addline^%mgsqlc(grp,.line)
- s line=ojtagbp_" ;" d addline^%mgsqlc(grp,.line)
+ s line=" "_"s"_" "_%zq("ojc")_"="_%zq("ojc")_"+1" d addline^%mgsqlc(grp,.line)
+ s line=%zq("ojtbp")_" ;" d addline^%mgsqlc(grp,.line)
  q
  ;
-ojdz1 ; perform natural inner join on data
- n ii,join2,alias1,y
- s join2="" f ii=tnum-1:-1:1 s alias1=$p(^mgtmp($j,"from",qnum,ii),"~",2) i $d(joinx(qnum,cname,alias1)) s join2=%z("dsv")_alias1_"."_cname_%z("dsv") q
- i '$l(join2) q
- s y=%z("dsv")_alias_"."_cname_%z("dsv"),line=" "_"i"_" "_y_"'="_join2_" "_"g"_" "_tag(qnum) d addline^%mgsqlc(grp,.line)
- s ^mgtmp($j,"wexcl",qnum,y_"="_join2)="",^(join2_"="_y)=""
+ojoindz1(grp,qnum,tnum,cname,alias) ; perform natural inner join on data
  q
  ;
-gota ; new attribute available from single-level parse
- n j,y,sqvar
- f j=1:1:i s y=$p(z,keyd,j) i y[%z("dsv") s sqvar=$p(y,%z("dsv"),2) i $l(sqvar) s got("a",sqvar)=""
- d corel^%mgsqlc5
- q
- ;
-kill k com,contyp,ct,data(qnum,tnum),tname,glb(qnum,tnum),i,ii,j,^mgtmp($j,"key",qnum,tnum),odel(qnum,tnum),p,r,subc,x,y,typ,postest
+gota(grp,qnum,tnum,zkey,no,got,data) ; new attribute available from single-level parse
+ n i,x,sqvar
+ f i=1:1:no s x=$p(zkey,",",i) i x[%z("dsv") s sqvar=$p(x,%z("dsv"),2) i sqvar'="" s got("a",sqvar)=""
+ d corelate^%mgsqlc5(grp,qnum,.got)
  q
  ;
 temps ; determine subscripts for order/group sort file
  k order,order2
- s sort2=0 i qnum=1,$d(gvar(qnum)),$d(ord),$l(ord) d temps2
+ s sort2=0 i qnum=1,$d(^mgtmp($j,"group",qnum)),$d(^mgtmp($j,"order")) d temps2
  s order=0
- i qnum=1,'sort2 f i=1:1 q:'$d(ord(i))  s lvar=ord(i),orderx(lvar)="" d temps1
- f i=1:1 q:'$d(gvar(qnum,i))  s lvar=gvar(qnum,i) i '$d(orderx(lvar)) d temps1
+ i qnum=1,'sort2 f i=1:1 q:'$d(^mgtmp($j,"order",i))  s lvar=^mgtmp($j,"order",i),orderx(lvar)="" d temps1
+ f i=1:1 q:'$d(^mgtmp($j,"group",qnum,i))  s lvar=^mgtmp($j,"group",qnum,i) i '$d(orderx(lvar)) d temps1
  k orderx
  q
  ;
@@ -276,11 +250,11 @@ temps1 ; determine pseudo-logical variable
  ;
 temps2 ; determine whether two sorts required
  n gvarx
- f i=1:1 q:'$d(gvar(qnum,i))  s gvarx(gvar(qnum,i))=""
- f i=1:1 q:'$d(ord(i))  i '$d(gvarx(ord(i))) s sort2=1 q
+ f i=1:1 q:'$d(^mgtmp($j,"group",qnum,i))  s ^mgtmp($j,"groupx",^mgtmp($j,"group",qnum,i))=""
+ f i=1:1 q:'$d(^mgtmp($j,"order",i))  i '$d(^mgtmp($j,"groupx",^mgtmp($j,"order",i))) s sort2=1 q
  i 'sort2 q
  s order2=0
- f i=1:1 q:'$d(ord(i))  s lvar=ord(i) d temps3
+ f i=1:1 q:'$d(^mgtmp($j,"order",i))  s lvar=^mgtmp($j,"order",i) d temps3
  q
  ;
 temps3 ; determine pseudo-logical variable for second parse
@@ -290,5 +264,7 @@ temps3 ; determine pseudo-logical variable for second parse
  s order2(order2)=lvar_"~"_var
  q
  ;
+ 
+ 
  
  

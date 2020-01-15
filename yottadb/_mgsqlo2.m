@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -62,7 +62,7 @@ comb22 s wkfctb2=$j(wkfctb1/wkfctbn1,"",12)+0
  q
  ;
 idx ; select best index (output: ino, dep, sat, nodes, wkfct)
- n use,idx,nds
+ n use,idx,nds,inop
  s ino="",maxdep=0,maxsat=0
 idx1 s ino=$o(indxa("e",alias,ino)) i ino="" g idxx
  i $d(cuse(alias,ino)) g idx1
@@ -86,8 +86,12 @@ idx2x ; index processed
  g idx1
 idxx s ino="" f  s ino=$o(idx(ino)) q:ino=""  s r=idx(ino),dep=$p(r,"~",1),sat=$p(r,"~",2) i dep<maxdep,sat<maxsat k idx(ino)
  s ino="" f  s ino=$o(idx(ino)) q:ino=""  s nodes=$p(idx(ino),"~",3),nds(nodes,ino)=""
- s nodes=$o(nds("")) i $l(nodes) s ino=$o(nds(nodes,""))
- i ino="" s ino=$$pkey^%mgsqld(dbid,tname)
+ s inop=$$pkey^%mgsqld(dbid,tname)
+ s nodes=$o(nds("")) i $l(nodes) d
+ . i $d(nds(nodes,inop)) s ino=inop q
+ . s ino=$o(nds(nodes,""))
+ . q
+ i ino="" s ino=inop
  i nodes="" s nodes=0
  s (dep,sat)=0
  i $d(idx(ino)) s r=idx(ino),dep=$p(r,"~",1),sat=$p(r,"~",2)

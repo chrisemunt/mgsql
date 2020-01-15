@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -25,13 +25,15 @@
 a d vers^%mgsql("%mgsqlcu") q
  ;
 main ; start
- s %tagz=tag(1),%tagi=%z("pt")_"i",%tdlm=%z("dl")
- s tname=update("update"),alias=$p(tname," ",2),tname=$p(tname," ",1)
+ n inop
+ s inop=$$pkey^%mgsqld(dbid,tname)
+ s %tagz=%zq("tag",1)
+ s tname=^mgtmp($j,"upd","update"),alias=$p(tname," ",2),tname=$p(tname," ",1)
  k dtyp d xfid^%mgsqlct
  s line=" "_"k"_" %do,%dn,%dx" d addline^%mgsqlc(grp,.line)
- s %kupd=0,cname="" f i=0:0 s cname=$o(xfidx(cname)) q:cname=""  i $d(update("set",cname)) s %kupd=1
- f i=1:1 q:'$d(xfid(0,i))  s cname=xfid(0,i,1) i cname?1a.e d key
- s cname="" f i=0:0 s cname=$o(update("set",cname)) q:cname=""  i cname?1a.e,'$d(xfidx(cname)) d dat
+ s %kupd=0,cname="" f  s cname=$o(xfidx(cname)) q:cname=""  i $d(^mgtmp($j,"upd","set",cname)) s %kupd=1
+ f i=1:1 q:'$d(xfid(inop,i))  s cname=xfid(inop,i,1) i cname?1a.e d key
+ s cname="" f  s cname=$o(^mgtmp($j,"upd","set",cname)) q:cname=""  i cname?1a.e,'$d(xfidx(cname)) d dat
  s %refile=0 d set^%mgsqlci
  s line=" "_"g"_" "_%tagz d addline^%mgsqlc(grp,.line)
 exit ; exit
@@ -42,7 +44,7 @@ key ; determine values for keys in update
  d dtyp^%mgsqlct
  s key("o",cname)="%do("_dtyp(cname)_")"
  s line=" "_"s"_" "_key("o",cname)_"="_%z("dsv")_alias_"."_cname_%z("dsv") d addline^%mgsqlc(grp,.line)
- i '$d(update("set",cname)) s line=" "_"s"_" "_"%dn("_dtyp(cname)_")="_key("o",cname) d addline^%mgsqlc(grp,.line)
+ i '$d(^mgtmp($j,"upd","set",cname)) s line=" "_"s"_" "_"%dn("_dtyp(cname)_")="_key("o",cname) d addline^%mgsqlc(grp,.line)
  i '%kupd q
  s key("n",cname)="%dn("_dtyp(cname)_")"
  s var=key("n",cname) d setto
@@ -58,13 +60,13 @@ dat ; determine values for update and set r.i. interface
  ;
 setto ; reconstruct set-to statement
  n i
- i '$d(update("set",cname)) s line=" "_"s"_" "_var_"="_"%do("_dtyp(cname)_")" d addline^%mgsqlc(grp,.line) q
- f i=1:1 q:'$d(update("set",cname,"zcode",i))  s line=update("set",cname,"zcode",i) d setto1
+ i '$d(^mgtmp($j,"upd","set",cname)) s line=" "_"s"_" "_var_"="_"%do("_dtyp(cname)_")" d addline^%mgsqlc(grp,.line) q
+ f i=1:1 q:'$d(^mgtmp($j,"upd","set",cname,"zcode",i))  s line=^mgtmp($j,"upd","set",cname,"zcode",i) d setto1
  q
  ;
 setto1 ; add to line
  n i
- s pn=0 i line[%z("dsv") f i=0:0 s pn=pn+2,x=$p(line,%z("dsv"),pn) q:x=""  i x["**set**" s line=$p(line,%z("dsv"),1,pn-1)_var_$p(line,%z("dsv"),pn+1,999) s pn=pn-2
+ s pn=0 i line[%z("dsv") f  s pn=pn+2,x=$p(line,%z("dsv"),pn) q:x=""  i x["**set**" s line=$p(line,%z("dsv"),1,pn-1)_var_$p(line,%z("dsv"),pn+1,999) s pn=pn-2
  d addline^%mgsqlc(grp,.line)
  q
  ;

@@ -4,7 +4,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -27,75 +27,46 @@ a d vers^%mgsql("%mgsqlv") q
  ;
 main(dbid,line,error) ; verify query
  k ^mgtmp($j)
- k %link,%delrec,union,adhoc,txp,error,sqfun
- k ojcnt,ojkey1,ojtagbp,ojtagbxx,ojtagpxx,ojtagxx
+ k %link,%delrec,union,adhoc,txp,error
  s error=""
- d gvars(dbid,.%z)
  s qnummax=$$main^%mgsqlp(.sql,.line,.error) i $l(error) g exit
  i '$d(sql(0,1)),$d(sql("txp",0)) s unique=1 g exit
  i '$d(sql(0,1)) s error="no sql script !!!",error(5)="HY000" g exit
  d upd(dbid,.sql,.error) i $l(error) g exit
- ;i $d(update("delete")),hilev g exit
+ ;i $d(^mgtmp($j,"upd","delete")),hilev g exit
  i $p(sql(0,1)," ",1)="call" d sp(dbid,.sql,.error) g exit
  f qnum=1:1:qnummax d verify(dbid,.sql,qnum,.error) i $l(error) q
  i $l(error) g exit
- s comord="",comdel="" f i=qnummax:-1:1 s comord=comord_comdel_i,comdel="~"
- i $d(%delrec(0)) d delrec i $l(error) g exit
+ f qnum=1:1:qnummax s ^mgtmp($j,"subq",qnum)=qnummax-(qnum-1)
+ i $d(%zq("drec",0)) d delrec i $l(error) g exit
  d unique
- s i="" f  s i=$o(^mgtmp($j,"wher",i)) q:i=""  f j=1:1 q:'$d(^mgtmp($j,"wher",i,j))  s x=^mgtmp($j,"wher",i,j) i x[%z("dq") d sqidx
- i '$d(update("insert")),'$d(^mgtmp($j,"from",1,1)) s error="no table to select 'from'",error(5)="HY000" g exit
- i '$d(update("insert")),'$d(^mgtmp($j,"sel",1,1)) s error="no 'select' items",error(5)="HY000" g exit
+ s i="" f  s i=$o(^mgtmp($j,"where",i)) q:i=""  f j=1:1 q:'$d(^mgtmp($j,"where",i,j))  s x=^mgtmp($j,"where",i,j) i x[%z("dq") d sqidx
+ i '$d(^mgtmp($j,"upd","insert")),'$d(^mgtmp($j,"from",1,1)) s error="no table to select 'from'",error(5)="HY000" g exit
+ i '$d(^mgtmp($j,"upd","insert")),'$d(^mgtmp($j,"sel",1,1)) s error="no 'select' items",error(5)="HY000" g exit
  ;
 exit i $l(error) d error
- k ans,arg,bkt,cmnd,cod,com,comdel,cond,d,done,dx,dy,f,tname,alias,fr,fun,funk,i,ii,j,k,l,l1,l2,lc,lf,lin,num,os,p,rf,selarg,selct,ss1,ss2,to,typ,whct,x,y,z
- q
- ;
-gvars(dbid,vars) ; initialize global variables
- k vars
- s vars("pv")="sq"
- s vars("pt")="sq"
- s vars("dsv")="{s}"
- s vars("dev")="{v}"
- s vars("df")="{f}"
- s vars("de")="{e}"
- s vars("dq")="{q}"
- s vars("dl")="{l}"
- s vars("ds")="{$}"
- s vars("dc")="{z}"
- s vars("vok")=%z("dsv")_"__status"_%z("dsv")
- s vars("vdata")=%z("dsv")_"__data"_%z("dsv")
- s vars("vdatax")=%z("dsv")_"__datax"_%z("dsv")
- s vars("vrc")=%z("dsv")_"__rowcount"_%z("dsv")
- s vars("vn")=%z("dsv")_"__count"_%z("dsv")
- s vars("vnx")=%z("dsv")_"__count_d"_%z("dsv")
- s vars("vdef")=%z("dsv")_"__defined"_%z("dsv")
- s vars("vck")=%z("dsv")_"__compound_key"_%z("dsv")
- s vars("vckcrc")=%z("dsv")_"__compound_key_crc"_%z("dsv")
- s vars("vckcrcdef")=%z("dsv")_"__compound_key_crc_defined"_%z("dsv")
- ;
- s vars("ctg")="^mgtemp"
- s vars("cts")="$j"
- s vars("ccode")="^mgsqlx(1,dbid,qid,""m"""
- s vars("ccoder")="^mgsqlx(1,dbid,qid,""mr"""
+ k ans,arg,bkt,cmnd,cod,com,cond,d,done,dx,dy,f,tname,alias,fr,fun,funk,i,ii,j,k,l,l1,l2,lc,lf,lin,num,os,p,rf,selarg,selct,ss1,ss2,to,typ,whct,x,y,z
  q
  ;
 sqidx ; index subqueries against parents
- s subq=$p(x,%z("dq"),2),x=^mgtmp($j,"wher",i,j-1)
+ s subq=$p(x,%z("dq"),2),x=^mgtmp($j,"where",i,j-1)
  s ^mgtmp($j,"sqcom",subq)=x
- i x="exists" s kiltemp(subq)="" q
- i x="not exists" s kiltemp(subq)="" q
- i x="in" s v=^mgtmp($j,"wher",i,j-2),kiltemp(subq)="",^mgtmp($j,"notnull",i,v)="",sqin(v)=subq q
- i x="not in" s v=^mgtmp($j,"wher",i,j-2),kiltemp(subq)="",^mgtmp($j,"notnull",i,v)="" q
- i $d(unique(subq)),'unique(subq) s kiltemp(subq)="" q
+ i x="exists" s ^mgtmp($j,"ktmp",subq)="" q
+ i x="not exists" s ^mgtmp($j,"ktmp",subq)="" q
+ i x="in" s v=^mgtmp($j,"where",i,j-2),^mgtmp($j,"ktmp",subq)="",^mgtmp($j,"notnull",i,v)="",^mgtmp($j,"sqin",v)=subq q
+ i x="not in" s v=^mgtmp($j,"where",i,j-2),^mgtmp($j,"ktmp",subq)="",^mgtmp($j,"notnull",i,v)="" q
+ i $d(^mgtmp($j,"unique",subq)),'^mgtmp($j,"unique",subq) s ^mgtmp($j,"ktmp",subq)="" q
  q
  ;
 unique ; determine whether unique result is to be returned
- i qnum=1,$d(update) s (unique(1),unique)=1 q
- s unique=0
- f i=1:1:qnum s unique(i)=0
- ;;;f i=1:1:qnum s unique(i)=1,x=^mgtmp($j,"sel",i) i x'?1n.n2u,x'="last" d
- ;;;. f j=1:1 q:'$d(^mgtmp($j,"outsel",i,j))  s x=^(j) i '$d(^mgtmp($j,"wsel",x)),x[%z("dsv"),$p(x,%z("dsv"),2)'?.n1a.u.1"_".u1"("1e.e1")" s unique(i)=0 q
- i $d(gvar(1)) s (unique(1),unique)=0 q
+ n outsel,agno,i,x,y
+ i qnum=1,$d(update) s ^mgtmp($j,"unique",1)=1 q
+ f i=1:1:qnum d
+ . s outsel=$g(^mgtmp($j,"outsel",i))+0,agno=0
+ . s x="" f  s x=$o(^mgtmp($j,"sqag",i,x)) q:x=""  s y="" f  s y=$o(^mgtmp($j,"sqag",i,x,y)) q:y=""  s agno=agno+1
+ . i outsel=agno s ^mgtmp($j,"unique",i)=1
+ . q
+ i $d(^mgtmp($j,"group",1)) k ^mgtmp($j,"unique",1) q
  q
  ;
 error ; format error message
@@ -174,18 +145,22 @@ grp ; look for auto-group situation in outer query
  ;
 delrec ; validate the delete records declaration
  n alias,qnum
- s alias=$p(%delrec(0),":",1)
- f qnum=1:1 q:'$d(^mgtmp($j,"from","x",qnum))  i $d(^mgtmp($j,"from","x",qnum,alias)) s %delrec(0,alias)="" q
- i '$l($o(%delrec(0,""))) s error="alias '"_%delrec(0)_"' in 'delete_records' is not defined in the query",error(5)="HY000" q
+ s alias=$p(%zq("drec",0),":",1)
+ f qnum=1:1 q:'$d(^mgtmp($j,"from","x",qnum))  i $d(^mgtmp($j,"from","x",qnum,alias)) s %zq("drec",0,alias)="" q
+ i '$l($o(%zq("drec",0,""))) s error="alias '"_%zq("drec",0)_"' in 'delete_records' is not defined in the query",error(5)="HY000" q
  q
  ;
 trx(wrd) ; data translation 
- n i,ii,arg,pre,post
- s ^mgtmp($j,"trx",wrd)=""
- f i=1:1 s chr=$e(wrd,i) i chr=":"!(chr?1"""")!(chr?1n)!(chr="") q
- f ii=$l(wrd):-1:1 s chr=$e(wrd,ii) i chr?1""""!(chr?1an)!(chr="") q
+ n i,ii,arg,arg1,pre,post,type,cn,sqv
+ s cn=$i(^mgtmp($j,"trx")),sqv="__evar"_cn
+ s type="" f i=1:1 s type=$e(wrd,i) i type?1a q
+ f i=2:1 s chr=$e(wrd,i) i chr=":"!(chr?1"""")!(chr?1"{")!(chr?1n)!(chr="") q
+ f ii=$l(wrd)-1:-1:1 s chr=$e(wrd,ii) i chr?1""""!(chr?1"}")!(chr?1an)!(chr="") q
  s arg=$e(wrd,i,ii),pre=$e(wrd,1,i-1),post=$e(wrd,ii+1,9999)
- i arg?1":"1a.e s arg=$e(arg,2,999) i arg'="" s ^mgtmp($j,"in",arg)=""
- q %z("dsv")_wrd_%z("dsv")
+ i arg?1":"1a.e s arg1=$e(arg,2,999) i arg1'="" s ^mgtmp($j,"in",arg1)=""
+ s ^mgtmp($j,"trx",sqv)=chr
+ s ^mgtmp($j,"trx",sqv,1)=arg
+ q %z("dsv")_sqv_%z("dsv")
  ;
+ 
  

@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -50,7 +50,7 @@ create(dbid,sql,error) ; validate 'create' statement
  d index
  s sql(1,1)="select ",com="" f i=1:1 q:'$d(^mgtmp($j,"from","i",i))  s x=^mgtmp($j,"from","i",i) i x?1a.e s sql(1,1)=sql(1,1)_com_alias_"."_x,com=","
  s sql(1,2)="from "_tname_" "_alias
- s create("index")=tname_" "_alias_"~"_idx
+ s ^mgtmp($j,"create","index")=tname_" "_alias_"~"_idx
  q
  ;
 create1 ; check individual items in index
@@ -147,31 +147,31 @@ insert ; validate 'insert' query
  s tname=$p(into," ",2) i tname="" s error="no table supplied in 'into' statement",error(5)="HY000" g insertx
  s tnamer=tname
  s %d=$$tab^%mgsqld(dbid,tname) i %d="" s error="no such table '"_tname_"'",error(5)="42S02" g insertx
- s update("insert")=tname
+ s ^mgtmp($j,"upd","insert")=tname
  i $p(valu," ",1)="values" d insv i $l(error) g insertx
  i $p(valu," ",1)'="values" d inss i $l(error) g insertx
  s inta=$p(into," ",3,999) i inta'="",inta'?1"("1e.e1")" s error="invalid column declaration list in 'into' statement",error(5)="HY000" g insertx
  i tname?1"{n:"1a.e,inta="" s error="column names must be specified in the 'into' statement for named aggregates",error(5)="HY000" g insertx
  i inta'="" s inta=$e(inta,2,$l(inta)-1)
- i inta'="" f i=1:1:$l(inta,",") s cname=$p(inta,",",i) s:cname="" error=1 q:cname=""  s update("att",i)=cname,update("attx",cname)="",update("att")=i s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname) i '%defk,'%defd s error=2 q
+ i inta'="" f i=1:1:$l(inta,",") s cname=$p(inta,",",i) s:cname="" error=1 q:cname=""  s ^mgtmp($j,"upd","att",i)=cname,^mgtmp($j,"upd","attx",cname)="",^mgtmp($j,"upd","att")=i s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname) i '%defk,'%defd s error=2 q
  i $l(error) s error=$s(error=1:"invalid column list in 'into' line",error=2:"column '"_cname_"' not found in table '"_tname_"'",1:""),error(5)="HY000" g insertx
  i $l(error) s error=$s(error=1:"invalid column list in 'into' line",error=2:"column '"_cname_"' not available from aggregates",1:""),error(5)="HY000" g insertx
  s kno=0,ino=$$pkey^%mgsqld(dbid,tname) s sc=$$key^%mgsqld(dbid,tname,ino,.%ind) f i=1:1 q:'$d(%ind(ino,i))  s x=%ind(ino,i) k %ind(ino,i) i x?1a.e s kno=kno+1,key(kno)=x
  s an=0 i tnamer?1"{n:"1a.e f i=1:1 q:'$d(key(i))  s an=an+1,data(an)=key(i) k key(i)
  s sc=$$data^%mgsqld(dbid,tname,.%data) s x="" f  s x=$o(%data(x)) q:x=""  s data(($p(%data(x),"\",2)+an))=x k %data(x)
- i $d(update("att")) f i=1:1 q:'$d(key(i))  s x=key(i) i '$d(update("attx",x)) s error="key column '"_x_"' not found in 'into' variable list",error(5)="HY000" q
+ i $d(^mgtmp($j,"upd","att")) f i=1:1 q:'$d(key(i))  s x=key(i) i '$d(^mgtmp($j,"upd","attx",x)) s error="key column '"_x_"' not found in 'into' variable list",error(5)="HY000" q
  i $l(error) g insertx
- i $d(update("att")),update("att")'=update("val") s error="the number of columns given is not the same as the number of values",error(5)="HY000" g insertx
- i $d(update("att")) g insert1
- f i=1:1 q:'$d(update("val",i))!'$d(key(i))  s update("att",i)=key(i)
- i $d(key(i)),'$d(update("val",i)) s error="not enough data available to satisfy whole key to table '"_tname_"'",error(5)="HY000" g insertx
- i '$d(update("val",i)) g insert1
+ i $d(^mgtmp($j,"upd","att")),^mgtmp($j,"upd","att")'=^mgtmp($j,"upd","val") s error="the number of columns given is not the same as the number of values",error(5)="HY000" g insertx
+ i $d(^mgtmp($j,"upd","att")) g insert1
+ f i=1:1 q:'$d(^mgtmp($j,"upd","val",i))!'$d(key(i))  s ^mgtmp($j,"upd","att",i)=key(i)
+ i $d(key(i)),'$d(^mgtmp($j,"upd","val",i)) s error="not enough data available to satisfy whole key to table '"_tname_"'",error(5)="HY000" g insertx
+ i '$d(^mgtmp($j,"upd","val",i)) g insert1
  s i=i-1
- f ii=1:1 q:'$d(update("val",i+ii))!'$d(data(ii))  s update("att",i+ii)=data(ii)
- i tname'?1"{n:"1a.e,$d(update("val",i+ii)),'$d(data(ii)) s error="too much data data available for table '"_tname_"'",error(5)="HY000" g insertx
-insert1 s tname=update("insert")
+ f ii=1:1 q:'$d(^mgtmp($j,"upd","val",i+ii))!'$d(data(ii))  s ^mgtmp($j,"upd","att",i+ii)=data(ii)
+ i tname'?1"{n:"1a.e,$d(^mgtmp($j,"upd","val",i+ii)),'$d(data(ii)) s error="too much data data available for table '"_tname_"'",error(5)="HY000" g insertx
+insert1 s tname=^mgtmp($j,"upd","insert")
  s incwhr=0
- s update("insert")=tname
+ s ^mgtmp($j,"upd","insert")=tname
 insertx i $l(error),'$d(error(0)) s error(0)="into",error(1)=0
  q
  ;
@@ -185,12 +185,12 @@ insv1 s pn=pn+1 i pn>$l(val,",") q
  f  q:($l(wrd,"""")#2)  s pn=pn+1,wrd=wrd_$p(val,",",pn)
  s an=an+1
  i wrd?.1"-".n.1"."1n.n g insv2
- i wrd?1"""".e1""""!(wrd[%z("ds")) g insv2
+ i wrd?1"""".e1""""!(wrd?@("1"""_%z("ds")_""".e1"""_%z("ds")_"""")) g insv2
  i wrd?1"'".e1"'" s wrd=$tr(wrd,"'","""") g insv2
  i wrd?1"{".e1"}" s wrd=$$trx^%mgsqlv(wrd) g insv2
  i wrd?1":"1a.e s inv($p(wrd,":",2))="",wrd=%z("dev")_$p(wrd,":",2)_%z("dev") g insv2
  s error="invalid item '"_wrd_"' in 'values' statement",error(5)="HY000" g insvx
-insv2 s update("val",an)=wrd,update("val")=an
+insv2 s ^mgtmp($j,"upd","val",an)=wrd,^mgtmp($j,"upd","val")=an
  g insv1
 insvx i $l(error) s error(0)="values",error(1)=0
  q
@@ -210,7 +210,7 @@ inss1 s pn=pn+1 i pn>$l(val,",") g inssx
  i wrd?.1"-".n.1"."1n.n g inss2
  i wrd?1"""".e1""""!(wrd[%z("ds")) g inss2
  s error="invalid item '"_wrd_"' in 'select' statement",error(5)="HY000" g inssx
-inss2 s update("val",an)=wrd,update("val")=an
+inss2 s ^mgtmp($j,"upd","val",an)=wrd,^mgtmp($j,"upd","val")=an
  g inss1
 inssx i $l(error),'$d(error(0)) s error(0)="select",error(1)=1
  q
@@ -221,7 +221,7 @@ inssa ; select all items from table
  s (alias1,tname)=$p(sql(1,2),"from ",2,999)
  i alias1[" " s tname=$p(alias1," ",1),alias1=$p(alias1," ",2)
  i '$l(alias1) s error="invalid 'from' statement",error(5)="HY000",error(0)="from",error(1)=1 q
- s ino=$$pkey^%mgsqld(dbid,tname) s sc=$$key^%mgsqld(dbid,tname,ino,.%ind) s an=0 f i=1:1 q:'$d(%ind(ino,i))  s x=%ind(ino,i) k %ind(ino,i) i x?1a.e s an=an+1,update("val",an)=alias1_"."_x,update("val")=an
- s sc=$$data^%mgsqld(dbid,tname,.%data) s x="" f i=1:1 s x=$o(%data(x)) q:x=""  s y=$p(%data(x),"\",2),update("val",y+an)=alias1_"."_x,update("val")=i+an k %data(x)
+ s ino=$$pkey^%mgsqld(dbid,tname) s sc=$$key^%mgsqld(dbid,tname,ino,.%ind) s an=0 f i=1:1 q:'$d(%ind(ino,i))  s x=%ind(ino,i) k %ind(ino,i) i x?1a.e s an=an+1,^mgtmp($j,"upd","val",an)=alias1_"."_x,^mgtmp($j,"upd","val")=an
+ s sc=$$data^%mgsqld(dbid,tname,.%data) s x="" f i=1:1 s x=$o(%data(x)) q:x=""  s y=$p(%data(x),"\",2),^mgtmp($j,"upd","val",y+an)=alias1_"."_x,^mgtmp($j,"upd","val")=i+an k %data(x)
  q
  ;

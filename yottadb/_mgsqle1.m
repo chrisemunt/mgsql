@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -115,7 +115,7 @@ word(en,ex,word,sqlex,ops,error) ; generate word array from expression lines en(
  q
  ;
 word1(lin,word,fun,sqlex,ops,error) ; decompose line lin
- n pn,wn,i,wrd,wrd1,wrduc,nwrd,obr,cbr,like,mpm,in,between,extvar,ok,in,like,mpm,between
+ n pn,wn,i,wrd,wrd1,wrdlc,nwrd,obr,cbr,like,mpm,in,between,extvar,ok,in,like,mpm,between
  f  q:$e(lin)'=" "  s lin=$e(lin,2,999)
  s pn=0,wn=0,in="",like="",mpm="",between=""
 word2 s pn=pn+1 i pn>$l(lin," ") q
@@ -123,11 +123,14 @@ word2 s pn=pn+1 i pn>$l(lin," ") q
  f i=pn+1:1 q:i>$l(lin," ")!($l(wrd,"""")#2)  s wrd=wrd_" "_$p(lin," ",i),pn=pn+1
  s obr=0 f i=1:1:$l(wrd) q:$e(wrd)'="("  s obr=obr+1,wrd=$e(wrd,2,999) i $d(in) q
  i wrd="" s cbr=0 g word3
- s wrduc=$$ucase^%mgsqls(wrd)
+ s wrdlc=$$lcase^%mgsqls(wrd)
  i wrd="missing_value" s wrd="$$mv^%mgsqls()"
  i wrd="current_date" s wrd="$$cdate^%mgsqls()"
  i wrd="current_time" s wrd="$$ctime^%mgsqls()"
  i wrd="current_timestamp" s wrd="$$ts^%mgsqls()"
+ i wrdlc?1"lower(".e1")" s wrd="$$lcase^%mgsqls("_$e(wrd,7,9999)
+ i wrdlc?1"upper(".e1")" s wrd="$$ucase^%mgsqls("_$e(wrd,7,9999)
+ i wrdlc?1"{d".e1"}" s wrd="$$edate^%mgsqls("_$e(wrd,3,$l(wrd)-1)_","""")"
  i wrd?1"$"1a.e1"("1e.e s wrd=$$func(lin,.pn,wrd,.error) i $l(error) q
  i wrd?1"$$"1a.e1"("1e.e s wrd=$$func(lin,.pn,wrd,.error) i $l(error) q
  i wrd?1a.a1"("1e.e1")".e s wrd1=$p(wrd,")",1)_")" d sqlex(0,.sqlex,wrd1) s wrd=%z("dsv")_wrd1_%z("dsv")_$p(wrd,")",2,999)
@@ -135,8 +138,8 @@ word2 s pn=pn+1 i pn>$l(lin," ") q
  i wrd=""!(wrd[%z("df"))!(wrd[%z("dev"))!(wrd[%z("dsv"))!(wrd[%z("dq")) g word3
  i wrd?1"{"1a.e,wrd=lin d sqlex(1,.sqlex,wrd) s wrd=%z("dev")_wrd_%z("dev") g word3
  ; translate logical operators into physical equivalents
- i wrduc="is" s nwrd=$$ucase^%mgsqls($p(lin," ",pn+1)) i nwrd="not" s wrd=wrd_" "_nwrd,wrduc=wrduc_" "_nwrd,pn=pn+1
- i wrduc="not" s nwrd=$$ucase^%mgsqls($p(lin," ",pn+1)) i nwrd="like"!(nwrd="in")!(nwrd="exists")!(nwrd="after")!(nwrd="before")!(nwrd="null") s wrd=wrd_" "_nwrd,wrduc=wrduc_" "_nwrd,pn=pn+1
+ i wrdlc="is" s nwrd=$$ucase^%mgsqls($p(lin," ",pn+1)) i nwrd="not" s wrd=wrd_" "_nwrd,wrdlc=wrdlc_" "_nwrd,pn=pn+1
+ i wrdlc="not" s nwrd=$$ucase^%mgsqls($p(lin," ",pn+1)) i nwrd="like"!(nwrd="in")!(nwrd="exists")!(nwrd="after")!(nwrd="before")!(nwrd="null") s wrd=wrd_" "_nwrd,wrdlc=wrdlc_" "_nwrd,pn=pn+1
  i like'="" s like=$$like^%mgsqle2(.wrd,.error) q:$l(error)  g word3
  i wrd="like"!(wrd="not like") s like=wn
  i mpm'="" s mpm=$$mpm^%mgsqle2(.wrd,.error) q:$l(error)  g word3
@@ -145,9 +148,9 @@ word2 s pn=pn+1 i pn>$l(lin," ") q
  i wrd="in"!(wrd="not in"),$p(lin," ",pn+1)'[%z("dq") s in=wn
  i between'="" s between=$$between^%mgsqle2(en,.wrd,.word,.wn,obr,cbr,.error) q:$l(error)  g word2
  i wrd="between"!(wrd="not between") s between=wn
- i wrduc="is" s wrd="=" g word3
- i wrduc="is not" s wrd="'=" g word3
- i wrduc="null" s wrd="""""" g word3
+ i wrdlc="is" s wrd="=" g word3
+ i wrdlc="is not" s wrd="'=" g word3
+ i wrdlc="null" s wrd="""""" g word3
  i wrd="<>"!(wrd="!=") s wrd="'=" g word3
  s wrd=$s(wrd=">=":"'<",wrd="<=":"'>",wrd="and":"&",wrd="or":"!",wrd="not":"'",wrd="like":"?",wrd="not like":"'?",1:wrd)
  i $d(ops(wrd)) g word3

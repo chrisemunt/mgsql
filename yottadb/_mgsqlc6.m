@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -24,50 +24,41 @@
  ;
 a d vers^%mgsql("%mgsqlc6") q
  ;
-prefun ; initialise select functions on data attributes
- i qnum=1,unique(1)=3 d init
- i $d(kiltemp(qnum)) s ktmp=1,line=" k "_%z("ctg")_"("_%z("cts")_","_qnum_")" d addline^%mgsqlc(grp,.line)
- i $d(gvar(qnum)) s ktmp=1,line=" k "_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_")" d addline^%mgsqlc(grp,.line) q
- s kdist=0,killcnt=0
- s x="" f  s x=$o(sqfun(qnum,x)) q:x=""  d prefun1
- ;k kdist,killcnt,sqfun1
- ;i 'unique(qnum) q
- ;s termx=1,x="" f  s x=$o(sqfun(qnum,x)) q:x=""  s nth="" f  s nth=$o(sqfun(qnum,x,"nth",nth)) q:nth=""  s r=sqfun(qnum,x,"nth",nth) s:$p(r,"~",3)="z" termx=0 i $p(r,"~",3)="a" s termx(nth)=x
- ;i termx=1 s nth="" f i=1:1 s nth=$o(termx(nth)) q:nth=""  s term(qnum)=" i "_%z("pv")_"(""x"","_qnum_")="_$p(sqfun(qnum,termx(nth),"nth",nth),"~",2)
- ;k termx i i'=2 k term
+aginit(grp,qnum,tnum) ; initialise select functions on data attributes
+ n ag,item,kdist
+ i qnum=1,$g(^mgtmp($j,"unique",1))=3 d init(grp,qnum)
+ i $d(^mgtmp($j,"ktmp",qnum)) s line=" k "_%z("ctg")_"("_%z("cts")_","_qnum_")" d addline^%mgsqlc(grp,.line)
+ i $d(^mgtmp($j,"group",qnum)) s ^mgtmp($j,"ktmp")=1,line=" k "_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_")" d addline^%mgsqlc(grp,.line) q
+ s kdist=0
+ s item="" f  s item=$o(^mgtmp($j,"sqag",qnum,item)) q:item=""  s ag="" f  s ag=$o(^mgtmp($j,"sqag",qnum,item,ag)) q:ag=""  d aginit1(grp,qnum,tnum,item,ag,.kdist)
  q
  ;
-prefun1 ; retrieve each aggregate for attribute
- s fun="" f  s fun=$o(sqfun(qnum,x,fun)) q:fun=""  d prefun2
- q
- ;
-prefun2 ; generate line of code to initilalise each specific aggregate
- n z,funtyp,notnull
- s funtyp=$p(fun,"_",1)
- s notnull=0 i $p(fun,"_",2)="notnull" s notnull=1
- s z=%z("dsv")_fun_"("_x_")"_%z("dsv")
- i x'["*" s lvar=x
- i funtyp="count" s:x'["*" line=line_" s "_%z("dsv")_fun_"("_x_")"_%z("dsv")_"=0" i x["*" s line=line_" s "_z_"=0"
- i funtyp="cntd",x'["*",qnum'=1,$d(kdist),'kdist s kdist=1,line=" k "_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_")" d addline^%mgsqlc(grp,.line)
- i funtyp="cntd",x'["*" s line=" s "_%z("dsv")_"cntd("_x_")"_%z("dsv")_"=0" d addline^%mgsqlc(grp,.line)
- i funtyp="sum" s line=line_" s "_%z("dsv")_fun_"("_x_")"_%z("dsv")_"=0"
- i funtyp="avg" s line=line_" s "_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"=0,"_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"=0"
- i funtyp="max" s line=line_" s "_%z("dsv")_fun_"("_x_")"_%z("dsv")_"="""""
- i funtyp="min" s line=line_" s "_%z("dsv")_fun_"("_x_")"_%z("dsv")_"="""","_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=0"
+aginit1(grp,qnum,tnum,item,ag,kdist) ; generate line of code to initilalise each specific aggregate
+ n sqvar,agtyp,notnull
+ s agtyp=$p(ag,"_",1)
+ s notnull=0 i $p(ag,"_",2)="notnull" s notnull=1
+ s sqvar=%z("dsv")_ag_"("_item_")"_%z("dsv")
+ i agtyp="count" s:item'["*" line=line_" s "_%z("dsv")_ag_"("_item_")"_%z("dsv")_"=0" i item["*" s line=line_" s "_sqvar_"=0"
+ i agtyp="cntd",item'["*",qnum'=1,'kdist s kdist=1,line=" k "_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_")" d addline^%mgsqlc(grp,.line)
+ i agtyp="cntd",item'["*" s line=" s "_%z("dsv")_"cntd("_item_")"_%z("dsv")_"=0" d addline^%mgsqlc(grp,.line)
+ i agtyp="sum" s line=line_" s "_%z("dsv")_ag_"("_item_")"_%z("dsv")_"=0"
+ i agtyp="avg" s line=line_" s "_%z("dsv")_ag_"avsum("_item_")"_%z("dsv")_"=0,"_%z("dsv")_ag_"avcnt("_item_")"_%z("dsv")_"=0"
+ i agtyp="max" s line=line_" s "_%z("dsv")_ag_"("_item_")"_%z("dsv")_"="""""
+ i agtyp="min" s line=line_" s "_%z("dsv")_ag_"("_item_")"_%z("dsv")_"="""","_%z("dsv")_ag_"nullindata("_item_")"_%z("dsv")_"=0"
  d addline^%mgsqlc(grp,.line)
  q
  ;
 updfun ; update aggregates
  s ordsub=""
- i $d(gvar(qnum)) d ggroup
- s x="" f  s x=$o(sqfun(qnum,x)) q:x=""  s fun="" f  s fun=$o(sqfun(qnum,x,fun)) q:fun=""  d updfun1
- i $d(gvar(qnum)) d ugroup
+ i $d(^mgtmp($j,"group",qnum)) d ggroup
+ s x="" f  s x=$o(^mgtmp($j,"sqag",qnum,x)) q:x=""  s fun="" f  s fun=$o(^mgtmp($j,"sqag",qnum,x,fun)) q:fun=""  d updfun1
+ i $d(^mgtmp($j,"group",qnum)) d ugroup
  k gvaru
  q
  ;
 updfun1 ; generate line of code to update specific aggregate
  n z,funtyp,nulltest
- i $d(kiltemp(qnum)) s ktmp=1,line=" k "_%z("ctg")_"("_%z("cts")_","_qnum_")" d addline^%mgsqlc(grp,.line)
+ i $d(^mgtmp($j,"ktmp",qnum)) s line=" k "_%z("ctg")_"("_%z("cts")_","_qnum_")" d addline^%mgsqlc(grp,.line)
  s funtyp=$p(fun,"_",1),nulltest="" i $p(fun,"_",2)="notnull" s nulltest=" "_"i"_" $l("_%z("dsv")_x_%z("dsv")_")"
  s z=%z("dsv")_fun_"("_x_")"_%z("dsv")
  ;
@@ -76,13 +67,13 @@ updfun1 ; generate line of code to update specific aggregate
  i funtyp="count",$d(index(0,alias,"a")) s line=nulltest_" "_"s"_" "_z_"="_z_"+"_%z("dsv")_x_%z("dsv") d addline^%mgsqlc(grp,.line) q
  i funtyp="count",x'["*" s line=nulltest_" "_"s"_" "_z_"="_z_"+1" d addline^%mgsqlc(grp,.line) q
  i funtyp="count",x["*" s line=" "_"s"_" "_z_"="_z_"+1" d addline^%mgsqlc(grp,.line) q
- i funtyp="cntd",x'["*" s ktmp=1
+ i funtyp="cntd",x'["*" s ^mgtmp($j,"ktmp")=1
  i funtyp="cntd",x'["*" d cntd q
  i funtyp="sum" s line=nulltest_" "_"s"_" "_z_"="_z_"+"_%z("dsv")_x_%z("dsv") d addline^%mgsqlc(grp,.line) q
  i funtyp="avg" s line=nulltest_" "_"s"_" "_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"="_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"+1,"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"="_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"+"_%z("dsv")_x_%z("dsv")_","_z_"="_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"/"_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv") d addline^%mgsqlc(grp,.line)
  i funtyp="max" s line=nulltest_" "_"k"_" %s s:$l("_%z("dsv")_x_%z("dsv")_") %s("_%z("dsv")_x_%z("dsv")_")="""" s:$l("_z_") %s("_z_")="""" s "_z_"=$o(%s(""""),-1) k %s" d addline^%mgsqlc(grp,.line) q
  i funtyp="min" s line=nulltest_" s:'$l("_%z("dsv")_x_%z("dsv")_") "_z_"="""","_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=1 i '"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_" k %s s %s("_%z("dsv")_x_%z("dsv")_")="""" s:$l("_z_") %s("_z_")="""" s "_z_"=$o(%s("""")) k %s" d addline^%mgsqlc(grp,.line) q
- i $d(gvar(qnum)) q
+ i $d(^mgtmp($j,"group",qnum)) q
  q
  ;
 cntd ; count distinct
@@ -101,13 +92,9 @@ ggroup ; retrieve data for current update on 'grouped' items
  k gvaru s gvaru=0
  s tk0=""",""""x"""","_qnum
  s ordsub="",com=""
- f i=1:1 q:'$d(order(i))  d out21^%mgsqlc2
- ;
+ f i=1:1 q:'$d(order(i))  d outrow21^%mgsqlc2
  s line=" s "_%z("vdata")_"=$g("_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_ordsub_"))" d addline^%mgsqlc(grp,.line)
- ;
- ;s gvaru=gvaru+1,gvaru(gvaru)=" s "_%z("pv")_"d="_recc
- s x="" f  s x=$o(sqfun(qnum,x)) q:x=""  s fun="" f  s fun=$o(sqfun(qnum,x,fun)) q:fun=""  d ggroup1
- ;s gvaru=gvaru+1,gvaru(gvaru)=$c(1)_tk0_$c(1)_%z("pv")_"d"
+ s x="" f  s x=$o(^mgtmp($j,"sqag",qnum,x)) q:x=""  s fun="" f  s fun=$o(^mgtmp($j,"sqag",qnum,x,fun)) q:fun=""  d ggroup1
  k rec0,rec
  q
  ;
@@ -115,23 +102,16 @@ ggroup1 ; retrieve data for specific function
  n z,ref,funtyp
  s funtyp=$p(fun,"_",1)
  s z=%z("dsv")_fun_"("_x_")"_%z("dsv")
- s line=" s "_%z("vdatax")_"=$p("_%z("vdata")_",""~"","_sqfun(qnum,x,fun)_")" d addline^%mgsqlc(grp,.line)
+ s line=" s "_%z("vdatax")_"=$p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")" d addline^%mgsqlc(grp,.line)
  i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s line=" s "_z_"="_%z("vdatax")_" i "_%z("vdata")_"="""" s "_z_"=0"
  i funtyp="avg" s line=" s:"_%z("vdata")_"'="""" "_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",2),"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",3) s:"_%z("vdata")_"="""" "_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"=0,"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"=0"
  i funtyp="min" s line=" s:"_%z("vdata")_"'="""" "_z_"=$p(%d,""#"",1),"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=$p(%d,""#"",2) s:"_%z("vdata")_"="""" "_z_"="""","_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=0"
  d addline^%mgsqlc(grp,.line)
- ; code to reset updated aggregates
  q
- ;s gvaru=gvaru+1
- ;s gvaru(gvaru)=" s $p("_%z("vdatax")_",""~"","_sqfun(qnum,x,fun)_")="
- ;i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s gvaru(gvaru)=gvaru(gvaru)_z
- ;i funtyp="min" s gvaru(gvaru)=gvaru(gvaru)_z_"_""#""_"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")
- ;i funtyp="avg" s gvaru(gvaru)=gvaru(gvaru)_z_"_""#""_"_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"_""#""_"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")
- ;q
  ;
 ugroup ; update goups
  s line=" s "_%z("vdata")_"="_recc d addline^%mgsqlc(grp,.line)
- s x="" f  s x=$o(sqfun(qnum,x)) q:x=""  s fun="" f  s fun=$o(sqfun(qnum,x,fun)) q:fun=""  d ugroup1
+ s x="" f  s x=$o(^mgtmp($j,"sqag",qnum,x)) q:x=""  s fun="" f  s fun=$o(^mgtmp($j,"sqag",qnum,x,fun)) q:fun=""  d ugroup1
  ;s gvaru=gvaru+1,gvaru(gvaru)=$c(1)_tk0_$c(1)_%z("pv")_"d"
  s line=" ; set the record" d addline^%mgsqlc(grp,.line)
  s line=" s "_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_ordsub_")="_%z("vdata") d addline^%mgsqlc(grp,.line)
@@ -142,17 +122,17 @@ ugroup1 ; update group for specific function
  ;s gvaru=gvaru+1
  s funtyp=$p(fun,"_",1)
  s z=%z("dsv")_fun_"("_x_")"_%z("dsv")
- i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s line=" s $p("_%z("vdata")_",""~"","_sqfun(qnum,x,fun)_")="_z
- i funtyp="min" s line=" s $p("_%z("vdata")_",""~"","_sqfun(qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")
- i funtyp="avg" s line=" s $p("_%z("vdata")_",""~"","_sqfun(qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"_""#""_"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")
+ i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s line=" s $p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")="_z
+ i funtyp="min" s line=" s $p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")
+ i funtyp="avg" s line=" s $p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"_""#""_"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")
  d addline^%mgsqlc(grp,.line)
  q
  ;
-init ; initialise select statement for unique queries
- n %noinc,line,lvar,pvar,com,x1,j
- s %noinc=1
- s (line,com)="" f j=1:1:outsel s x1=^mgtmp($j,"sql","sel",qnum,j) i x1[%z("dsv"),x1'["(" s line=line_com_x1,com="," i $l(line)>200 s line=" s ("_line_")=""""",com="" d addline^%mgsqlc(grp,.line)
+init(grp,qnum) ; initialise select statement for unique queries
+ n line,outsel,com,i,x
+ s outsel=^mgtmp($j,"outsel")
+ s (line,com)="" f i=1:1:outsel s x=^mgtmp($j,"sel",qnum,i) i x[%z("dsv"),x'["(" s line=line_com_x,com="," i $l(line)>200 s line=" s ("_line_")=""""",com="" d addline^%mgsqlc(grp,.line)
  i $l(line) s line=" s ("_line_")=""""" d addline^%mgsqlc(grp,.line)
- k j,x1
  q
  ;
+ 

@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -132,13 +132,19 @@ mv() ; missing value
 age(mdate) ; calculate age
  q (+$h-mdate)\365.25
  ;
+dsep() ; get date separator
+ n sep
+ s sep="/"
+ q sep
+ ;
 ddate(mdate,format) ; decode M date
- n d,m,y,ddate
+ n d,m,y,ddate,sep
  i mdate="" q ""
+ s sep=$$dsep()
  s ddate=$zd(mdate,1)
- s d=$p(ddate,"/",2)
- s m=$p(ddate,"/",1)
- s y=$p(ddate,"/",3)
+ s d=$p(ddate,sep,2)
+ s m=$p(ddate,sep,1)
+ s y=$p(ddate,sep,3)
  i $$isydb(),y<100 d
  . i mdate<58074 s y=y+1900
  . i mdate'<58074 s y=y+2000

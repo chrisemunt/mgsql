@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -33,7 +33,8 @@ v() ; version and date
  ;s v="1.0",r=5,d="14 May 2019"
  ;s v="1.0",r=6,d="7 June 2019"
  ;s v="1.0",r=7,d="13 June 2019"
- s v="1.0",r=8,d="1 November 2019"
+ ;s v="1.0",r=8,d="1 November 2019"
+ s v="1.1",r=9,d="15 January 2020"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -48,7 +49,7 @@ exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
  ;k ^mgsqlx,^mgtmp
  new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
- s error=""
+ s error="",ok=0
  s dbid=$$schema(dbid)
  s line(1)=sql
  s rou=$$main^%mgsqlx(dbid,.line,.info,.error)
@@ -60,7 +61,7 @@ exec(dbid,sql,%zi,%zo)
  . s @("ok=$$"_rou_"(.%zi,.%zo)")
  . s rc=$$sc^%mgsqlz()
  . q
- s ok=-1 i rou'="" s %zo("routine")=rou,@("ok=$$exec^"_rou_"(.%zi,.%zo)")
+ i rou'="" s %zo("routine")=rou,@("ok=$$exec^"_rou_"(.%zi,.%zo)")
 exec1 ; exit
  q ok
  ;
@@ -150,7 +151,9 @@ create ; create tables
  s sql="create table patient ("
  s sql=sql_" num int not null,"
  s sql=sql_" name varchar(255),"
- s sql=sql_" address varchar(255),"
+ s sql=sql_" address varchar(255) separate ('address'),"
+ s sql=sql_" dob date,"
+ s sql=sql_" age int derived age^%mgsqls(dob),"
  s sql=sql_" constraint pk_patient primary key (num))"
  s sql=sql_" /*! global=mgpat, delimiter=# */"
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
@@ -167,7 +170,7 @@ create ; create tables
  ;
 index ; create index
  k %zi,%zo
- s sql="create index x1 on admission ('x1', dadm, num)"
+ s sql="create index index1 on admission ('index1', dadm, num)"
  s sql=sql_" /*! global=mgadm */"
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
@@ -180,11 +183,11 @@ delete ; delete records
  ;
 insert ; insert records
  k %zi,%zo
- s sql="insert into patient (num, name, address) values (:num, :name, :address)"
- s %zi("num")=1,%zi("name")="Chris Munt",%zi("address")="Banstead",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
- s %zi("num")=2,%zi("name")="Rob Tweed",%zi("address")="Redhill",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
- s %zi("num")=3,%zi("name")="John Smith",%zi("address")="London",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
- s %zi("num")=4,%zi("name")="Jane Doe",%zi("address")="Oxford",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s sql="insert into patient (num, name, address, dob) values (:num, :name, :address, {d:dob})"
+ s %zi("num")=1,%zi("name")="Peter Davis",%zi("address")="Banstead",%zi("dob")="1974-08-12",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=2,%zi("name")="Sarah Jones",%zi("address")="Redhill",%zi("dob")="1967-07-13",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=3,%zi("name")="John Smith",%zi("address")="London",%zi("dob")="2002-04-21",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=4,%zi("name")="Jane Doe",%zi("address")="Oxford",%zi("dob")="1997-11-10",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  ;
  k %zi,%zo
  s sql="insert into admission (num, dadm, ward, con) values (:num, {d:dadm}, :ward, :con)"
@@ -222,7 +225,7 @@ sel4 ; select all patients and any associated admission records (using an 'outer
  s ok=$$exec^%mgsql("","select a.num,a.name,b.dadm,b.ward,b.con from patient a left join admission b using (num)",.%zi,.%zo)
  q
  ;
-sel5 ; select all patients who have been admitted more that 3 times
+sel5 ; select all patients who have been admitted more than 3 times
  k %zi,%zo
  s sql="select a.num,a.name,b.dadm,b.ward,b.con from patient a, admission b"
  s sql=sql_" where a.num = b.num and 3 < select count(c.dadm) from admission c where c.num = a.num"
@@ -256,8 +259,14 @@ sel9 ; select all patients and any associated admission records, but only those 
  s ok=$$exec^%mgsql("","select a.num,a.name,b.num,b.dadm,b.ward from patient a left join admission b on a.num = b.num and b.ward = 'B3'")
  q
  ;
+sel10 ; select all patients older than 40.  Convert names to upper case
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","select a.num,upper(a.name),a.dob,a.age from patient a where a.age > 40")
+ q
+ ;
 proc ; create stored procedures
  s ok=$$exec^%mgsql("","CREATE PROCEDURE patient_getdata (num int, name varchar(255), address varchar(255))",.%zi,.%zo)
  s ok=$$exec^%mgsql("","CREATE PROCEDURE SelectAllPatients AS SELECT * FROM patient GO;",.%zi,.%zo)
  q
  ;
+ 

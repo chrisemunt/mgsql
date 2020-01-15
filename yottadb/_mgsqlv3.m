@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -37,11 +37,11 @@ update ; validate 'update' query
  i scmnd="columns" d at i $p(sql(0,1)," ",1)="insert" q
  i scmnd="set" d set i $l(error) g updatex
  s (x,sel,com)="" k y
- f i=0:0 s x=$o(update("set",x)) q:x=""  s sel=sel_com_x,com=",",y(x)="",y="" f i=0:0 s y=$o(update("set",x,"i",y)) q:y=""  i '$d(y(y)) s sel=sel_com_y,y(y)=""
+ f i=0:0 s x=$o(^mgtmp($j,"upd","set",x)) q:x=""  s sel=sel_com_x,com=",",y(x)="",y="" f i=0:0 s y=$o(^mgtmp($j,"upd","set",x,"i",y)) q:y=""  i '$d(y(y)) s sel=sel_com_y,y(y)=""
  k y
  s sql(1,1)="select "_sel,sql(1,2)="from "_tname i $l(alias) s sql(1,2)=sql(1,2)_" "_alias_updidx
  i '$l(ats) d update1 k wrd,wrdx i ins q
- s update("update")=tname,update("set")=set i $l(alias) s update("update")=update("update")_" "_alias
+ s ^mgtmp($j,"upd","update")=tname,^mgtmp($j,"upd","set")=set i $l(alias) s ^mgtmp($j,"upd","update")=^mgtmp($j,"upd","update")_" "_alias
 updatex i $l(error),'$d(error(0)) s error(0)="update",error(1)=0
  k upd,set
  q
@@ -61,7 +61,7 @@ at ; validate 'columns' line and transform to 'insert' if neccessary
  s sql(0,1)="insert"
  s sql(0,2)="into "_tname_" ("
  s sql(0,3)="values ("
- s x="",com="" f i=0:0 s x=$o(update("set",x)) q:x=""  s sql(0,2)=sql(0,2)_com_x,sql(0,3)=sql(0,3)_com_update("set",x),com=","
+ s x="",com="" f i=0:0 s x=$o(^mgtmp($j,"upd","set",x)) q:x=""  s sql(0,2)=sql(0,2)_com_x,sql(0,3)=sql(0,3)_com_^mgtmp($j,"upd","set",x),com=","
  f i=2,3 s sql(0,i)=sql(0,i)_")"
 atx i $l(error) s error(0)="columns",error(1)=0
  q
@@ -77,7 +77,7 @@ at1 ; validate column
  . s qnum=$p(tname,%z("dq"),2)
  . i '$d(^mgtmp($j,"vx",qnum,cname)) s error="column '"_cname_"' is found in derived table "_alias,error(5)="42S22" q
  . q
-at11 k pkey(cname) s update("set",cname)=":"_xc,update("set",cname,"zcode",1)=" s "_%z("dsv")_cname_"**set**"_%z("dsv")_"="_%z("dev")_xc_%z("dev"),inv(xc)=""
+at11 k pkey(cname) s ^mgtmp($j,"upd","set",cname)=":"_xc,^mgtmp($j,"upd","set",cname,"zcode",1)=" s "_%z("dsv")_cname_"**set**"_%z("dsv")_"="_%z("dev")_xc_%z("dev"),inv(xc)=""
  q
  ;
 set ; validate 'set' statement
@@ -100,9 +100,9 @@ set1 ; validate individual 'set' in 'set' statement
  . q
  s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname) i '%defk,'%defd s error="column '"_cname_"' in 'set' statement not found in table '"_tname_"'",error(5)="42S22" q
 set11 d set2 i $l(error) q
- s update("set",cname)=to
- f i=1:1 q:'$d(zcode(i))  s update("set",cname,"zcode",i)=zcode(i)
- s x="" f i=0:0 s x=$o(sqlex("x",x)) q:x=""  s update("set",cname,"i",x)=""
+ s ^mgtmp($j,"upd","set",cname)=to
+ f i=1:1 q:'$d(zcode(i))  s ^mgtmp($j,"upd","set",cname,"zcode",i)=zcode(i)
+ s x="" f i=0:0 s x=$o(sqlex("x",x)) q:x=""  s ^mgtmp($j,"upd","set",cname,"i",x)=""
  q
  ;
 set2 ; compile set assignment
@@ -110,7 +110,7 @@ set2 ; compile set assignment
  n (%z,dbid,qid,error,to,outv,inv,entpar,del,zcode,sqlex)
  k zcode,sqlex
  s outv=outv_"**set**"
- s l=1,ex(1)=to d ex^%mgsqle(outv,.ex,.word,.code,.fun,.error)
+ s l=1,ex(1)=to d ex^%mgsqle(outv,.ex,.word,.zcode,.fun,.error)
  q
  ;
 update1 ; determine if transformation into 'insert' is necessary
@@ -157,8 +157,8 @@ delete ; delete records
  f i=1:1 q:'$d(%ind(ino,i))  s x=%ind(ino,i) k %ind(ino,i) i x?1a.e s sel=sel_com_x,com=","
  i sel="" s error="no key columns found in table '"_tname_"'",error(5)="HY000",error(0)="from",error(1)=0 q
  s sql(1,1)="select "_sel
- s update("key")=sel
-deletex s update("delete")=tname i $l(alias) s update("delete")=update("delete")_" "_alias
+ s ^mgtmp($j,"upd","key")=sel
+deletex s ^mgtmp($j,"upd","delete")=tname i $l(alias) s ^mgtmp($j,"upd","delete")=^mgtmp($j,"upd","delete")_" "_alias
  k dele,frm,whe,x,sel,tname,com
  q
  ;
@@ -169,7 +169,7 @@ delete1 ; assess possibility of doing high level kill
  i 'eq q
  s hilev=1,ino="" f i=0:0 s ino=$o(%ind(ino)) q:ino=""  d delete2 i 'hilev q
  i 'hilev q
- s cname="" f i=0:0 s cname=$o(eq(cname)) q:cname=""  s update("attx",cname)=eq(cname,"c")
+ s cname="" f i=0:0 s cname=$o(eq(cname)) q:cname=""  s ^mgtmp($j,"upd","attx",cname)=eq(cname,"c")
  q
  ;
 delete2 ; each index must conform to hilev criteria

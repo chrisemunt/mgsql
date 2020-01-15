@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -25,21 +25,21 @@
 a d vers^%mgsql("%mgsqlci") q
  ;
 main ; start
- s %tagz=$s('$d(sql(1,1)):tagout,1:tag(1)),%tagi=%z("pt")_"i" ;,%tdlm=%z("dl")
- s (tname,alias)=update("insert")
+ s %tagz=$s('$d(sql(1,1)):%zq("tagout"),1:%zq("tag",1))
+ s (tname,alias)=^mgtmp($j,"upd","insert")
  k dtyp d xfid^%mgsqlct
- f i=1:1 q:'$d(update("att",i))  d data
+ f i=1:1 q:'$d(^mgtmp($j,"upd","att",i))  d data
  s %refile=1 d set
- i $d(sql(1,1)) s line=" "_"g"_" "_tag(1) d addline^%mgsqlc(grp,.line)
+ i $d(sql(1,1)) s line=" "_"g"_" "_%zq("tag",1) d addline^%mgsqlc(grp,.line)
  ;
 exit ; exit
  k upd,null,key,nkey,nkeyt,okey,okeyt,pkey,pref,idx,apc,cde,z
  q
  ;
 data ; determine values for update
- s cname=update("att",i)
+ s cname=^mgtmp($j,"upd","att",i)
  d dtyp^%mgsqlct
- s (y,var)=update("val",i)
+ s (y,var)=^mgtmp($j,"upd","val",i)
  ;i y?.1"."1a.e s var=%z("dsv")_y_%z("dsv")
  i y?1":"1a.e s var=%z("dev")_y_%z("dev")
  i $d(xfidx(cname)) s (key("o",cname),key("n",cname))=var
@@ -51,8 +51,6 @@ data ; determine values for update
  ;  dat("o",cname)=val : optional
  ;  dat("n",cname)=val : optional
  ;  %refile         : flag for forced refiling of all indices
- ;  %tagi           : reserved label prefix for indices etc
- ;  %tdlm           : reserved label delimiter
  ;  %tagz           : label for exit
  ;
 index ; generate physical index references
@@ -87,15 +85,6 @@ index4 s zo=zo_com1_pvar
 index5 s xvar=$s(cname?1a.e&'$d(xfidx(cname)):"%dx"_pst_"("_dtyp(cname)_")",1:pvar)
  s zn=zn_com1_pvar,zx=zx_com1_xvar
  i cname?1a.e,'$d(xfidx(cname)) s tn=tn_andn_"$l"_"("_pvar_")",tx=tx_andn_"$l"_"("_xvar_")",andn=","
- q
- ;
-char ; get file characteristics
- s %retr=1,%onel=0 q
- i %upd q
- s sc=$$data^%mgsqld(dbid,tname,.%data)
- s %sep=0,%all=1 s cname="" f  s cname=$o(%data(cname)) q:cname=""  s %d=%data(cname) s:'$d(dat("n",cname)) %all=0 s ano=ano+1,data($p(%d,"\",1))=cname i $p(%d,"\",3)="s" s %sep=1
- i '$l($o(xfid(0))),%all,'%sep s %retr=0
- i ano<10,%all,'%sep s %onel=1
  q
  ;
 elim ; eliminate indices not affected by update
@@ -144,27 +133,27 @@ getold2 ; get old data record
  ;
 killold ; kill old data record for index
  i '$d(pkey("o",ino)) q
- i $d(xfid(ino,"t")) q
  s subt="" i $l(subt("o",ino)) s subt=subt("o",ino)
  s glo=xfid(ino),key=pkey("o",ino)
- i '$d(xfid(ino,"t")) d k
- i $d(xfid(ino,"t")) s dat="""""" d s
+ d k(grp,subt,glo,key)
  i '%set q
  i '%upd!(ino=$$pkey^%mgsqld(dbid,tname)) q
  s subt="" i $l(subt("x",ino)) s subt=subt("x",ino)
  s glo=xfid(ino),key=pkey("x",ino)
- i '$d(xfid(ino,"t")) d k
- i $d(xfid(ino,"t")) s dat="""""" d s
+ d k(grp,subt,glo,key)
  q
  ;
 getnew ; get indexed data associated with new keys
+ n inop
  k ^mgtmp($j,"got")
- s subt="",dat="%dx",glo=xfid(0),key=pkey("n",0),zgloz="",fail="" d g
- s ino=$$pkey^%mgsqld(dbid,tname) f  s ino=$o(pkey("o",ino)) q:ino=""  f i=1:1 q:'$d(xfid(ino,i))  f ii=1:1 q:'$d(xfid(ino,i,ii))  s cname=xfid(ino,i,ii) i cname?1a.e d getnew1
+ s inop=$$pkey^%mgsqld(dbid,tname)
+ s subt="",dat="%dx",glo=xfid(inop),key=pkey("n",inop),zgloz="",fail="" d g(grp,subt,dat,glo,key,zgloz)
+ f  s ino=$o(pkey("o",ino)) q:ino=""  i ino'=inop f i=1:1 q:'$d(xfid(ino,i))  f ii=1:1 q:'$d(xfid(ino,i,ii))  s cname=xfid(ino,i,ii) i cname?1a.e d getnew1
  q
  ;
 getnew1 ; get individual data item
- n i,ii
+ n i,ii,inop
+ s inop=$$pkey^%mgsqld(dbid,tname)
  i $d(xfidx(cname))!$d(^mgtmp($j,"got",cname)) q
  s ^mgtmp($j,"got",cname)=""
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
@@ -172,20 +161,20 @@ getnew1 ; get individual data item
  i '$d(dtyp(cname,"e")) q
  s r=dtyp(cname,"e"),smeth=$p(r,"\",3),pce=$p(r,"\",1)
  i smeth="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%dx,"_dlm_","_pce_")"
- i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(0)_"("_pkey("n",0)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
+ i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(inop)_"("_pkey("n",inop)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
  d addline^%mgsqlc(grp,.line)
  q
  ;
 setnew ; set new record for data/index
+ n setdstr
+ s setdstr=1
  i '$d(pkey("n",ino)) q
- i $d(xfid(ino,"t")) q
  i inop=$$pkey^%mgsqld(dbid,tname)
- i ino=inop,%onel d setnew3 q
- i ino=inop s cname="" f  s cname=$o(dat("n",cname)) q:cname=""  d setnew1
+ i ino=inop s setdstr=0,cname="" f  s cname=$o(dat("n",cname)) q:cname=""  d setnew1
  i ino=inop,%upd k out d setnew2
  s subt="" i $l(subt("o",ino)) s subt=subt("n",ino)
  s glo=xfid(ino),key=pkey("n",ino),dat=$s(ino=$$pkey^%mgsqld(dbid,tname):"%d",1:"""""")
- d s
+ i setdstr d s(grp,subt,dat,glo,key)
  q
  ;
 setnew1 ; set all new attribute values
@@ -194,32 +183,19 @@ setnew1 ; set all new attribute values
  i '$d(dtyp(cname,"e")) q
  s r=dtyp(cname,"e"),smeth=$p(r,"\",3),pce=$p(r,"\",1)
  i $l(var)<250,$d(out(pce,var)) q
- i smeth="d" s line=" "_"s"_" $p(%d,"_dlm_","_pce_")="_var
+ i smeth="d" s line=" "_"s"_" $p(%d,"_dlm_","_pce_")="_var,setdstr=1
  i smeth="s" s line=" "_"s"_" "_xfid(ino)_"("_pkey("n",ino)_","_$$seps^%mgsqld(dbid,tname,cname)_")="_var
  d addline^%mgsqlc(grp,.line)
  q
  ;
 setnew2 ; for cases where primary key has potentially changed
  s cname="",com="" f  s cname=$o(key("o",cname)) q:cname=""  s line=line_com_key("n",cname)_"="_key("o",cname),com=","
- i $l(line) s line=" "_"i"_" "_line_" "_"g"_" "_%tdlm_%tagi_%tdlm d addline^%mgsqlc(grp,.line)
- s line=" "_"s"_" %s=""""" d addline^%mgsqlc(grp,.line)
- s line=%tdlm_%tagi_1_%tdlm_" "_"s"_" %s=$o("_xfid(inop)_"("_pkey("o",inop)_",%s)) "_"i"_" %s="""" "_"g"_" "_%tdlm_%tagi_2_%tdlm d addline^%mgsqlc(grp,.line)
- s line=" "_"s"_" %xx="_xfid(inop)_"("_pkey("o",inop)_",%s)" d addline^%mgsqlc(grp,.line)
- s subt="",glo=xfid(inop),key=pkey("o",inop)_",%s" d k
- s subt="",glo=xfid(inop),key=pkey("n",inop)_",%s",dat="%xx" d s
- s line=" "_"g"_" "_%tdlm_%tagi_1_%tdlm d addline^%mgsqlc(grp,.line)
- s line=%tdlm_%tagi_2_%tdlm_" ;" d addline^%mgsqlc(grp,.line)
- d killold
- s line=%tdlm_%tagi_%tdlm_" ;" d addline^%mgsqlc(grp,.line)
- q
- ;
-setnew3 ; cram entire update into one line
- s (line,com)="" f  s cname=$o(key("o",cname)) q:cname=""  i cname?1a.e s line=line_com_"$l"_"("_key("o",cname)_")",com=","
- i $l(line) s line=" "_"i"_" "_line
- s line=line_" "_"s"_" "_xfid(ino)_"("_pkey("n",ino)_")="
- i '$d(dat("n")) s line=line_"""""" d addline^%mgsqlc(grp,.line)
- s com="" f i=1:1 q:'$d(data(i))  s cname=data(i),line=line_com_$s($d(dat("n",cname)):dat("n",cname),1:""""""),com="_"_dlm_"_"
- d addline^%mgsqlc(grp,.line)
+ i $l(line) s line=" "_"i"_" "_line_" "_"g"_" "_%tagz d addline^%mgsqlc(grp,.line)
+ s line=" k %xx" d addline^%mgsqlc(grp,.line)
+ s subt="",glo=xfid(inop),key=pkey("o",inop),dvar="%xx" d gm(grp,subt,dvar,glo,key)
+ s subt="",glo=xfid(inop),key=pkey("n",inop),dat="%xx" d m(grp,subt,dat,glo,key)
+ s line=" k %xx" d addline^%mgsqlc(grp,.line)
+ s subt="",glo=xfid(inop),key=pkey("o",inop) d k(grp,subt,glo,key)
  q
  ;
 set ; set a file reference
@@ -228,13 +204,12 @@ set ; set a file reference
  s ino=$$pkey^%mgsqld(dbid,tname)
  s %upd=($g(pkey("o",ino))'=$g(pkey("n",ino)))
  i '%upd,'%refile d elim
- d char
 sete ; set new
- i %retr d getold
+ d getold
  i %upd d getnew
  s inop=$$pkey^%mgsqld(dbid,tname)
  s ino=inop d setnew
- f  s ino=$o(pkey("n",ino)) q:ino=""  i ino'=inop d killold,setnew
+ s ino="" f  s ino=$o(pkey("n",ino)) q:ino=""  i ino'=inop d killold,setnew
  k %data,data,pkey,subt,zn,zo,tn,to,andn,ando,com,com1,out,ltst
  q
  ;
@@ -247,21 +222,31 @@ kille ; exit
  k %data,data,pkey,subt,zn,zo,tn,to,andn,ando,com,com1,out,ltst
  q
  ;
-g ; get command
- s line=$s($l(subt):" i "_subt,1:"")_" "_"s"_" "_dat_"="_"$g"_"("_glo_"("_key_")"_zgloz_")" d addline^%mgsqlc(grp,.line)
+g(grp,test,dvar,glo,key,default) ; get command
+ n line
+ s line=$s($l(test):" i "_test,1:"")_" "_"s"_" "_dvar_"="_"$g"_"("_glo_"("_key_")"_default_")" d addline^%mgsqlc(grp,.line)
  q
  ;
-gd ; get command with failed definition rejection
- s line=" "_"s"_" "_%z("vdef")_"="_"$d"_"("_glo_"("_key_")"_zgloz_")" s:$l(fail) line=line_" "_"i"_" '"_%z("vdef")_fail d addline^%mgsqlc(grp,.line)
- s line=" "_"s"_" "_dat_"="""" "_"i"_" "_%z("vdef")_"#10 "_"s"_" "_dat_"="_glo_"("_key_")"_zgloz d addline^%mgsqlc(grp,.line)
+gm(grp,test,dvar,glo,key) ; get via merge command
+ n line
+ s line=$s($l(test):" i "_test,1:"")_" "_"m"_" "_dvar_"="_glo_"("_key_")" d addline^%mgsqlc(grp,.line)
  q
  ;
-s ; set command
- s line=$s($l(subt):" "_"i"_" "_subt,1:"")_" "_"s"_" "_glo_"("_key_")="_dat d addline^%mgsqlc(grp,.line)
+gd(grp,test,dvar,glo,key,default,fail) ; get command with failed definition rejection
+ s line=" "_"s"_" "_%z("vdef")_"="_"$d"_"("_glo_"("_key_")"_default_")" s:$l(fail) line=line_" "_"i"_" '"_%z("vdef")_fail d addline^%mgsqlc(grp,.line)
+ s line=" "_"s"_" "_dvar_"="""" "_"i"_" "_%z("vdef")_"#10 "_"s"_" "_dvar_"="_glo_"("_key_")"_default d addline^%mgsqlc(grp,.line)
  q
  ;
-k ; kill command
- s line=$s($l(subt):" "_"i"_" "_subt,1:"")_" "_"k"_" "_glo_"("_key_")" d addline^%mgsqlc(grp,.line)
+s(grp,test,dvar,glo,key) ; set command
+ s line=$s($l(test):" "_"i"_" "_test,1:"")_" "_"s"_" "_glo_"("_key_")="_dvar d addline^%mgsqlc(grp,.line)
+ q
+ ;
+m(grp,test,dvar,glo,key) ; merge command
+ s line=$s($l(test):" "_"i"_" "_test,1:"")_" "_"m"_" "_glo_"("_key_")="_dvar d addline^%mgsqlc(grp,.line)
+ q
+ ;
+k(grp,test,glo,key) ; kill command
+ s line=$s($l(test):" "_"i"_" "_test,1:"")_" "_"k"_" "_glo_"("_key_")" d addline^%mgsqlc(grp,.line)
  q
  ;
 dbg ; set up referential actions audit trail

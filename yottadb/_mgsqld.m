@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -39,11 +39,11 @@ nxttname(dbid,tname) ; next table
  q tname
  ;
 col(dbid,tname,cname) ; column details
- n %d,type,type1,ano,sm
+ n %d,type,mtype,ano,sm
  s %d=$g(^mgsqld(0,dbid,"t",tname,"tc",cname))
  s type=$p(%d,"\",2)
- s type1="number" i type["varchar" s type1="string"
- s $p(%d,"\",11)=type1
+ s mtype="num" i type["varchar" s mtype="str"
+ s $p(%d,"\",11)=mtype
  q %d
  ;
 dtype(dbid,tname,cname)
@@ -100,6 +100,11 @@ seps(dbid,tname,cname) ; trailing keys for separately subscripted items
  s ssubs="" i smeth="s" s ssubs=$g(^mgsqld(0,dbid,"t",tname,"tc",cname,"s"))
  i ssubs="" s ssubs=pce
  q ssubs
+ ;
+derv(dbid,tname,cname) ; derived columns
+ n derv
+ s derv=$g(^mgsqld(0,dbid,"t",tname,"tc",cname,"d"))
+ q derv
  ;
 defk(dbid,tname,cname) ; item defined in entity primary key
  n i,ino
@@ -203,7 +208,7 @@ ctable(dbid,tname,cols) ; create table
  s ^mgsqld(0,dbid,"t",tname,"t")=dlm_"\"_pk
  s cname="" f  s cname=$o(col(cname)) q:cname=""  d
  . s ^mgsqld(0,dbid,"t",tname,"tc",cname)=col(cname)
- . s name="" f  s name=$o(col(cname,name)) q:name=""  s ^mgsqld(0,dbid,"t",tname,"tc",cname,$e(name,1))=col(cname,name)
+ . s name="" f  s name=$o(col(cname,name)) q:name=""  s ^mgsqld(0,dbid,"t",tname,"tc",cname,$e(name,1))=$$rstring^%mgsqlp(col(cname,name))
  . q
  s in="" f i=1:1 s in=$o(idx(in)) q:in=""  d
  . s ^mgsqld(0,dbid,"t",tname,"ti",in)=idx(in)

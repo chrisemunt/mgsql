@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -30,8 +30,10 @@ main(dbid,line,info,error) ; compile query
  new $ztrap set $ztrap="zgoto "_$zlevel_":maine^%mgsqlx"
  ;k ^mgsqlx
  s rou="",error=""
+ d gvars(.%z)
  s ddl=$$verify(dbid,.line,.error) i ddl=1 g exit
  s qid=$$hash(dbid,.rou,.line)
+ d gcvars(dbid,qid,.%zq)
  s info("qid")=qid
  i ddl=2 s info("sp")=rou g main1
  ; Force recompilation
@@ -158,4 +160,34 @@ acc(user,model,entity,context,error,info) ; see if access is allowed
  i 'result,error="" s error="you ("_user_") may not access "_entity_" (app="_$g(info("app"))_"; ip="_$g(info("ip"))_")",error(5)="42000"
  q result
  ;
- 
+gvars(vars) ; initialize global variables
+ k vars
+ s vars("pv")="sq"
+ s vars("pt")="sq"
+ s vars("dsv")="{s}"
+ s vars("dev")="{v}"
+ s vars("df")="{f}"
+ s vars("de")="{e}"
+ s vars("dq")="{q}"
+ s vars("dl")="{l}"
+ s vars("ds")="{$}"
+ s vars("dc")="{z}"
+ s vars("vok")=%z("dsv")_"__status"_%z("dsv")
+ s vars("vdata")=%z("dsv")_"__data"_%z("dsv")
+ s vars("vdatax")=%z("dsv")_"__datax"_%z("dsv")
+ s vars("vrc")=%z("dsv")_"__rowcount"_%z("dsv")
+ s vars("vn")=%z("dsv")_"__count"_%z("dsv")
+ s vars("vnx")=%z("dsv")_"__count_d"_%z("dsv")
+ s vars("vdef")=%z("dsv")_"__defined"_%z("dsv")
+ s vars("vck")=%z("dsv")_"__compound_key"_%z("dsv")
+ s vars("vckcrc")=%z("dsv")_"__compound_key_crc"_%z("dsv")
+ s vars("vckcrcdef")=%z("dsv")_"__compound_key_crc_defined"_%z("dsv")
+ s vars("ctg")="^mgtemp"
+ s vars("cts")="$j"
+ q
+ ;
+gcvars(dbid,qid,vars) ; initialize global variables
+ s vars("ccode")="^mgsqlx(1,"""_dbid_""","""_qid_""",""m"""
+ s vars("ccoder")="^mgsqlx(1,"""_dbid_""","""_qid_""",""mr"""
+ q
+ ;

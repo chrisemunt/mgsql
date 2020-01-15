@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -193,7 +193,7 @@ indx1 ; retrieve index data for file tname
  s rc=$$ind^%mgsqld(dbid,tname,.%ind)
  s ino=""
 indx2 s ino=$o(%ind(ino)) i ino="" g indxx
- i $d(create("index")),ino=$p(create("index"),"~",2) g indx2
+ i $d(^mgtmp($j,"create","index")),ino=$p(^mgtmp($j,"create","index"),"~",2) g indx2
  s sc=$$key^%mgsqld(dbid,tname,ino,.%ind)
  s kno=0,ano=0,pnds=0
 indx3 s kno=kno+1 i '$d(%ind(ino,kno)) g indx2

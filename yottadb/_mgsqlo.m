@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -29,7 +29,7 @@ main ; optimiser
  s qnum=0
 opt1 s qnum=qnum+1 i '$d(^mgtmp($j,"from",qnum)) d rec g exit
  s wo="",spc="",index=^mgtmp($j,"from","i","x",qnum)
- f i=1:1 q:'$d(^mgtmp($j,"wher",qnum,i))  s wrd=^mgtmp($j,"wher",qnum,i) s:wrd[%z("dsv") wrd=$p(wrd,%z("dsv"),2) s wo=wo_spc_wrd,spc=" "
+ f i=1:1 q:'$d(^mgtmp($j,"where",qnum,i))  s wrd=^mgtmp($j,"where",qnum,i) s:wrd[%z("dsv") wrd=$p(wrd,%z("dsv"),2) s wo=wo_spc_wrd,spc=" "
  d word
  d ent
  s sqlman=0
@@ -40,7 +40,7 @@ exit ; exit
  q
  ;
 word ; generate word array for sub-query
- f i=1:1 q:'$d(^mgtmp($j,"wher",qnum,i))  s wrd=^mgtmp($j,"wher",qnum,i),word(i)=wrd
+ f i=1:1 q:'$d(^mgtmp($j,"where",qnum,i))  s wrd=^mgtmp($j,"where",qnum,i),word(i)=wrd
  k wrd
  q
  ;
@@ -51,7 +51,6 @@ ent ; generate ent array for sub-query
  f i=1:1 q:'$d(^mgtmp($j,"from",qnum,i))  s alias=$p(^mgtmp($j,"from",qnum,i),"~",2),alias(alias)=i,ent(i)=^mgtmp($j,"from",qnum,i)_"~"_^mgtmp($j,"from","i",0,$p(^mgtmp($j,"from",qnum,i),"~",2))
  s slot=0,alias="" f i=0:0 s alias=$o(%link("ord",qnum,alias)) q:alias=""  s slot=slot+1
  i slot s alias="" f i=0:0 s alias=$o(%link("ord",qnum,alias)) q:alias=""  f i=1:1:slot s entord(i,alias(alias))=""
- s alias="" f i=0:0 s alias=$o(alias(alias)) q:alias=""  i $d(seq(alias)) s slot=slot+1,entord(slot,alias(alias))="",done(alias)=""
  f i=1:1 q:'$d(^mgtmp($j,"from","z",qnum,"ord",i))  s alias=^mgtmp($j,"from","z",qnum,"ord",i) i '$d(done(alias)) s slot=slot+1,entord(slot,alias(alias))="",done(alias)=""
  q
  ;
@@ -78,9 +77,7 @@ rec2 ; record work involved at each level
  s y=%z("dsv")_alias_"."_x_%z("dsv")
  s (nds,nds1,nds2)=$s($d(^mgsqldbs("e",dbid,tname,ino,kno)):$p(^(kno),"~",1),1:0) i kno>1 s nds1=nds,(nds,nds2)=$s(nds>0:$j(nds/pnds,0,0),1:nds)
  s pnds=nds1,nds="~"_nds
- s z="" f ii=0:0 s z=$o(alias(z)) q:z=""  i z'=alias,$d(joinx(qnum,x,z)) s z=1 q
- i z s nds="[1]",nds2=1
- i 'z,$d(rec(y)) s:rec(y)="=" nds="[1]",nds2=1 s:rec(y)'="=" nds="[>"_nds_"<]",nds2=nds2
+ i $d(rec(y)) s:rec(y)="=" nds="[1]",nds2=1 s:rec(y)'="=" nds="[>"_nds_"<]",nds2=nds2
  i $e(nds)="~" s nds="["_nds_"]"
  s ndst=$s(nds2=1:ndst+1,nds2>1:ndst*nds2,1:ndst),cum=$s(nds2=1:cum+1,nds2>1:cum*nds2,1:cum),key=key_com_x_"#"_cum_"#"_ndst_"#"_nds,com=","
  q
