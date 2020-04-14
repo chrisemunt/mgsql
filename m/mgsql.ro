@@ -1,5 +1,5 @@
 Cache for Windows^INT^MGSQL
-%RO on 15 Jan 2020 01:00 AM
+%RO on 14 Apr 2020 01:00 AM
 %mgsql
 %mgsql ;(CM) MGSQL Front end
  ;
@@ -37,7 +37,8 @@ v() ; version and date
  ;s v="1.0",r=6,d="7 June 2019"
  ;s v="1.0",r=7,d="13 June 2019"
  ;s v="1.0",r=8,d="1 November 2019"
- s v="1.1",r=9,d="15 January 2020"
+ ;s v="1.1",r=9,d="15 January 2020"
+ s v="1.2",r=10,d="14 April 2020"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -48,10 +49,14 @@ vers(this) ; version information
  w !
  Q
  ;
+upgrade(mode) ; upgrade this installation
+ k ^mgsqlx,^mgtmp,^mgtemp
+ q 0
+ ;
 exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
- ;k ^mgsqlx,^mgtmp
  s $zt="exece^%mgsql" ; new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
+ ;;;d upgrade(0)
  s error="",ok=0
  s dbid=$$schema(dbid)
  s line(1)=sql
@@ -155,6 +160,7 @@ drop ; drop tables
  k %zi,%zo
  s ok=$$exec^%mgsql("","drop table patient",.%zi,.%zo)
  s ok=$$exec^%mgsql("","drop table admission",.%zi,.%zo)
+ s ok=$$exec^%mgsql("","drop table labtest",.%zi,.%zo)
  q
  ;
 create ; create tables
@@ -177,6 +183,15 @@ create ; create tables
  s sql=sql_" constraint pk_admission primary key ('p', num, dadm))"
  s sql=sql_" /*! global=mgadm, delimiter=# */"
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ ;
+ s sql="create table labtest ("
+ s sql=sql_" num int not null,"
+ s sql=sql_" dtest date not null,"
+ s sql=sql_" test varchar(32),"
+ s sql=sql_" result int,"
+ s sql=sql_" constraint pk_labtest primary key ('p', num, dtest, test))"
+ s sql=sql_" /*! global=mgtst, delimiter=# */"
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 index ; create index
@@ -190,6 +205,7 @@ delete ; delete records
  k %zi,%zo
  s ok=$$exec^%mgsql("","delete from patient",.%zi,.%zo)
  s ok=$$exec^%mgsql("","delete from admission",.%zi,.%zo)
+ s ok=$$exec^%mgsql("","delete from labtest",.%zi,.%zo)
  q
  ;
 insert ; insert records
@@ -209,6 +225,16 @@ insert ; insert records
  s %zi("num")=2,%zi("dadm")="2018-02-20",%zi("ward")="C1",%zi("con")="EW",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=3,%zi("dadm")="2018-04-21",%zi("ward")="D2",%zi("con")="RS",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=2,%zi("dadm")="2018-11-10",%zi("ward")="C3",%zi("con")="RP",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ ;
+ k %zi,%zo
+ s sql="insert into labtest (num, dtest, test, result) values (:num, {d:dtest}, :test, :result)"
+ s %zi("num")=1,%zi("dtest")="2012-02-20",%zi("test")="HGB",%zi("result")="14.2",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=1,%zi("dtest")="2012-03-21",%zi("test")="HGB",%zi("result")="15.1",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=1,%zi("dtest")="2015-01-17",%zi("test")="HGB",%zi("result")="15.7",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=1,%zi("dtest")="2016-01-01",%zi("test")="HGB",%zi("result")="17.1",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=2,%zi("dtest")="2018-02-20",%zi("test")="HGB",%zi("result")="13.2",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=2,%zi("dtest")="2018-11-10",%zi("test")="HGB",%zi("result")="14.7",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=3,%zi("dtest")="2018-04-21",%zi("test")="HGB",%zi("result")="16.4",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 update ; update a record
@@ -247,7 +273,7 @@ sel6 ; count the number of times admitted patients have been admitted
  k %zi,%zo
  s sql="select a.num,a.name,count(b.dadm) from patient a, admission b"
  s sql=sql_" where a.num = b.num"
- s sql=sql_" group by a.num,a.name"
+ s sql=sql_" group by a.num"
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
@@ -627,7 +653,7 @@ exit ; exit
 dist(grp,qnum,tnum) ; optimize select distinct
  n done,x,got,ii
  s done=0
- i $g(^mgtmp($j,"sel",qnum))'="distinct" q done
+ i $g(^mgtmp($j,"sel",qnum,0))'="distinct" q done
  i $d(^mgtmp($j,"from",qnum,2)) q done
  f ii=1:1:i s x=$p(z,",",i) i x'="" s got(x)=""
  s done=1 f ii=1:1 q:'$d(^mgtmp($j,"sel",qnum,ii))  s x=$g(^(ii)) i x'="",'$d(got(x)) s done=0 q
@@ -652,7 +678,7 @@ parse(dbid,sql,grp,qnum,tnum,data,got,error) ; parse global
  . s x=$p($p(zkey,",",kno),%z("dsv"),2)
  . i x'="" s got("a",x)=""
  . q
- i qnum=1,tnum=1,$g(^mgtmp($j,"sel",qnum))="distinct" s zkey=$$dist^%mgsqlc2(qnum,tnum)
+ i qnum=1,tnum=1,$g(^mgtmp($j,"sel",qnum,0))="distinct" s zkey=$$dist^%mgsqlc2(qnum,tnum)
  s (key,key(0))="",tagn=1 i tnum=1,'$d(%zq("tag",qnum)) s %zq("tag",qnum)=%zq("tagx")
  i $d(^mgtmp($j,"from","z",qnum,"pass",alias)) d ojoin(grp,qnum,tnum,.data,.error)
  k got("a")
@@ -816,41 +842,9 @@ gota(grp,qnum,tnum,zkey,no,got,data) ; new attribute available from single-level
  q
  ;
 temps ; determine subscripts for order/group sort file
- k order,order2
- s sort2=0 i qnum=1,$d(^mgtmp($j,"group",qnum)),$d(^mgtmp($j,"order")) d temps2
- s order=0
- i qnum=1,'sort2 f i=1:1 q:'$d(^mgtmp($j,"order",i))  s lvar=^mgtmp($j,"order",i),orderx(lvar)="" d temps1
- f i=1:1 q:'$d(^mgtmp($j,"group",qnum,i))  s lvar=^mgtmp($j,"group",qnum,i) i '$d(orderx(lvar)) d temps1
- k orderx
+ ; TODO see if we can eliminate secondary sort where an order by is applied to groups
  q
  ;
-temps1 ; determine pseudo-logical variable
- s order=order+1
- s var="\cm"_order
- s var=%z("dsv")_var_%z("dsv")
- s order(order)=lvar_"~"_var
- q
- ;
-temps2 ; determine whether two sorts required
- n gvarx
- f i=1:1 q:'$d(^mgtmp($j,"group",qnum,i))  s ^mgtmp($j,"groupx",^mgtmp($j,"group",qnum,i))=""
- f i=1:1 q:'$d(^mgtmp($j,"order",i))  i '$d(^mgtmp($j,"groupx",^mgtmp($j,"order",i))) s sort2=1 q
- i 'sort2 q
- s order2=0
- f i=1:1 q:'$d(^mgtmp($j,"order",i))  s lvar=^mgtmp($j,"order",i) d temps3
- q
- ;
-temps3 ; determine pseudo-logical variable for second parse
- s order2=order2+1
- s var="\\cm"_order2
- s var=%z("dsv")_var_%z("dsv")
- s order2(order2)=lvar_"~"_var
- q
- ;
- 
- 
- 
- 
 
 %mgsqlc2
 %mgsqlc2 ; was 3 (CM) sql compiler - sub driver ; 27 apr 2003  12:44 pm
@@ -949,7 +943,6 @@ sqinc1 ; include subquery
 outrec ; set up record for output and test for 'distinct'
  f i=1:1 q:'$d(^mgtmp($j,"sel",qnum,i))  s lvar=$p(^mgtmp($j,"sel",qnum,i),%z("dsv"),2) i $l(lvar) d
  . n i
- . ;f i=1:1 q:'$d(^mgtmp($j,"e",lvar,i))  s line=^(i) d addline^%mgsqlc(grp,.line)
  . s pvar=$$subvar1^%mgsqlc(lvar)
  . s lvar=$p($p(lvar,")",1),"(",2) i $l(lvar) s pvar=$$subvar1^%mgsqlc(lvar)
  . q
@@ -961,7 +954,7 @@ outrec ; set up record for output and test for 'distinct'
  s rec="",recc="",rdel="",rdelc=""
  f i=1:1 q:'$d(^mgtmp($j,"outsel",qnum,i))  s x=^(i) d outrec2
  i $d(^mgtmp($j,"order")) s rec=recc
- i $g(^mgtmp($j,"sel",qnum))'="distinct"!$d(^mgtmp($j,"group",qnum)) q
+ i $g(^mgtmp($j,"sel",qnum,0))'="distinct"!$d(^mgtmp($j,"group",qnum)) q
  s line=" s "_rec d addline^%mgsqlc(grp,.line)
  s line=" s "_%z("vck")_"="_recc_","_%z("vckcrc")_"="_"$zcrc("_%z("vck")_",7)" d addline^%mgsqlc(grp,.line)
  s line=" i $d("_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_"""x""_"_%z("vck")_")) g "_%zq("tag",qnum)
@@ -1002,13 +995,20 @@ outrow ; set up output to intermediate file
  q
 outrow1 ; output from outer query - take data as it comes
  s %zq("tagp")=$g(%zq("tag",qnum))
- i '$g(^mgtmp($j,"unique",qnum)) d row^%mgsqlc3
+ i '$g(^mgtmp($j,"unique",qnum)) d row^%mgsqlc3(grp,qnum,0,""),top^%mgsqlc3(grp,qnum,0)
  s line=line_" g "_%zq("tagp") d addline^%mgsqlc(grp,.line) q
  q
 outrow2 ; output is 'ordered'
- s com="",ordsub="" f i=1:1 q:'$d(order(i))  d outrow21
+ s com="",ordsub="" f i=1:1 q:'$d(^mgtmp($j,"order",i))  d
+ . s x=$g(^mgtmp($j,"order",i)) ;,y=%z("dsv")_"__order"_$p(^mgtmp($j,"order",i,0),"~",1)_%z("dsv")
+ . s ordsub=ordsub_com_"$s("_x_"="""":"" "",1:"_x_")",com=","
+ . q
+ s line=" k %zo("_%z("vrc")_")" d addline^%mgsqlc(grp,.line)
+ s outsel=^mgtmp($j,"outsel",qnum)
+ f i=1:1:outsel s line=line_" s %zo("_%z("vrc")_","_i_")="_^mgtmp($j,"outsel",qnum,i) d addline^%mgsqlc(grp,.line)
  s line=" s "_%z("pv")_"n="_%z("pv")_"n+1" d addline^%mgsqlc(grp,.line)
- d linel s line=" s "_%z("ctg")_"("_%z("cts")_","_"""x"",1,"_ordsub_","_%z("pv")_"n"_")="_"sqlcnt(0)" d addline^%mgsqlc(grp,.line)
+ ;d linel
+ s line=" m "_%z("ctg")_"("_%z("cts")_","_"""x"",1,"_ordsub_","_%z("pv")_"n"_")="_"%zo("_%z("vrc")_")" d addline^%mgsqlc(grp,.line)
  s line=" g "_%zq("tag",qnum) d addline^%mgsqlc(grp,.line)
  q
  ;
@@ -1017,12 +1017,6 @@ outrowsq ; output from inner query
  s line=" s:"_x_"="""" "_x_"="" """ d addline^%mgsqlc(grp,.line)
  ; add data
  s line=" s "_%z("ctg")_"("_%z("cts")_","_qnum_","_x_")=""""" d addline^%mgsqlc(grp,.line)
- q
- ;
-outrow21 ; set up order
- s x=$p(order(i),"~",1),y=$p(order(i),"~",2)
- s ordsub=ordsub_com_y,com=","
- s line=" s "_y_"=$s("_x_"="""":"" "",1:"_x_")" d addline^%mgsqlc(grp,.line)
  q
  ;
 linel ; split long lines
@@ -1042,7 +1036,7 @@ order(sql,qnum,tnum,data,dir) ; determine order in which data will come out
  i qnum'=1!(tnum'=1)!$d(^mgtmp($j,"group",qnum))!$d(sql("union",1)) q
  s key=data(qnum,tnum,"key")
  i '$d(^mgtmp($j,"order")) q
- i '%d(^mgtmp($j,"order",$l(key,","))) q
+ i '$d(^mgtmp($j,"order",$l(key,","))) q
  s ok=1,kno=1
  f i=1:1:$l(key,",") s item=$p(key,",",i) s ok=$$order1(qnum,key,item,.kno,.dir) i 'ok q
  i 'ok k dir q
@@ -1051,7 +1045,8 @@ order(sql,qnum,tnum,data,dir) ; determine order in which data will come out
  ;
 order1(qnum,key,item,kno,dir) ; check if order is in keeping with required order
  n x,ord,ok
- i item'[%z("dsv") q
+ s ok=0
+ i item'[%z("dsv") q 0
  s ord=$g(^mgtmp($j,"order",kno,0))
  s x=$p(ord,",",kno),dir=$p(x,"~",2),x=$p(x,"~",1) i x="" q 1
  s x=^mgtmp($j,"sel",qnum,x) i key'[x q 0
@@ -1066,7 +1061,7 @@ order1(qnum,key,item,kno,dir) ; check if order is in keeping with required order
  ;
  s dir=$s(dir="desc":"-1",1:"1")
  s dir(x)=dir
- q
+ q ok
  ;
 order2(qnum,item) ; check if 'leading' subscript is uniquely fixed
  n link,op,cnst,or
@@ -1084,8 +1079,8 @@ dist(qnum,tnum) ; optimise distinct clause if possible
  f i=1:1:outsel q:'$d(^mgtmp($j,"sel",qnum,i))  s x=^(i),dn("x",x)=""
  f i=1:1:$l(z,",") s y=$p(zkey,",",i) i y[%z("dsv") q:'$d(dn("x",y))  k dn("x",y) s dn=i
  i $d(dn("x")) q zkey
- i dn=$l(zkey,",") s ^mgtmp($j,"sel",qnum)=""
- i dn<$l(zkey,","),'$d(^mgtmp($j,"sel",qnum,outsel+1)) s zkey=$p(zkey,",",1,dn),^mgtmp($j,"sel",qnum)=""
+ i dn=$l(zkey,",") s ^mgtmp($j,"sel",qnum,0)=""
+ i dn<$l(zkey,","),'$d(^mgtmp($j,"sel",qnum,outsel+1)) s zkey=$p(zkey,",",1,dn),^mgtmp($j,"sel",qnum,0)=""
  q zkey
  ;
 delrec ; delete selected record
@@ -1144,7 +1139,7 @@ endsqx i qnum=1,$d(eof("l")) s line=%z("dl")_%z("pt")_"d"_%z("dl")_" ;" d addlin
  ;
 endsq1 ; unique result but expected as a list
  n com
- i qnum=1,$g(^mgtmp($j,"unique",qnum)) d row^%mgsqlc3
+ i qnum=1,$g(^mgtmp($j,"unique",qnum)) d row(grp,qnum,0,"")
  i qnum=1 q
  i '^mgtmp($j,"unique",qnum) q
  s com=^mgtmp($j,"sqcom",qnum)
@@ -1154,18 +1149,28 @@ endsq1 ; unique result but expected as a list
  q
  ;
 regroup ; reorganise data for 'group by' clause
- s line=line_" s (",com="",i=1
- f i=1:1 q:'$d(order(i))  s line=line_com_$p(order(i),"~",2),com=","
- s line=line_")=""""" d addline^%mgsqlc(grp,.line)
+ n i,codezo,x,sort2,funtyp,sort2
+ i line'="" s line=line_" ; groups" d addline^%mgsqlc(grp,.line)
+ s sort2=0 i qnum=1,$d(^mgtmp($j,"order")) s sort2=1
  i sort2 s line=" k "_%z("ctg")_"("_%z("cts")_","_"""x2"")"_" s "_%z("pv")_"n=0" d addline^%mgsqlc(grp,.line)
- s i=0,(keyo,como)=""
- f i=1:1 q:'$d(order(i))  d reorder1
- s line=" s "_%z("vdata")_"="_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_como_keyo_")" d addline^%mgsqlc(grp,.line)
- s x="" f  s x=$o(^mgtmp($j,"sqag",qnum,x)) q:x=""  s fun="" f  s fun=$o(^mgtmp($j,"sqag",qnum,x,fun)) q:fun=""  d regroup1
- i $d(^mgtmp($j,"having",1)) d having
- f i=1:1 q:'$d(^mgtmp($j,"outsel",qnum,i))  s item=^mgtmp($j,"outsel",qnum,i),line=" s "_item_"=$p("_%z("vdata")_",""~"","_i_")" d addline^%mgsqlc(grp,.line)
- i sort2 d sort2
- i qnum=1 s %data=0,%zq("tagp")=tag d row s line=line_" g "_%zq("tagp") d addline^%mgsqlc(grp,.line) q
+ s (keyo,como)="" f i=1:1 q:'$d(^mgtmp($j,"group",qnum,i))  d
+ . s x=$g(^mgtmp($j,"group",qnum,i,0))
+ . s varo=%z("dsv")_"__order"_i_%z("dsv")
+ . s dir=$p(x,"~",2),dir=$s(dir="desc":-1,1:1)
+ . s line=" s "_varo_"=""""" d addline^%mgsqlc(grp,.line)
+ . d reorder1(grp,qnum,i,.keyo,varo,.como,.tag,sort2,dir)
+ . q
+ s x="" f  s x=$o(^mgtmp($j,"sqag",qnum,x)) q:x=""  s fun="" f  s fun=$o(^mgtmp($j,"sqag",qnum,x,fun)) q:fun=""  d
+ . s funtyp=$p(fun,"_",1)
+ . i funtyp'="avg",funtyp'="min" q
+ . s line=" s "_%z("vdata")_"=$g("_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_^mgtmp($j,"sqag",qnum,x,fun)_"))" d addline^%mgsqlc(grp,.line)
+ . s line=" s "_%z("vdata")_"=$p("_%z("vdata")_",""#"",1)" d addline^%mgsqlc(grp,.line)
+ . s line=" s "_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_^mgtmp($j,"sqag",qnum,x,fun)_")="_%z("vdata") d addline^%mgsqlc(grp,.line)
+ . q
+ i $d(^mgtmp($j,"having",1)) d having(grp,qnum,keyo,tag)
+ i sort2 d sort2(grp,qnum,.keyo)
+ s codezo=" m "_"%zo("_%z("vrc")_")="_%z("ctg")_"("_%z("cts")_","""_$s(sort2:"x2",1:"x")_""","_qnum_","_keyo_")"
+ i qnum=1 s %data=0,%zq("tagp")=tag d row(grp,qnum,1,codezo),top(grp,qnum,1) s line=line_" g "_%zq("tagp") d addline^%mgsqlc(grp,.line) q
  i qnum'=1 d
  . s %zq("tag",qnum)=tag
  . s line=" s "_^mgtmp($j,"sel",qnum,1)_"="_%z("pv")_"d" d addline^%mgsqlc(grp,.line)
@@ -1173,78 +1178,93 @@ regroup ; reorganise data for 'group by' clause
  . q
  q
  ;
-regroup1 ; set aggregate(s) into their relevant group
- n funtyp
- s funtyp=$p(fun,"_",1)
- i funtyp="avg"!(funtyp="min") s line=" s $p("_%z("pv")_"d,""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")=$p($p("_%z("pv")_"d,""~"","_^mgtmp($j,"sqag",qnum,x,fun)_"),""#"",1)"
- d addline^%mgsqlc(grp,.line)
- q
- ;
-having ; set up test for 'having' clause
+having(grp,qnum,keyo,tag) ; set up test for 'having' clause
+ n i,x,fun
  s line=""
- f i=1:1 q:'$d(^mgtmp($j,"having",i))  s x=^mgtmp($j,"having",i) d having1 s line=line_x
+ f i=1:1 q:'$d(^mgtmp($j,"having",i))  s x=^mgtmp($j,"having",i) d  s line=line_x
+ . i x'[%z("dsv") q
+ . s x=$p(x,%z("dsv"),2),fun=$p(x,"(",1),x=$p($p(x,"(",2,999),")",1)
+ . s x="$g("_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_^mgtmp($j,"sqag",qnum,x,fun)_"))"
+ . q
  i line="" q
  s line=" i '("_line_") g "_tag d addline^%mgsqlc(grp,.line)
  q
  ;
-having1 ; process individual element in 'having' clause
- i x'[%z("dsv") q
- s x=$p(x,%z("dsv"),2),fun=$p(x,"(",1),x=$p($p(x,"(",2,999),")",1)
- s x="$p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")"
- q
- ;
 reorder ; reorder data for 'order by' clause
+ n i,com,como,key0,varo,codezo,x,sort2
+ s sort2=0
  s line=line_" s (",com=""
- f i=1:1 q:'$d(order(i))  s line=line_com_$p(order(i),"~",2),com=","
+ f i=1:1 q:'$d(^mgtmp($j,"order",i))  s line=line_com_%z("dsv")_"__order"_$p(^mgtmp($j,"order",i,0),"~",1)_%z("dsv"),com=","
  s line=line_","_%z("pv")_"n)=""""" d addline^%mgsqlc(grp,.line)
- s (keyo,como)="" f i=1:1:$l(ord,",") d reorder1
- s tag=%z("dl")_%z("pt")_qnum_"o"_(i+1)_%z("dl"),%zq("tagp")=%z("dl")_%z("pt")_qnum_"o"_i_%z("dl")
+ s (keyo,como)="" f i=1:1 q:'$d(^mgtmp($j,"order",i))  d
+ . s x=$g(^mgtmp($j,"order",i,0))
+ . s varo=%z("dsv")_"__order"_$p(x,"~",1)_%z("dsv")
+ . s dir=$p(x,"~",2),dir=$s(dir="desc":-1,1:1)
+ . d reorder1(grp,qnum,i,.keyo,varo,.como,.tag,sort2,dir)
+ . q
+ s tag=%z("dl")_%z("pt")_qnum_"o"_(i)_%z("dl"),%zq("tagp")=%z("dl")_%z("pt")_qnum_"o"_(i-1)_%z("dl")
  s line=tag_" s "_%z("pv")_"n=$o("_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_%z("pv")_"n))"_" i "_%z("pv")_"n="""" g "_%zq("tagp") d addline^%mgsqlc(grp,.line)
- s line=" s "_%z("vdata")_"="_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_%z("vdata")_")" d addline^%mgsqlc(grp,.line)
- s %data=0,%zq("tagp")=tag d row s line=line_" g "_%zq("tagp") d addline^%mgsqlc(grp,.line) q
+ s codezo=" m "_"%zo("_%z("vrc")_")="_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_","_%z("pv")_"n"_")"
+ s %data=0,%zq("tagp")=tag d row(grp,qnum,1,codezo),top(grp,qnum,1) s line=line_" g "_%zq("tagp") d addline^%mgsqlc(grp,.line) q
  q
  ;
-reorder1 ; for each grouped attribute
- s dir="$o" i qnum=1,$d(^mgtmp($j,"order",i)) s dir=$p(^mgtmp($j,"order",i,0),"~",2),dir=$s(dir="desc":"$zp",1:"$o")
- s x=$p(order(i),"~",2)
- s keyo=keyo_como_x,como=","
- s tag=%z("dl")_%z("pt")_qnum_"o"_i_%z("dl")
- s %zq("tagp")=$s(i=1:$s(sort2:%z("dl")_%z("pt")_qnum_"on2"_%z("dl"),1:%zq("tagout")),i>1:%z("dl")_%z("pt")_qnum_"o"_(i-1)_%z("dl"),1:"")
- s line=tag_" s "_x_"="_dir_"("_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_")) i "_x_"="""""
- i i=1,qnum'=1 s line=line_" q" d addline^%mgsqlc(grp,.line) q
+reorder1(grp,qnum,kno,keyo,varo,como,tago,sort2,dir) ; for each grouped attribute
+ s keyo=keyo_como_varo,como=","
+ s tago=%z("dl")_%z("pt")_qnum_"o"_kno_%z("dl")
+ s %zq("tagp")=$s(kno=1:$s(sort2:%z("dl")_%z("pt")_qnum_"on2"_%z("dl"),1:%zq("tagout")),kno>1:%z("dl")_%z("pt")_qnum_"o"_(kno-1)_%z("dl"),1:"")
+ s line=tag_" s "_varo_"="_"$o("_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_"),"_dir_") i "_varo_"="""""
+ i kno=1,qnum'=1 s line=line_" q" d addline^%mgsqlc(grp,.line) q
  s line=line_" g "_%zq("tagp") d addline^%mgsqlc(grp,.line)
  q
  ;
-sort2 ; perform secondary sort
- s (keyo,com)=""
- f i=1:1 q:'$d(^mgtmp($j,"order",i))  s seln=$p($p(ord,",",i),"~",1),v1=order2(i),v2=$p(v1,"~",2),v1=$p(v1,"~",1),keyo=keyo_com_v2,com=",",line=" s ("_v1_","_v2_")=$p("_%z("pv")_"d,""~"","_seln_") i "_v2_"="""" s "_v2_"="" """ d addline^%mgsqlc(grp,.line)
+sort2(grp,qnum,keyo) ; perform secondary sort
+ n i,x,y,keyn,keyx,varx,com,dir
+ s line=" ; secondary sort" d addline^%mgsqlc(grp,.line)
+ s line=" m "_%z("vdata")_"="_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_keyo_")" d addline^%mgsqlc(grp,.line)
+ s (keyn,com)="" f i=1:1 q:'$d(^mgtmp($j,"order",i))  d
+ . s x=$g(^mgtmp($j,"order",i,0)),y=$p(x,"~",1) i y="" s y=1
+ . s keyn=keyn_com_"$s("_%z("vdata")_"("_y_")"_"="""":"" "",1:"_%z("vdata")_"("_y_")"_")",com=","
+ . q
  s line=" s "_%z("pv")_"n="_%z("pv")_"n+1" d addline^%mgsqlc(grp,.line)
- s line=" s "_%z("ctg")_"("_%z("cts")_","_"""x2"","_qnum_","_keyo_","_%z("pv")_"n)="_%z("pv")_"d" d addline^%mgsqlc(grp,.line)
+ s line=" m "_%z("ctg")_"("_%z("cts")_","_"""x2"","_qnum_","_keyn_","_%z("pv")_"n)="_%z("vdata") d addline^%mgsqlc(grp,.line)
  s line=" g "_tag d addline^%mgsqlc(grp,.line)
- s line=%z("dl")_%z("pt")_qnum_"on2"_%z("dl")_" s ("_keyo_","_%z("pv")_"n)=""""" d addline^%mgsqlc(grp,.line)
- s (keyo,como)="" f i=1:1 q:'$d(^mgtmp($j,"order",i))  d sort21
- s tag=%z("dl")_%z("pt")_qnum_"on2"_(i+1)_%z("dl"),%zq("tagp")=%z("dl")_%z("pt")_qnum_"on2"_i_%z("dl")
- s line=tag_" s "_%z("pv")_"n=$o("_%z("ctg")_"("_%z("cts")_","_"""x2"","_qnum_","_keyo_","_%z("pv")_"n))"_" i "_%z("pv")_"n="""" g "_%zq("tagp") d addline^%mgsqlc(grp,.line)
- s line=" s "_%z("vdata")_"="_%z("ctg")_"("_%z("cts")_","_"""x2"","_qnum_","_keyo_","_%z("pv")_"n)" d addline^%mgsqlc(grp,.line)
+ s line=%z("dl")_%z("pt")_qnum_"on2"_%z("dl")_" ; secondary sort output" d addline^%mgsqlc(grp,.line) ;_" s ("_keyo_","_%z("pv")_"n)=""""" d addline^%mgsqlc(grp,.line)
+ s (keyx,com)="" f i=1:1 q:'$d(^mgtmp($j,"order",i))  d
+ . s x=$g(^mgtmp($j,"order",i,0))
+ . s varx=%z("dsv")_"__order"_$p(x,"~",1)_%z("dsv")
+ . s dir=$p(x,"~",2),dir=$s(dir="desc":-1,1:1)
+ . s keyx=keyx_com_varx,com=","
+ . s tag=%z("dl")_%z("pt")_qnum_"on2"_i_%z("dl")
+ . s %zq("tagp")=$s(i=1:%zq("tagout"),i>1:%z("dl")_%z("pt")_qnum_"on2"_(i-1)_%z("dl"),1:"")
+ . s line=" s "_varx_"=""""" d addline^%mgsqlc(grp,.line)
+ . s line=tag_" s "_varx_"="_"$o("_%z("ctg")_"("_%z("cts")_","_"""x2"","_qnum_","_keyx_"),"_dir_")"_" i "_varx_"="""""
+ . i i=1,qnum'=1 s line=line_" q" d addline^%mgsqlc(grp,.line) q
+ . s line=line_" g "_%zq("tagp") d addline^%mgsqlc(grp,.line)
+ . q
+ s line=" s "_%z("pv")_"n=""""" d addline^%mgsqlc(grp,.line)
+ s tag=%z("dl")_%z("pt")_qnum_"on2"_(i)_%z("dl"),%zq("tagp")=%z("dl")_%z("pt")_qnum_"on2"_(i-1)_%z("dl")
+ s line=tag_" s "_%z("pv")_"n=$o("_%z("ctg")_"("_%z("cts")_","_"""x2"","_qnum_","_keyx_","_%z("pv")_"n))"_" i "_%z("pv")_"n="""" g "_%zq("tagp") d addline^%mgsqlc(grp,.line)
+ s keyo=keyx_","_%z("pv")_"n"
  q
  ;
-sort21 ; for each grouped attribute in secondary sort
- s dir="$o" i qnum=1,$d(^mgtmp($j,"order",i)) s dir=$p(^mgtmp($j,"order",i,0),"~",2),dir=$s(dir="desc":"$zp",1:"$o")
- s x=$p(order2(i),"~",2)
- s keyo=keyo_como_x,como=","
- s tag=%z("dl")_%z("pt")_qnum_"on2"_i_%z("dl")
- s %zq("tagp")=$s(i=1:%zq("tagout"),i>1:%z("dl")_%z("pt")_qnum_"on2"_(i-1)_%z("dl"),1:"")
- s line=tag_" s "_x_"="_dir_"("_%z("ctg")_"("_%z("cts")_","_"""x2"","_qnum_","_keyo_"))"_" i "_x_"="""""
- i i=1,qnum'=1 s line=line_" q" d addline^%mgsqlc(grp,.line) q
- s line=line_" g "_%zq("tagp") d addline^%mgsqlc(grp,.line)
- q
- ;
-row ; output a line of sql data
+row(grp,qnum,havezo,codezo) ; output a line of sql data
+ n outsel,i
  s line=line_" s "_%z("vrc")_"="_%z("vrc")_"+1" d addline^%mgsqlc(grp,.line)
+ i codezo'="" s line=codezo d addline^%mgsqlc(grp,.line)
  i $d(^mgtmp($j,"upd")) q
- s outsel=^mgtmp($j,"outsel",qnum)
- f i=1:1:outsel s line=line_" s %zo("_%z("vrc")_","_i_")="_^mgtmp($j,"outsel",qnum,i) d addline^%mgsqlc(grp,.line)
+ i 'havezo d
+ . s outsel=^mgtmp($j,"outsel",qnum)
+ . f i=1:1:outsel s line=line_" s %zo("_%z("vrc")_","_i_")="_^mgtmp($j,"outsel",qnum,i) d addline^%mgsqlc(grp,.line)
+ . q
  s line=line_" s "_%z("vok")_"=$$ss^%mgsqlz(.%zi,.%zo,"_%z("vrc")_")" d addline^%mgsqlc(grp,.line)
+ q
+ ;
+top(grp,qnum,sort) ; sql top
+ n top
+ s top=$g(^mgtmp($j,"sel",qnum,0)) i top'?1"top#"1n.n q
+ s top=$p(top,"#",2)
+ i sort s line=" i "_%z("vrc")_"'<"_top_" g "_%zq("tagout") d addline^%mgsqlc(grp,.line)
+ i 'sort s line=" i "_%z("vrc")_"'<"_top_" g "_%zq("tagx") d addline^%mgsqlc(grp,.line)
  q
  ;
  
@@ -1618,8 +1638,11 @@ ggroup ; retrieve data for current update on 'grouped' items
  k gvaru s gvaru=0
  s tk0=""",""""x"""","_qnum
  s ordsub="",com=""
- f i=1:1 q:'$d(order(i))  d outrow21^%mgsqlc2
- s line=" s "_%z("vdata")_"=$g("_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_ordsub_"))" d addline^%mgsqlc(grp,.line)
+ f i=1:1 q:'$d(^mgtmp($j,"group",qnum,i))  d
+ . s x=$g(^mgtmp($j,"group",qnum,i)) ;,y=%z("dsv")_"__order"_$p(^mgtmp($j,"order",i,0),"~",1)_%z("dsv")
+ . s ordsub=ordsub_com_"$s("_x_"="""":"" "",1:"_x_")",com=","
+ . q
+ s line=" k "_%z("vdata")_" m "_%z("vdata")_"="_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_ordsub_")" d addline^%mgsqlc(grp,.line)
  s x="" f  s x=$o(^mgtmp($j,"sqag",qnum,x)) q:x=""  s fun="" f  s fun=$o(^mgtmp($j,"sqag",qnum,x,fun)) q:fun=""  d ggroup1
  k rec0,rec
  q
@@ -1628,29 +1651,31 @@ ggroup1 ; retrieve data for specific function
  n z,ref,funtyp
  s funtyp=$p(fun,"_",1)
  s z=%z("dsv")_fun_"("_x_")"_%z("dsv")
- s line=" s "_%z("vdatax")_"=$p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")" d addline^%mgsqlc(grp,.line)
- i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s line=" s "_z_"="_%z("vdatax")_" i "_%z("vdata")_"="""" s "_z_"=0"
- i funtyp="avg" s line=" s:"_%z("vdata")_"'="""" "_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",2),"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",3) s:"_%z("vdata")_"="""" "_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"=0,"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"=0"
- i funtyp="min" s line=" s:"_%z("vdata")_"'="""" "_z_"=$p(%d,""#"",1),"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=$p(%d,""#"",2) s:"_%z("vdata")_"="""" "_z_"="""","_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=0"
+ s line=" s "_%z("vdatax")_"=$g("_%z("vdata")_"("_^mgtmp($j,"sqag",qnum,x,fun)_"))" d addline^%mgsqlc(grp,.line)
+ i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s line=" s "_z_"="_%z("vdatax")_" i "_z_"="""" s "_z_"=0"
+ i funtyp="avg" s line=" s:"_%z("vdatax")_"'="""" "_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",2),"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",3) s:"_%z("vdatax")_"="""" "_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"=0,"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"=0"
+ i funtyp="min" s line=" s:"_%z("vdatax")_"'="""" "_z_"=$p("_%z("vdatax")_",""#"",1),"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",2) s:"_%z("vdatax")_"="""" "_z_"="""","_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=0"
  d addline^%mgsqlc(grp,.line)
  q
  ;
 ugroup ; update goups
- s line=" s "_%z("vdata")_"="_recc d addline^%mgsqlc(grp,.line)
+ f i=1:1 q:'$d(^mgtmp($j,"outsel",qnum,i))  s x=^(i) d
+ . i x[%z("dsv")&(x["(")&$d(^mgtmp($j,"group",qnum)) s x=0
+ . s line=" s "_%z("vdata")_"("_i_")="_x
+ . d addline^%mgsqlc(grp,.line) ;s recc=recc_rdelc_x,rdelc="_"_$c(34)_"~"_$c(34)_"_" d outrec1
+ . q
  s x="" f  s x=$o(^mgtmp($j,"sqag",qnum,x)) q:x=""  s fun="" f  s fun=$o(^mgtmp($j,"sqag",qnum,x,fun)) q:fun=""  d ugroup1
- ;s gvaru=gvaru+1,gvaru(gvaru)=$c(1)_tk0_$c(1)_%z("pv")_"d"
  s line=" ; set the record" d addline^%mgsqlc(grp,.line)
- s line=" s "_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_ordsub_")="_%z("vdata") d addline^%mgsqlc(grp,.line)
+ s line=" m "_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_ordsub_")="_%z("vdata") d addline^%mgsqlc(grp,.line)
  q
  ;
 ugroup1 ; update group for specific function
  n funtyp,z
- ;s gvaru=gvaru+1
  s funtyp=$p(fun,"_",1)
  s z=%z("dsv")_fun_"("_x_")"_%z("dsv")
- i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s line=" s $p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")="_z
- i funtyp="min" s line=" s $p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")
- i funtyp="avg" s line=" s $p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"_""#""_"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")
+ i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s line=" s "_%z("vdata")_"("_^mgtmp($j,"sqag",qnum,x,fun)_")="_z
+ i funtyp="min" s line=" s "_%z("vdata")_"("_^mgtmp($j,"sqag",qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")
+ i funtyp="avg" s line=" s "_%z("vdata")_"("_^mgtmp($j,"sqag",qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"_""#""_"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")
  d addline^%mgsqlc(grp,.line)
  q
  ;
@@ -2066,6 +2091,7 @@ table2 ; get details for primary key (for indexed search)
  ;
 table3 ; process data item to be retrieved/derived
  i x="*" q
+ i x["(",x[")" s x=$p($p(x,"(",2),")",1)
  s cname=x,ext="",f=""
  i x["." s cname=$p(x,".",2),f=$p(x,".",1)
  i f'=alias,f'=alias_"g" q
@@ -2714,6 +2740,9 @@ word2 s pn=pn+1 i pn>$l(lin," ") q
  i wrd="current_timestamp" s wrd="$$ts^%mgsqls()"
  i wrdlc?1"lower(".e1")" s wrd="$$lcase^%mgsqls("_$e(wrd,7,9999)
  i wrdlc?1"upper(".e1")" s wrd="$$ucase^%mgsqls("_$e(wrd,7,9999)
+ i wrdlc?1"trim(".e1")" s wrd="$$trim^%mgsqls("_$e(wrd,7,9999)
+ i wrdlc?1"rtrim(".e1")" s wrd="$$rtrim^%mgsqls("_$e(wrd,7,9999)
+ i wrdlc?1"ltrim(".e1")" s wrd="$$ltrim^%mgsqls("_$e(wrd,7,9999)
  i wrdlc?1"{d".e1"}" s wrd="$$edate^%mgsqls("_$e(wrd,3,$l(wrd)-1)_","""")"
  i wrd?1"$"1a.e1"("1e.e s wrd=$$func(lin,.pn,wrd,.error) i $l(error) q
  i wrd?1"$$"1a.e1"("1e.e s wrd=$$func(lin,.pn,wrd,.error) i $l(error) q
@@ -2921,13 +2950,16 @@ fun(wrd,sqlfn) ; generate code for in-line functions
  s pre=$p(wrd,%z("df"),1),post=$p(wrd,%z("df"),3,999)
  s fn=$p(wrd,%z("df"),2)
  s fun=sqlfn(fn),fun=$p(fun,"(",1)
- i fun?1"$"1a.e s code=$$m(.sqlfn,fn)
- i fun?1"$$"1a.e s code=$$ext(.sqlfn,fn)
+ i fun?1"$"1a.e s code=$$m(.sqlfn,fn,fun)
+ i fun?1"$$"1a.e s code=$$ext(.sqlfn,fn,fun)
  s code=pre_code_post
  q code
  ;
-ext(sqlfn,fn) ; generate code for m extrinsic function
+ext(sqlfn,fn,fun) ; generate code for m extrinsic function
  n line,sub,i,com
+ i fun="$$trim^%mgsqls",'$d(sqlfn(fn,"p",2)) s sqlfn(fn,"p",2,1)=""" """
+ i fun="$$rtrim^%mgsqls",'$d(sqlfn(fn,"p",2)) s sqlfn(fn,"p",2,1)=""" """
+ i fun="$$ltrim^%mgsqls",'$d(sqlfn(fn,"p",2)) s sqlfn(fn,"p",2,1)=""" """
  s line=fun_"("
  s sub=fun_"("
  s com="" f i=1:1 q:'$d(sqlfn(fn,"p",i))  s sub=sub_com_sqlfn(fn,"p",i,1),com=","
@@ -2936,7 +2968,7 @@ ext(sqlfn,fn) ; generate code for m extrinsic function
  ;b
  q line
  ;
-m(sqlfn,fn) ; m function
+m(sqlfn,fn,fun) ; m function
  n line,sub,i,com
  s line=fun_"("
  s sub=fun_"("
@@ -2976,13 +3008,15 @@ betweenx ; exit
 like(wrd,error) ; form expression for sql style pattern-match
  n wrd1,chr,i
  i wrd'?1""""1e.e1"""",wrd'[%z("ds") s error="invalid 'like' argument "_wrd,error(5)="HY000" q ""
- s wrd1=$e(wrd,2,$l(wrd)-1),wrd=""
- f i=1:1:$l(wrd1) s chr=$e(wrd1,i) s wrd=wrd_$s(chr="_":"1e",chr="%":".e",1:1_$c(34)_chr_$c(34))
+ i wrd[%z("ds") s wrd=$$rstring^%mgsqlp(wrd)
+ s wrd1=wrd i wrd?1""""1e.e1"""" s wrd1=$e(wrd,2,$l(wrd)-1)
+ s wrd="" f i=1:1:$l(wrd1) s chr=$e(wrd1,i) s wrd=wrd_$s(chr="_":"1e",chr="%":".e",1:1_$c(34)_chr_$c(34))
  q ""
  ;
 mpm(wrd,error) ; form expression for m style pattern-match
  n cn,chr,pchr,x,i
  s cn=0,chr=""
+ i wrd[%z("ds") s wrd=$$rstring^%mgsqlp(wrd)
 mpm1 s pchr=chr,cn=cn+1 i cn>$l(wrd) g mpmx
  s chr=$e(wrd,cn)
  i chr="."!(chr?1n) f i=cn+1:1 s x=$e(wrd,i) q:x'?1n&(x'=".")  s cn=cn+1,chr=chr_x
@@ -3156,8 +3190,8 @@ sql1 ; sql - process/compile and fire off routine
  . i cname["(" d  q
  . . s ag=$p(cname,"("),cname=$p($p(cname,"(",2,999),")",1)
  . . i cname["." s cname=$p(cname,".",2)
- . . s ag=$$trim^%mgsqln(ag)
- . . s cname=$$trim^%mgsqln(cname)
+ . . s ag=$$trim^%mgsqln(ag," ")
+ . . s cname=$$trim^%mgsqln(cname," ")
  . . i cname="" s cname="col_"_i
  . . s cname=ag_"-"_cname
  . . s cname=$tr(cname,":","")
@@ -5006,7 +5040,7 @@ cdel2 s pn=pn+1 i pn>$l(txt," ") g cdel1r
  s ^mgtmp($j,"cmnd",qnum,wrd0)=ln
 cdel2r s txtn=txtn_" "_pre_wrd_pst
  g cdel2
-cdel1r s txtn=$$trim^%mgsqls(txtn) i '$l(txtn) k wrk(ln) g cdel1
+cdel1r s txtn=$$trim^%mgsqls(txtn," ") i '$l(txtn) k wrk(ln) g cdel1
  s wrk(ln)=txtn,txtn=""
  g cdel1
 cdelx ;
@@ -5052,8 +5086,8 @@ cdel71 s pre=$p(line,dlm,1,pn-1),post=$p(line,dlm,pn,9999)
 rems ; trim and remove surplus spaces from txt
  n pn,wrd,txt1
  i '$l(txt) q
- s txt=$$trim^%mgsqls(txt) i '$l(txt) q
- f pn=1:1:$l(txt," ") s txt1=$p(txt," ",pn+1,9999) i txt1?1" ".e s txt1=$$ltrim^%mgsqls(txt1),txt=$p(txt," ",1,pn)_" "_txt1
+ s txt=$$trim^%mgsqls(txt," ") i '$l(txt) q
+ f pn=1:1:$l(txt," ") s txt1=$p(txt," ",pn+1,9999) i txt1?1" ".e s txt1=$$ltrim^%mgsqls(txt1," "),txt=$p(txt," ",1,pn)_" "_txt1
  q
  ;
 remsc ; remove spaces from comma in context of natural separator
@@ -5244,7 +5278,7 @@ extr4 ; add update as 'subquery zero'
  ;
 extra ; add text to temporary (by (sub) query) array
  n i,n
- s txt=$$trim^%mgsqls(txt)
+ s txt=$$trim^%mgsqls(txt," ")
  i '$l(txt) q
  f i=2:2 s n=$p(txt,%z("dq"),i) q:n'?1n.n  i n<qnum s error="error in brackets with respect to sub-statements "_n_" and "_qnum,error(5)="HY000" q
  i $l(error) q
@@ -5317,7 +5351,7 @@ logb3 s del=%z("dc") i $l($p(txt1,%z("dq"),1))<$l($p(txt1,%z("dc"),1)) s del=%z(
  ;
 logba ; add line to final logic block
  n i,n
- s txt=$$trim^%mgsqls(txt)
+ s txt=$$trim^%mgsqls(txt," ")
  i '$l(txt) q
  s log=log+1,log(blkno,log)=txt,txt=""
  q
@@ -5337,7 +5371,7 @@ sqlb3 i txt1'[%z("dc") s txt=txt_" "_txt1 g sqlb2
 sqlba ; add line to final array
  n i,n
  f i=2:2 s n=$p(txt,%z("dq"),i) q:n'?1n.n  d sqlba1
- s txt=$$trim^%mgsqls(txt)
+ s txt=$$trim^%mgsqls(txt," ")
  i '$l(txt) q
  s sql=sql+1,sql(qnum,sql)=txt,txt=""
  q
@@ -5549,20 +5583,22 @@ flush() ; flush output buffer
  w *-3
  q
  ;
-trim(x) ; trim leading/trailing spaces from text
- q $$ltrim($$rtrim(x))
+trim(x,chrs) ; trim leading/trailing spaces from text
+ q $$ltrim($$rtrim(x,chrs),chrs)
  ;
-ltrim(x) ; trim leading spaces from text
- f  q:$e(x,1)'=" "  s x=$e(x,2,9999)
+ltrim(x,chrs) ; trim leading spaces from text
+ i chrs="" s chrs=" "
+ f  q:chrs'[$e(x,1)  s x=$e(x,2,9999) i x="" q
+ q x
+ ;
+rtrim(x,chrs) ; trim trailing spaces from text
+ n len
+ i chrs="" s chrs=" "
+ s len=$l(x) f  q:chrs'[$e(x,len)  s x=$e(x,1,len-1),len=len-1 i x="" q
  q x
  ;
 rreplace(x,this,with) ; recursive replace
  f  q:$e(x,1)'[this  s x=$p(x,this,1)_with_$p(x,this,2,9999)
- q x
- ;
-rtrim(x) ; trim trailing spaces from text
- n len
- s len=$l(x) f  q:$e(x,len)'=" "  s x=$e(x,1,len-1),len=len-1
  q x
  ;
 ucase(x) ; convert string to upper-case
@@ -5635,7 +5671,7 @@ ddate(mdate,format) ; decode M date
 edate(ddate,format) ; encode M date
  n dd,dj,djstr,dl,dlm,dm,dy,i,mdate,x,y,ok
  i ddate="" q ""
- s ddate=$$ltrim(ddate)
+ s ddate=$$ltrim(ddate," ")
  i ddate?8n s dy=$e(ddate,1,4),dm=$e(ddate,5,6),dd=$e(ddate,7,8) g edate1
  i ddate?4n1"-"2n1"-"2n s dy=$p(ddate,"-",1),dm=$p(ddate,"-",2),dd=$p(ddate,"-",3) g edate1
  i ddate["." s dlm="."
@@ -5832,7 +5868,7 @@ verify1 s ln=ln+1 i '$d(sql(qnum,ln)) g verifyx
  i cmnd="group" d group^%mgsqlv2(dbid,.sql,qnum,.arg,.error) i $l(error) g verifyx
  i cmnd="having" d having^%mgsqlv2(dbid,.sql,qnum,.arg,.error) i $l(error) g verifyx
  g verify1
-verifyx i '$l(error),qnum=1,$d(sql("union",qnum)) s ^mgtmp($j,"sel",qnum)="distinct"
+verifyx i '$l(error),qnum=1,$d(sql("union",qnum)) s ^mgtmp($j,"sel",qnum,0)="distinct"
  q
  ;
 grp ; look for auto-group situation in outer query
@@ -6092,16 +6128,17 @@ order2 s ^mgtmp($j,"order",itemno)=sel,^mgtmp($j,"order",itemno,0)=num_"~"_dir
  q
  ;
 select(dbid,sql,qnum,arg,error) ; validate 'select' statement
- n opu,op,opu,argn,args,snum,snum1,itemno,item
+ n opu,op,opu,opn,argn,args,snum,snum1,itemno,item,x
  s op="" i arg?1an.an1" "1e.e s op=$p(arg," ",1),arg=$p(arg," ",2,999)
  s opu=$$lcase^%mgsqls(op)
- i opu'="",opu'="distinct" s error="invalid row operator '"_op_"' in 'select' statement",error(5)="HY000" g selectx
+ i opu'="",opu'="distinct",opu'="top" s error="invalid row operator '"_op_"' in 'select' statement",error(5)="HY000" g selectx
  i opu="distinct" s op=opu
- s ^mgtmp($j,"sel",qnum)=op
+ i opu="top" s op=opu,opn=1 s x=$p(arg," ",1) s:(x?1n.n) opn=x,arg=$p(arg," ",2,999) s op=op_"#"_opn
+ s ^mgtmp($j,"sel",qnum,0)=op
  s argn=$$arg^%mgsqle(arg,.args)
  i qnum>1,'$d(sql("union",qnum)),$d(args(2)) s error="sub-query 'select' statements may have only 1 output",error(5)="HY000" g selectx
  s (snum,snum1)=0
- f itemno=1:1 q:'$d(args(itemno))  s item=$$trim^%mgsqls(args(itemno)) d select1(dbid,qnum,itemno,item,.error) i $l(error) q
+ f itemno=1:1 q:'$d(args(itemno))  s item=$$trim^%mgsqls(args(itemno)," ") d select1(dbid,qnum,itemno,item,.error) i $l(error) q
  i $l(error) g selectx
  i qnum'=1,$d(sql("union",qnum)) d union(qnum,.error) i $l(error) g selectx
 selectx i $l(error) s error(0)="select",error(1)=qnum
@@ -6208,6 +6245,9 @@ sqlfun(sqlfun) ; translate SQL function name to M equivalent
  s mfun=""
  i sqlfun="lower" s mfun="$$lcase^%mgsqls"
  i sqlfun="upper" s mfun="$$ucase^%mgsqls"
+ i sqlfun="trim" s mfun="$$trim^%mgsqls"
+ i sqlfun="rtrim" s mfun="$$rtrim^%mgsqls"
+ i sqlfun="ltrim" s mfun="$$ltrim^%mgsqls"
  q mfun
  ;
  
@@ -6518,14 +6558,14 @@ table(dbid,sql,error) ; create a new table
  s (obr,cbr)=0,item="",cn=0 f i=1:1 s chr=$e(cols,i) q:chr=""  d
  . i chr="(" s obr=obr+1
  . i chr=")" s cbr=cbr+1
- . i chr=",",obr=cbr s cn=cn+1,cols(cn)=$$trim^%mgsqls(item),(obr,cbr)=0,item="" q
+ . i chr=",",obr=cbr s cn=cn+1,cols(cn)=$$trim^%mgsqls(item," "),(obr,cbr)=0,item="" q
  . s item=item_chr
  . q
- i item'="" s cn=cn+1,cols(cn)=$$trim^%mgsqls(item)
+ i item'="" s cn=cn+1,cols(cn)=$$trim^%mgsqls(item," ")
  s opt="" i crt["/*!" s opt=$p($p(crt,"/*!",2,999),"*/",1)
  f i=1:1:$l(opt,",") s item=$p(opt,",",i) d
- . s name=$$trim^%mgsqls($p(item,"=",1))
- . s value=$$trim^%mgsqls($p(item,"=",2))
+ . s name=$$trim^%mgsqls($p(item,"=",1)," ")
+ . s value=$$trim^%mgsqls($p(item,"=",2)," ")
  . i name'="" s tname($$lcase^%mgsqls(name))=value
  . q
  s rc=$$ctable^%mgsqld(dbid,.tname,.cols)
@@ -6544,8 +6584,8 @@ tindex(dbid,sql,error) ; create a new index for table
  f i=1:1:$l(cols,",") s cols(i)=$p(cols,",",i)
  s opt="" i crt["/*!" s opt=$p($p(crt,"/*!",2,999),"*/",1)
  f i=1:1:$l(opt,",") s item=$p(opt,",",i) d
- . s name=$$trim^%mgsqls($p(item,"=",1))
- . s value=$$trim^%mgsqls($p(item,"=",2))
+ . s name=$$trim^%mgsqls($p(item,"=",1)," ")
+ . s value=$$trim^%mgsqls($p(item,"=",2)," ")
  . i name'="" s tname($$lcase^%mgsqls(name))=value
  . q
  s rc=$$cindex^%mgsqld(dbid,.tname,ino,.cols)
@@ -6559,10 +6599,10 @@ proc(dbid,sql,error) ; create a new procedure
  s item="",obr=0,cbr=0 f i=1:1 s chr=$e(crt,i) q:chr=""  d
  . i chr="(" s obr=obr+1
  . i chr=")" s cbr=cbr+1
- . i chr=",",obr=cbr s cols($i(cols))=$$trim^%mgsqls(item),item="",obr=0,cbr=0 q
+ . i chr=",",obr=cbr s cols($i(cols))=$$trim^%mgsqls(item," "),item="",obr=0,cbr=0 q
  . s item=item_chr
  . q
- i item'="" s cols($i(cols))=$$trim^%mgsqls(item)
+ i item'="" s cols($i(cols))=$$trim^%mgsqls(item," ")
  s rc=$$cproc^%mgsqld(dbid,pname,.cols)
  q
  ;
@@ -6722,7 +6762,7 @@ fromxx ; compile 'on' predicates
 from1(dbid,qnum,tnum,tname) ; validate each table selected from
  n %ref,i,ii,j,x,y,z,z1,zz,ino,inof,exp,pn,nat,jtyp,ok,com
  f x="inner","left","right","full" s jtyp(x)=""
- s (exp,pn,obr,cbr)=0,y="",com="" f i=1:1:$l(tname," ") s x=$$trim^%mgsqls($p(tname," ",i)) i $l(x) d
+ s (exp,pn,obr,cbr)=0,y="",com="" f i=1:1:$l(tname," ") s x=$$trim^%mgsqls($p(tname," ",i)," ") i $l(x) d
  . i x["(" s obr=obr+1
  . i x[")" s cbr=cbr+1
  . s y=y_com_x,com=" "
@@ -6833,7 +6873,7 @@ nat(dbid,qnum,tnum,tname,nat,exp,error) ; extract join parameters
  s x=exp(i+1)
  i x'?1"("1e.e1")" s error="syntax error in parameters to 'using' statement",error(5)="HY000" q
  s x=$p($p(x,"(",2),")",1)
- f ii=1:1:$l(x,",") s cname=$$trim^%mgsqls($p(x,",",ii)) i $l(cname) s ^mgtmp($j,"from","z",qnum,"jn",tnum+1,cname)=""
+ f ii=1:1:$l(x,",") s cname=$$trim^%mgsqls($p(x,",",ii)," ") i $l(cname) s ^mgtmp($j,"from","z",qnum,"jn",tnum+1,cname)=""
  i '$d(^mgtmp($j,"from","z",qnum,"jn",tnum+1)) s error="no valid parameters for 'using' statement found",error(5)="HY000" q
  k exp(i),exp(i+1) f i=i+2:1 q:'$d(exp(i))  s exp(i-2)=exp(i) k exp(i)
  q
@@ -6841,7 +6881,7 @@ naton ; 'on' statement
  s x=exp(i+1)
  i x?1"("1e.e1")" s x=$p($p(x,"(",2),")",1)
  s ^mgtmp($j,"from","on",qnum,$i(^mgtmp($j,"from","on",qnum)))=x
- f ii=1:1:$l(x," ") s cname=$$trim^%mgsqls($p(x," ",ii)),alias=$p(cname,".",1),cname=$p(cname,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
+ f ii=1:1:$l(x," ") s cname=$$trim^%mgsqls($p(x," ",ii)," "),alias=$p(cname,".",1),cname=$p(cname,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
  k exp(i),exp(i+1) f i=i+2:1 q:'$d(exp(i))  s exp(i-2)=exp(i) k exp(i)
  q
  ;
@@ -7061,9 +7101,9 @@ read(head,cgi,data) ; read request
  i line["?" s cgi("QUERY_STRING")=$p($p(line," ",2),"?",2,9999)
  s cgi("SERVER_PROTOCOL")=$p(line," ",3)
  f i=2:1 s line=$p(head,$c(13,10),i) q:line=""  d
- . s name=$tr($$ucase^%mgsqls($$rtrim^%mgsqls($p(line,":",1))),"-","_")
- . i name="CONTENT_LENGTH"!(name="CONTENT_TYPE") s cgi(name)=$$ltrim^%mgsqls($p(line,":",2,999)) q
- . s cgi("HTTP_"_name)=$$ltrim^%mgsqls($p(line,":",2,999))
+ . s name=$tr($$ucase^%mgsqls($$rtrim^%mgsqls($p(line,":",1)," ")),"-","_")
+ . i name="CONTENT_LENGTH"!(name="CONTENT_TYPE") s cgi(name)=$$ltrim^%mgsqls($p(line,":",2,999)," ") q
+ . s cgi("HTTP_"_name)=$$ltrim^%mgsqls($p(line,":",2,999)," ")
  . q
  s clen=+$g(cgi("CONTENT_LENGTH")) i clen=0 q 1
  s data="",len=0 f  r x#(clen-len) s data=data_x,len=len+$l(x) i len=clen q
@@ -7103,8 +7143,8 @@ sql(sql) ; run query
  . i cname["(" d  q
  . . s ag=$p(cname,"("),cname=$p($p(cname,"(",2,999),")",1)
  . . i cname["." s cname=$p(cname,".",2)
- . . s ag=$$trim^%mgsqln(ag)
- . . s cname=$$trim^%mgsqln(cname)
+ . . s ag=$$trim^%mgsqln(ag," ")
+ . . s cname=$$trim^%mgsqln(cname," ")
  . . i cname="" s cname="col_"_i
  . . s cname=ag_"-"_cname
  . . s cname=$tr(cname,":","")
@@ -7230,7 +7270,6 @@ main(dbid,line,info,error) ; compile query
  ;n ddl,rou,qid,sql
  n (%z,dbid,line,info,error)
  s $zt="maine^%mgsqlx" ; new $ztrap set $ztrap="zgoto "_$zlevel_":maine^%mgsqlx"
- ;k ^mgsqlx
  s rou="",error=""
  d gvars(.%z)
  s ddl=$$verify(dbid,.line,.error) i ddl=1 g exit
