@@ -73,14 +73,14 @@ table(dbid,sql,error) ; create a new table
  s (obr,cbr)=0,item="",cn=0 f i=1:1 s chr=$e(cols,i) q:chr=""  d
  . i chr="(" s obr=obr+1
  . i chr=")" s cbr=cbr+1
- . i chr=",",obr=cbr s cn=cn+1,cols(cn)=$$trim^%mgsqls(item),(obr,cbr)=0,item="" q
+ . i chr=",",obr=cbr s cn=cn+1,cols(cn)=$$trim^%mgsqls(item," "),(obr,cbr)=0,item="" q
  . s item=item_chr
  . q
- i item'="" s cn=cn+1,cols(cn)=$$trim^%mgsqls(item)
+ i item'="" s cn=cn+1,cols(cn)=$$trim^%mgsqls(item," ")
  s opt="" i crt["/*!" s opt=$p($p(crt,"/*!",2,999),"*/",1)
  f i=1:1:$l(opt,",") s item=$p(opt,",",i) d
- . s name=$$trim^%mgsqls($p(item,"=",1))
- . s value=$$trim^%mgsqls($p(item,"=",2))
+ . s name=$$trim^%mgsqls($p(item,"=",1)," ")
+ . s value=$$trim^%mgsqls($p(item,"=",2)," ")
  . i name'="" s tname($$lcase^%mgsqls(name))=value
  . q
  s rc=$$ctable^%mgsqld(dbid,.tname,.cols)
@@ -99,8 +99,8 @@ tindex(dbid,sql,error) ; create a new index for table
  f i=1:1:$l(cols,",") s cols(i)=$p(cols,",",i)
  s opt="" i crt["/*!" s opt=$p($p(crt,"/*!",2,999),"*/",1)
  f i=1:1:$l(opt,",") s item=$p(opt,",",i) d
- . s name=$$trim^%mgsqls($p(item,"=",1))
- . s value=$$trim^%mgsqls($p(item,"=",2))
+ . s name=$$trim^%mgsqls($p(item,"=",1)," ")
+ . s value=$$trim^%mgsqls($p(item,"=",2)," ")
  . i name'="" s tname($$lcase^%mgsqls(name))=value
  . q
  s rc=$$cindex^%mgsqld(dbid,.tname,ino,.cols)
@@ -114,10 +114,10 @@ proc(dbid,sql,error) ; create a new procedure
  s item="",obr=0,cbr=0 f i=1:1 s chr=$e(crt,i) q:chr=""  d
  . i chr="(" s obr=obr+1
  . i chr=")" s cbr=cbr+1
- . i chr=",",obr=cbr s cols($i(cols))=$$trim^%mgsqls(item),item="",obr=0,cbr=0 q
+ . i chr=",",obr=cbr s cols($i(cols))=$$trim^%mgsqls(item," "),item="",obr=0,cbr=0 q
  . s item=item_chr
  . q
- i item'="" s cols($i(cols))=$$trim^%mgsqls(item)
+ i item'="" s cols($i(cols))=$$trim^%mgsqls(item," ")
  s rc=$$cproc^%mgsqld(dbid,pname,.cols)
  q
  ;

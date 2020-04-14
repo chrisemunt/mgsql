@@ -48,7 +48,7 @@ fromxx ; compile 'on' predicates
 from1(dbid,qnum,tnum,tname) ; validate each table selected from
  n %ref,i,ii,j,x,y,z,z1,zz,ino,inof,exp,pn,nat,jtyp,ok,com
  f x="inner","left","right","full" s jtyp(x)=""
- s (exp,pn,obr,cbr)=0,y="",com="" f i=1:1:$l(tname," ") s x=$$trim^%mgsqls($p(tname," ",i)) i $l(x) d
+ s (exp,pn,obr,cbr)=0,y="",com="" f i=1:1:$l(tname," ") s x=$$trim^%mgsqls($p(tname," ",i)," ") i $l(x) d
  . i x["(" s obr=obr+1
  . i x[")" s cbr=cbr+1
  . s y=y_com_x,com=" "
@@ -159,7 +159,7 @@ nat(dbid,qnum,tnum,tname,nat,exp,error) ; extract join parameters
  s x=exp(i+1)
  i x'?1"("1e.e1")" s error="syntax error in parameters to 'using' statement",error(5)="HY000" q
  s x=$p($p(x,"(",2),")",1)
- f ii=1:1:$l(x,",") s cname=$$trim^%mgsqls($p(x,",",ii)) i $l(cname) s ^mgtmp($j,"from","z",qnum,"jn",tnum+1,cname)=""
+ f ii=1:1:$l(x,",") s cname=$$trim^%mgsqls($p(x,",",ii)," ") i $l(cname) s ^mgtmp($j,"from","z",qnum,"jn",tnum+1,cname)=""
  i '$d(^mgtmp($j,"from","z",qnum,"jn",tnum+1)) s error="no valid parameters for 'using' statement found",error(5)="HY000" q
  k exp(i),exp(i+1) f i=i+2:1 q:'$d(exp(i))  s exp(i-2)=exp(i) k exp(i)
  q
@@ -167,7 +167,7 @@ naton ; 'on' statement
  s x=exp(i+1)
  i x?1"("1e.e1")" s x=$p($p(x,"(",2),")",1)
  s ^mgtmp($j,"from","on",qnum,$i(^mgtmp($j,"from","on",qnum)))=x
- f ii=1:1:$l(x," ") s cname=$$trim^%mgsqls($p(x," ",ii)),alias=$p(cname,".",1),cname=$p(cname,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
+ f ii=1:1:$l(x," ") s cname=$$trim^%mgsqls($p(x," ",ii)," "),alias=$p(cname,".",1),cname=$p(cname,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
  k exp(i),exp(i+1) f i=i+2:1 q:'$d(exp(i))  s exp(i-2)=exp(i) k exp(i)
  q
  ;

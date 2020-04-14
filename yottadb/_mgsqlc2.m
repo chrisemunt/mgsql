@@ -94,7 +94,6 @@ sqinc1 ; include subquery
 outrec ; set up record for output and test for 'distinct'
  f i=1:1 q:'$d(^mgtmp($j,"sel",qnum,i))  s lvar=$p(^mgtmp($j,"sel",qnum,i),%z("dsv"),2) i $l(lvar) d
  . n i
- . ;f i=1:1 q:'$d(^mgtmp($j,"e",lvar,i))  s line=^(i) d addline^%mgsqlc(grp,.line)
  . s pvar=$$subvar1^%mgsqlc(lvar)
  . s lvar=$p($p(lvar,")",1),"(",2) i $l(lvar) s pvar=$$subvar1^%mgsqlc(lvar)
  . q
@@ -106,7 +105,7 @@ outrec ; set up record for output and test for 'distinct'
  s rec="",recc="",rdel="",rdelc=""
  f i=1:1 q:'$d(^mgtmp($j,"outsel",qnum,i))  s x=^(i) d outrec2
  i $d(^mgtmp($j,"order")) s rec=recc
- i $g(^mgtmp($j,"sel",qnum))'="distinct"!$d(^mgtmp($j,"group",qnum)) q
+ i $g(^mgtmp($j,"sel",qnum,0))'="distinct"!$d(^mgtmp($j,"group",qnum)) q
  s line=" s "_rec d addline^%mgsqlc(grp,.line)
  s line=" s "_%z("vck")_"="_recc_","_%z("vckcrc")_"="_"$zcrc("_%z("vck")_",7)" d addline^%mgsqlc(grp,.line)
  s line=" i $d("_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_"""x""_"_%z("vck")_")) g "_%zq("tag",qnum)
@@ -147,13 +146,20 @@ outrow ; set up output to intermediate file
  q
 outrow1 ; output from outer query - take data as it comes
  s %zq("tagp")=$g(%zq("tag",qnum))
- i '$g(^mgtmp($j,"unique",qnum)) d row^%mgsqlc3
+ i '$g(^mgtmp($j,"unique",qnum)) d row^%mgsqlc3(grp,qnum,0,""),top^%mgsqlc3(grp,qnum,0)
  s line=line_" g "_%zq("tagp") d addline^%mgsqlc(grp,.line) q
  q
 outrow2 ; output is 'ordered'
- s com="",ordsub="" f i=1:1 q:'$d(order(i))  d outrow21
+ s com="",ordsub="" f i=1:1 q:'$d(^mgtmp($j,"order",i))  d
+ . s x=$g(^mgtmp($j,"order",i)) ;,y=%z("dsv")_"__order"_$p(^mgtmp($j,"order",i,0),"~",1)_%z("dsv")
+ . s ordsub=ordsub_com_"$s("_x_"="""":"" "",1:"_x_")",com=","
+ . q
+ s line=" k %zo("_%z("vrc")_")" d addline^%mgsqlc(grp,.line)
+ s outsel=^mgtmp($j,"outsel",qnum)
+ f i=1:1:outsel s line=line_" s %zo("_%z("vrc")_","_i_")="_^mgtmp($j,"outsel",qnum,i) d addline^%mgsqlc(grp,.line)
  s line=" s "_%z("pv")_"n="_%z("pv")_"n+1" d addline^%mgsqlc(grp,.line)
- d linel s line=" s "_%z("ctg")_"("_%z("cts")_","_"""x"",1,"_ordsub_","_%z("pv")_"n"_")="_"sqlcnt(0)" d addline^%mgsqlc(grp,.line)
+ ;d linel
+ s line=" m "_%z("ctg")_"("_%z("cts")_","_"""x"",1,"_ordsub_","_%z("pv")_"n"_")="_"%zo("_%z("vrc")_")" d addline^%mgsqlc(grp,.line)
  s line=" g "_%zq("tag",qnum) d addline^%mgsqlc(grp,.line)
  q
  ;
@@ -162,12 +168,6 @@ outrowsq ; output from inner query
  s line=" s:"_x_"="""" "_x_"="" """ d addline^%mgsqlc(grp,.line)
  ; add data
  s line=" s "_%z("ctg")_"("_%z("cts")_","_qnum_","_x_")=""""" d addline^%mgsqlc(grp,.line)
- q
- ;
-outrow21 ; set up order
- s x=$p(order(i),"~",1),y=$p(order(i),"~",2)
- s ordsub=ordsub_com_y,com=","
- s line=" s "_y_"=$s("_x_"="""":"" "",1:"_x_")" d addline^%mgsqlc(grp,.line)
  q
  ;
 linel ; split long lines
@@ -187,7 +187,7 @@ order(sql,qnum,tnum,data,dir) ; determine order in which data will come out
  i qnum'=1!(tnum'=1)!$d(^mgtmp($j,"group",qnum))!$d(sql("union",1)) q
  s key=data(qnum,tnum,"key")
  i '$d(^mgtmp($j,"order")) q
- i '%d(^mgtmp($j,"order",$l(key,","))) q
+ i '$d(^mgtmp($j,"order",$l(key,","))) q
  s ok=1,kno=1
  f i=1:1:$l(key,",") s item=$p(key,",",i) s ok=$$order1(qnum,key,item,.kno,.dir) i 'ok q
  i 'ok k dir q
@@ -196,7 +196,8 @@ order(sql,qnum,tnum,data,dir) ; determine order in which data will come out
  ;
 order1(qnum,key,item,kno,dir) ; check if order is in keeping with required order
  n x,ord,ok
- i item'[%z("dsv") q
+ s ok=0
+ i item'[%z("dsv") q 0
  s ord=$g(^mgtmp($j,"order",kno,0))
  s x=$p(ord,",",kno),dir=$p(x,"~",2),x=$p(x,"~",1) i x="" q 1
  s x=^mgtmp($j,"sel",qnum,x) i key'[x q 0
@@ -211,7 +212,7 @@ order1(qnum,key,item,kno,dir) ; check if order is in keeping with required order
  ;
  s dir=$s(dir="desc":"-1",1:"1")
  s dir(x)=dir
- q
+ q ok
  ;
 order2(qnum,item) ; check if 'leading' subscript is uniquely fixed
  n link,op,cnst,or
@@ -229,8 +230,8 @@ dist(qnum,tnum) ; optimise distinct clause if possible
  f i=1:1:outsel q:'$d(^mgtmp($j,"sel",qnum,i))  s x=^(i),dn("x",x)=""
  f i=1:1:$l(z,",") s y=$p(zkey,",",i) i y[%z("dsv") q:'$d(dn("x",y))  k dn("x",y) s dn=i
  i $d(dn("x")) q zkey
- i dn=$l(zkey,",") s ^mgtmp($j,"sel",qnum)=""
- i dn<$l(zkey,","),'$d(^mgtmp($j,"sel",qnum,outsel+1)) s zkey=$p(zkey,",",1,dn),^mgtmp($j,"sel",qnum)=""
+ i dn=$l(zkey,",") s ^mgtmp($j,"sel",qnum,0)=""
+ i dn<$l(zkey,","),'$d(^mgtmp($j,"sel",qnum,outsel+1)) s zkey=$p(zkey,",",1,dn),^mgtmp($j,"sel",qnum,0)=""
  q zkey
  ;
 delrec ; delete selected record

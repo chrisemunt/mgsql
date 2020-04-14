@@ -28,7 +28,6 @@ main(dbid,line,info,error) ; compile query
  ;n ddl,rou,qid,sql
  n (%z,dbid,line,info,error)
  new $ztrap set $ztrap="zgoto "_$zlevel_":maine^%mgsqlx"
- ;k ^mgsqlx
  s rou="",error=""
  d gvars(.%z)
  s ddl=$$verify(dbid,.line,.error) i ddl=1 g exit

@@ -75,20 +75,22 @@ flush() ; flush output buffer
  w *-3
  q
  ;
-trim(x) ; trim leading/trailing spaces from text
- q $$ltrim($$rtrim(x))
+trim(x,chrs) ; trim leading/trailing spaces from text
+ q $$ltrim($$rtrim(x,chrs),chrs)
  ;
-ltrim(x) ; trim leading spaces from text
- f  q:$e(x,1)'=" "  s x=$e(x,2,9999)
+ltrim(x,chrs) ; trim leading spaces from text
+ i chrs="" s chrs=" "
+ f  q:chrs'[$e(x,1)  s x=$e(x,2,9999) i x="" q
+ q x
+ ;
+rtrim(x,chrs) ; trim trailing spaces from text
+ n len
+ i chrs="" s chrs=" "
+ s len=$l(x) f  q:chrs'[$e(x,len)  s x=$e(x,1,len-1),len=len-1 i x="" q
  q x
  ;
 rreplace(x,this,with) ; recursive replace
  f  q:$e(x,1)'[this  s x=$p(x,this,1)_with_$p(x,this,2,9999)
- q x
- ;
-rtrim(x) ; trim trailing spaces from text
- n len
- s len=$l(x) f  q:$e(x,len)'=" "  s x=$e(x,1,len-1),len=len-1
  q x
  ;
 ucase(x) ; convert string to upper-case
@@ -158,7 +160,7 @@ ddate(mdate,format) ; decode M date
 edate(ddate,format) ; encode M date
  n dd,dj,djstr,dl,dlm,dm,dy,i,mdate,x,y,ok
  i ddate="" q ""
- s ddate=$$ltrim(ddate)
+ s ddate=$$ltrim(ddate," ")
  i ddate?8n s dy=$e(ddate,1,4),dm=$e(ddate,5,6),dd=$e(ddate,7,8) g edate1
  i ddate?4n1"-"2n1"-"2n s dy=$p(ddate,"-",1),dm=$p(ddate,"-",2),dd=$p(ddate,"-",3) g edate1
  i ddate["." s dlm="."

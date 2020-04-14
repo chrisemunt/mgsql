@@ -130,6 +130,9 @@ word2 s pn=pn+1 i pn>$l(lin," ") q
  i wrd="current_timestamp" s wrd="$$ts^%mgsqls()"
  i wrdlc?1"lower(".e1")" s wrd="$$lcase^%mgsqls("_$e(wrd,7,9999)
  i wrdlc?1"upper(".e1")" s wrd="$$ucase^%mgsqls("_$e(wrd,7,9999)
+ i wrdlc?1"trim(".e1")" s wrd="$$trim^%mgsqls("_$e(wrd,7,9999)
+ i wrdlc?1"rtrim(".e1")" s wrd="$$rtrim^%mgsqls("_$e(wrd,7,9999)
+ i wrdlc?1"ltrim(".e1")" s wrd="$$ltrim^%mgsqls("_$e(wrd,7,9999)
  i wrdlc?1"{d".e1"}" s wrd="$$edate^%mgsqls("_$e(wrd,3,$l(wrd)-1)_","""")"
  i wrd?1"$"1a.e1"("1e.e s wrd=$$func(lin,.pn,wrd,.error) i $l(error) q
  i wrd?1"$$"1a.e1"("1e.e s wrd=$$func(lin,.pn,wrd,.error) i $l(error) q

@@ -112,7 +112,7 @@ cdel2 s pn=pn+1 i pn>$l(txt," ") g cdel1r
  s ^mgtmp($j,"cmnd",qnum,wrd0)=ln
 cdel2r s txtn=txtn_" "_pre_wrd_pst
  g cdel2
-cdel1r s txtn=$$trim^%mgsqls(txtn) i '$l(txtn) k wrk(ln) g cdel1
+cdel1r s txtn=$$trim^%mgsqls(txtn," ") i '$l(txtn) k wrk(ln) g cdel1
  s wrk(ln)=txtn,txtn=""
  g cdel1
 cdelx ;
@@ -158,8 +158,8 @@ cdel71 s pre=$p(line,dlm,1,pn-1),post=$p(line,dlm,pn,9999)
 rems ; trim and remove surplus spaces from txt
  n pn,wrd,txt1
  i '$l(txt) q
- s txt=$$trim^%mgsqls(txt) i '$l(txt) q
- f pn=1:1:$l(txt," ") s txt1=$p(txt," ",pn+1,9999) i txt1?1" ".e s txt1=$$ltrim^%mgsqls(txt1),txt=$p(txt," ",1,pn)_" "_txt1
+ s txt=$$trim^%mgsqls(txt," ") i '$l(txt) q
+ f pn=1:1:$l(txt," ") s txt1=$p(txt," ",pn+1,9999) i txt1?1" ".e s txt1=$$ltrim^%mgsqls(txt1," "),txt=$p(txt," ",1,pn)_" "_txt1
  q
  ;
 remsc ; remove spaces from comma in context of natural separator

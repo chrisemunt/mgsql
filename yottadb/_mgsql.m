@@ -34,7 +34,8 @@ v() ; version and date
  ;s v="1.0",r=6,d="7 June 2019"
  ;s v="1.0",r=7,d="13 June 2019"
  ;s v="1.0",r=8,d="1 November 2019"
- s v="1.1",r=9,d="15 January 2020"
+ ;s v="1.1",r=9,d="15 January 2020"
+ s v="1.2",r=10,d="14 April 2020"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -45,10 +46,14 @@ vers(this) ; version information
  w !
  Q
  ;
+upgrade(mode) ; upgrade this installation
+ k ^mgsqlx,^mgtmp,^mgtemp
+ q 0
+ ;
 exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
- ;k ^mgsqlx,^mgtmp
  new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
+ ;;;d upgrade(0)
  s error="",ok=0
  s dbid=$$schema(dbid)
  s line(1)=sql
@@ -144,6 +149,7 @@ drop ; drop tables
  k %zi,%zo
  s ok=$$exec^%mgsql("","drop table patient",.%zi,.%zo)
  s ok=$$exec^%mgsql("","drop table admission",.%zi,.%zo)
+ s ok=$$exec^%mgsql("","drop table labtest",.%zi,.%zo)
  q
  ;
 create ; create tables
@@ -166,6 +172,15 @@ create ; create tables
  s sql=sql_" constraint pk_admission primary key ('p', num, dadm))"
  s sql=sql_" /*! global=mgadm, delimiter=# */"
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ ;
+ s sql="create table labtest ("
+ s sql=sql_" num int not null,"
+ s sql=sql_" dtest date not null,"
+ s sql=sql_" test varchar(32),"
+ s sql=sql_" result int,"
+ s sql=sql_" constraint pk_labtest primary key ('p', num, dtest, test))"
+ s sql=sql_" /*! global=mgtst, delimiter=# */"
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 index ; create index
@@ -179,6 +194,7 @@ delete ; delete records
  k %zi,%zo
  s ok=$$exec^%mgsql("","delete from patient",.%zi,.%zo)
  s ok=$$exec^%mgsql("","delete from admission",.%zi,.%zo)
+ s ok=$$exec^%mgsql("","delete from labtest",.%zi,.%zo)
  q
  ;
 insert ; insert records
@@ -198,6 +214,16 @@ insert ; insert records
  s %zi("num")=2,%zi("dadm")="2018-02-20",%zi("ward")="C1",%zi("con")="EW",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=3,%zi("dadm")="2018-04-21",%zi("ward")="D2",%zi("con")="RS",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=2,%zi("dadm")="2018-11-10",%zi("ward")="C3",%zi("con")="RP",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ ;
+ k %zi,%zo
+ s sql="insert into labtest (num, dtest, test, result) values (:num, {d:dtest}, :test, :result)"
+ s %zi("num")=1,%zi("dtest")="2012-02-20",%zi("test")="HGB",%zi("result")="14.2",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=1,%zi("dtest")="2012-03-21",%zi("test")="HGB",%zi("result")="15.1",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=1,%zi("dtest")="2015-01-17",%zi("test")="HGB",%zi("result")="15.7",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=1,%zi("dtest")="2016-01-01",%zi("test")="HGB",%zi("result")="17.1",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=2,%zi("dtest")="2018-02-20",%zi("test")="HGB",%zi("result")="13.2",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=2,%zi("dtest")="2018-11-10",%zi("test")="HGB",%zi("result")="14.7",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=3,%zi("dtest")="2018-04-21",%zi("test")="HGB",%zi("result")="16.4",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 update ; update a record
@@ -236,7 +262,7 @@ sel6 ; count the number of times admitted patients have been admitted
  k %zi,%zo
  s sql="select a.num,a.name,count(b.dadm) from patient a, admission b"
  s sql=sql_" where a.num = b.num"
- s sql=sql_" group by a.num,a.name"
+ s sql=sql_" group by a.num"
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;

@@ -44,7 +44,7 @@ exit ; exit
 dist(grp,qnum,tnum) ; optimize select distinct
  n done,x,got,ii
  s done=0
- i $g(^mgtmp($j,"sel",qnum))'="distinct" q done
+ i $g(^mgtmp($j,"sel",qnum,0))'="distinct" q done
  i $d(^mgtmp($j,"from",qnum,2)) q done
  f ii=1:1:i s x=$p(z,",",i) i x'="" s got(x)=""
  s done=1 f ii=1:1 q:'$d(^mgtmp($j,"sel",qnum,ii))  s x=$g(^(ii)) i x'="",'$d(got(x)) s done=0 q
@@ -69,7 +69,7 @@ parse(dbid,sql,grp,qnum,tnum,data,got,error) ; parse global
  . s x=$p($p(zkey,",",kno),%z("dsv"),2)
  . i x'="" s got("a",x)=""
  . q
- i qnum=1,tnum=1,$g(^mgtmp($j,"sel",qnum))="distinct" s zkey=$$dist^%mgsqlc2(qnum,tnum)
+ i qnum=1,tnum=1,$g(^mgtmp($j,"sel",qnum,0))="distinct" s zkey=$$dist^%mgsqlc2(qnum,tnum)
  s (key,key(0))="",tagn=1 i tnum=1,'$d(%zq("tag",qnum)) s %zq("tag",qnum)=%zq("tagx")
  i $d(^mgtmp($j,"from","z",qnum,"pass",alias)) d ojoin(grp,qnum,tnum,.data,.error)
  k got("a")
@@ -233,38 +233,6 @@ gota(grp,qnum,tnum,zkey,no,got,data) ; new attribute available from single-level
  q
  ;
 temps ; determine subscripts for order/group sort file
- k order,order2
- s sort2=0 i qnum=1,$d(^mgtmp($j,"group",qnum)),$d(^mgtmp($j,"order")) d temps2
- s order=0
- i qnum=1,'sort2 f i=1:1 q:'$d(^mgtmp($j,"order",i))  s lvar=^mgtmp($j,"order",i),orderx(lvar)="" d temps1
- f i=1:1 q:'$d(^mgtmp($j,"group",qnum,i))  s lvar=^mgtmp($j,"group",qnum,i) i '$d(orderx(lvar)) d temps1
- k orderx
+ ; TODO see if we can eliminate secondary sort where an order by is applied to groups
  q
  ;
-temps1 ; determine pseudo-logical variable
- s order=order+1
- s var="\cm"_order
- s var=%z("dsv")_var_%z("dsv")
- s order(order)=lvar_"~"_var
- q
- ;
-temps2 ; determine whether two sorts required
- n gvarx
- f i=1:1 q:'$d(^mgtmp($j,"group",qnum,i))  s ^mgtmp($j,"groupx",^mgtmp($j,"group",qnum,i))=""
- f i=1:1 q:'$d(^mgtmp($j,"order",i))  i '$d(^mgtmp($j,"groupx",^mgtmp($j,"order",i))) s sort2=1 q
- i 'sort2 q
- s order2=0
- f i=1:1 q:'$d(^mgtmp($j,"order",i))  s lvar=^mgtmp($j,"order",i) d temps3
- q
- ;
-temps3 ; determine pseudo-logical variable for second parse
- s order2=order2+1
- s var="\\cm"_order2
- s var=%z("dsv")_var_%z("dsv")
- s order2(order2)=lvar_"~"_var
- q
- ;
- 
- 
- 
- 

@@ -153,8 +153,8 @@ sql1 ; sql - process/compile and fire off routine
  . i cname["(" d  q
  . . s ag=$p(cname,"("),cname=$p($p(cname,"(",2,999),")",1)
  . . i cname["." s cname=$p(cname,".",2)
- . . s ag=$$trim^%mgsqln(ag)
- . . s cname=$$trim^%mgsqln(cname)
+ . . s ag=$$trim^%mgsqln(ag," ")
+ . . s cname=$$trim^%mgsqln(cname," ")
  . . i cname="" s cname="col_"_i
  . . s cname=ag_"-"_cname
  . . s cname=$tr(cname,":","")

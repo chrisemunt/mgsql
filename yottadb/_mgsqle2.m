@@ -87,13 +87,16 @@ fun(wrd,sqlfn) ; generate code for in-line functions
  s pre=$p(wrd,%z("df"),1),post=$p(wrd,%z("df"),3,999)
  s fn=$p(wrd,%z("df"),2)
  s fun=sqlfn(fn),fun=$p(fun,"(",1)
- i fun?1"$"1a.e s code=$$m(.sqlfn,fn)
- i fun?1"$$"1a.e s code=$$ext(.sqlfn,fn)
+ i fun?1"$"1a.e s code=$$m(.sqlfn,fn,fun)
+ i fun?1"$$"1a.e s code=$$ext(.sqlfn,fn,fun)
  s code=pre_code_post
  q code
  ;
-ext(sqlfn,fn) ; generate code for m extrinsic function
+ext(sqlfn,fn,fun) ; generate code for m extrinsic function
  n line,sub,i,com
+ i fun="$$trim^%mgsqls",'$d(sqlfn(fn,"p",2)) s sqlfn(fn,"p",2,1)=""" """
+ i fun="$$rtrim^%mgsqls",'$d(sqlfn(fn,"p",2)) s sqlfn(fn,"p",2,1)=""" """
+ i fun="$$ltrim^%mgsqls",'$d(sqlfn(fn,"p",2)) s sqlfn(fn,"p",2,1)=""" """
  s line=fun_"("
  s sub=fun_"("
  s com="" f i=1:1 q:'$d(sqlfn(fn,"p",i))  s sub=sub_com_sqlfn(fn,"p",i,1),com=","
@@ -102,7 +105,7 @@ ext(sqlfn,fn) ; generate code for m extrinsic function
  ;b
  q line
  ;
-m(sqlfn,fn) ; m function
+m(sqlfn,fn,fun) ; m function
  n line,sub,i,com
  s line=fun_"("
  s sub=fun_"("
@@ -142,13 +145,15 @@ betweenx ; exit
 like(wrd,error) ; form expression for sql style pattern-match
  n wrd1,chr,i
  i wrd'?1""""1e.e1"""",wrd'[%z("ds") s error="invalid 'like' argument "_wrd,error(5)="HY000" q ""
- s wrd1=$e(wrd,2,$l(wrd)-1),wrd=""
- f i=1:1:$l(wrd1) s chr=$e(wrd1,i) s wrd=wrd_$s(chr="_":"1e",chr="%":".e",1:1_$c(34)_chr_$c(34))
+ i wrd[%z("ds") s wrd=$$rstring^%mgsqlp(wrd)
+ s wrd1=wrd i wrd?1""""1e.e1"""" s wrd1=$e(wrd,2,$l(wrd)-1)
+ s wrd="" f i=1:1:$l(wrd1) s chr=$e(wrd1,i) s wrd=wrd_$s(chr="_":"1e",chr="%":".e",1:1_$c(34)_chr_$c(34))
  q ""
  ;
 mpm(wrd,error) ; form expression for m style pattern-match
  n cn,chr,pchr,x,i
  s cn=0,chr=""
+ i wrd[%z("ds") s wrd=$$rstring^%mgsqlp(wrd)
 mpm1 s pchr=chr,cn=cn+1 i cn>$l(wrd) g mpmx
  s chr=$e(wrd,cn)
  i chr="."!(chr?1n) f i=cn+1:1 s x=$e(wrd,i) q:x'?1n&(x'=".")  s cn=cn+1,chr=chr_x

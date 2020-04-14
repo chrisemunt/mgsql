@@ -92,8 +92,11 @@ ggroup ; retrieve data for current update on 'grouped' items
  k gvaru s gvaru=0
  s tk0=""",""""x"""","_qnum
  s ordsub="",com=""
- f i=1:1 q:'$d(order(i))  d outrow21^%mgsqlc2
- s line=" s "_%z("vdata")_"=$g("_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_ordsub_"))" d addline^%mgsqlc(grp,.line)
+ f i=1:1 q:'$d(^mgtmp($j,"group",qnum,i))  d
+ . s x=$g(^mgtmp($j,"group",qnum,i)) ;,y=%z("dsv")_"__order"_$p(^mgtmp($j,"order",i,0),"~",1)_%z("dsv")
+ . s ordsub=ordsub_com_"$s("_x_"="""":"" "",1:"_x_")",com=","
+ . q
+ s line=" k "_%z("vdata")_" m "_%z("vdata")_"="_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_ordsub_")" d addline^%mgsqlc(grp,.line)
  s x="" f  s x=$o(^mgtmp($j,"sqag",qnum,x)) q:x=""  s fun="" f  s fun=$o(^mgtmp($j,"sqag",qnum,x,fun)) q:fun=""  d ggroup1
  k rec0,rec
  q
@@ -102,29 +105,31 @@ ggroup1 ; retrieve data for specific function
  n z,ref,funtyp
  s funtyp=$p(fun,"_",1)
  s z=%z("dsv")_fun_"("_x_")"_%z("dsv")
- s line=" s "_%z("vdatax")_"=$p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")" d addline^%mgsqlc(grp,.line)
- i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s line=" s "_z_"="_%z("vdatax")_" i "_%z("vdata")_"="""" s "_z_"=0"
- i funtyp="avg" s line=" s:"_%z("vdata")_"'="""" "_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",2),"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",3) s:"_%z("vdata")_"="""" "_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"=0,"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"=0"
- i funtyp="min" s line=" s:"_%z("vdata")_"'="""" "_z_"=$p(%d,""#"",1),"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=$p(%d,""#"",2) s:"_%z("vdata")_"="""" "_z_"="""","_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=0"
+ s line=" s "_%z("vdatax")_"=$g("_%z("vdata")_"("_^mgtmp($j,"sqag",qnum,x,fun)_"))" d addline^%mgsqlc(grp,.line)
+ i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s line=" s "_z_"="_%z("vdatax")_" i "_z_"="""" s "_z_"=0"
+ i funtyp="avg" s line=" s:"_%z("vdatax")_"'="""" "_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",2),"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",3) s:"_%z("vdatax")_"="""" "_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"=0,"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")_"=0"
+ i funtyp="min" s line=" s:"_%z("vdatax")_"'="""" "_z_"=$p("_%z("vdatax")_",""#"",1),"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=$p("_%z("vdatax")_",""#"",2) s:"_%z("vdatax")_"="""" "_z_"="""","_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")_"=0"
  d addline^%mgsqlc(grp,.line)
  q
  ;
 ugroup ; update goups
- s line=" s "_%z("vdata")_"="_recc d addline^%mgsqlc(grp,.line)
+ f i=1:1 q:'$d(^mgtmp($j,"outsel",qnum,i))  s x=^(i) d
+ . i x[%z("dsv")&(x["(")&$d(^mgtmp($j,"group",qnum)) s x=0
+ . s line=" s "_%z("vdata")_"("_i_")="_x
+ . d addline^%mgsqlc(grp,.line) ;s recc=recc_rdelc_x,rdelc="_"_$c(34)_"~"_$c(34)_"_" d outrec1
+ . q
  s x="" f  s x=$o(^mgtmp($j,"sqag",qnum,x)) q:x=""  s fun="" f  s fun=$o(^mgtmp($j,"sqag",qnum,x,fun)) q:fun=""  d ugroup1
- ;s gvaru=gvaru+1,gvaru(gvaru)=$c(1)_tk0_$c(1)_%z("pv")_"d"
  s line=" ; set the record" d addline^%mgsqlc(grp,.line)
- s line=" s "_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_ordsub_")="_%z("vdata") d addline^%mgsqlc(grp,.line)
+ s line=" m "_%z("ctg")_"("_%z("cts")_","_"""x"","_qnum_","_ordsub_")="_%z("vdata") d addline^%mgsqlc(grp,.line)
  q
  ;
 ugroup1 ; update group for specific function
  n funtyp,z
- ;s gvaru=gvaru+1
  s funtyp=$p(fun,"_",1)
  s z=%z("dsv")_fun_"("_x_")"_%z("dsv")
- i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s line=" s $p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")="_z
- i funtyp="min" s line=" s $p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")
- i funtyp="avg" s line=" s $p("_%z("vdata")_",""~"","_^mgtmp($j,"sqag",qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"_""#""_"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")
+ i funtyp="count"!(funtyp="cntd")!(funtyp="sum")!(funtyp="max") s line=" s "_%z("vdata")_"("_^mgtmp($j,"sqag",qnum,x,fun)_")="_z
+ i funtyp="min" s line=" s "_%z("vdata")_"("_^mgtmp($j,"sqag",qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"nullindata("_x_")"_%z("dsv")
+ i funtyp="avg" s line=" s "_%z("vdata")_"("_^mgtmp($j,"sqag",qnum,x,fun)_")="_z_"_""#""_"_%z("dsv")_fun_"avcnt("_x_")"_%z("dsv")_"_""#""_"_%z("dsv")_fun_"avsum("_x_")"_%z("dsv")
  d addline^%mgsqlc(grp,.line)
  q
  ;

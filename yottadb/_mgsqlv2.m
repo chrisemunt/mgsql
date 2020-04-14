@@ -97,16 +97,17 @@ order2 s ^mgtmp($j,"order",itemno)=sel,^mgtmp($j,"order",itemno,0)=num_"~"_dir
  q
  ;
 select(dbid,sql,qnum,arg,error) ; validate 'select' statement
- n opu,op,opu,argn,args,snum,snum1,itemno,item
+ n opu,op,opu,opn,argn,args,snum,snum1,itemno,item,x
  s op="" i arg?1an.an1" "1e.e s op=$p(arg," ",1),arg=$p(arg," ",2,999)
  s opu=$$lcase^%mgsqls(op)
- i opu'="",opu'="distinct" s error="invalid row operator '"_op_"' in 'select' statement",error(5)="HY000" g selectx
+ i opu'="",opu'="distinct",opu'="top" s error="invalid row operator '"_op_"' in 'select' statement",error(5)="HY000" g selectx
  i opu="distinct" s op=opu
- s ^mgtmp($j,"sel",qnum)=op
+ i opu="top" s op=opu,opn=1 s x=$p(arg," ",1) s:(x?1n.n) opn=x,arg=$p(arg," ",2,999) s op=op_"#"_opn
+ s ^mgtmp($j,"sel",qnum,0)=op
  s argn=$$arg^%mgsqle(arg,.args)
  i qnum>1,'$d(sql("union",qnum)),$d(args(2)) s error="sub-query 'select' statements may have only 1 output",error(5)="HY000" g selectx
  s (snum,snum1)=0
- f itemno=1:1 q:'$d(args(itemno))  s item=$$trim^%mgsqls(args(itemno)) d select1(dbid,qnum,itemno,item,.error) i $l(error) q
+ f itemno=1:1 q:'$d(args(itemno))  s item=$$trim^%mgsqls(args(itemno)," ") d select1(dbid,qnum,itemno,item,.error) i $l(error) q
  i $l(error) g selectx
  i qnum'=1,$d(sql("union",qnum)) d union(qnum,.error) i $l(error) g selectx
 selectx i $l(error) s error(0)="select",error(1)=qnum
@@ -213,6 +214,9 @@ sqlfun(sqlfun) ; translate SQL function name to M equivalent
  s mfun=""
  i sqlfun="lower" s mfun="$$lcase^%mgsqls"
  i sqlfun="upper" s mfun="$$ucase^%mgsqls"
+ i sqlfun="trim" s mfun="$$trim^%mgsqls"
+ i sqlfun="rtrim" s mfun="$$rtrim^%mgsqls"
+ i sqlfun="ltrim" s mfun="$$ltrim^%mgsqls"
  q mfun
  ;
  

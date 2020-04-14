@@ -124,7 +124,7 @@ extr4 ; add update as 'subquery zero'
  ;
 extra ; add text to temporary (by (sub) query) array
  n i,n
- s txt=$$trim^%mgsqls(txt)
+ s txt=$$trim^%mgsqls(txt," ")
  i '$l(txt) q
  f i=2:2 s n=$p(txt,%z("dq"),i) q:n'?1n.n  i n<qnum s error="error in brackets with respect to sub-statements "_n_" and "_qnum,error(5)="HY000" q
  i $l(error) q
@@ -197,7 +197,7 @@ logb3 s del=%z("dc") i $l($p(txt1,%z("dq"),1))<$l($p(txt1,%z("dc"),1)) s del=%z(
  ;
 logba ; add line to final logic block
  n i,n
- s txt=$$trim^%mgsqls(txt)
+ s txt=$$trim^%mgsqls(txt," ")
  i '$l(txt) q
  s log=log+1,log(blkno,log)=txt,txt=""
  q
@@ -217,7 +217,7 @@ sqlb3 i txt1'[%z("dc") s txt=txt_" "_txt1 g sqlb2
 sqlba ; add line to final array
  n i,n
  f i=2:2 s n=$p(txt,%z("dq"),i) q:n'?1n.n  d sqlba1
- s txt=$$trim^%mgsqls(txt)
+ s txt=$$trim^%mgsqls(txt," ")
  i '$l(txt) q
  s sql=sql+1,sql(qnum,sql)=txt,txt=""
  q

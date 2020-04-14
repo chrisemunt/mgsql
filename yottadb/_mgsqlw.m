@@ -72,9 +72,9 @@ read(head,cgi,data) ; read request
  i line["?" s cgi("QUERY_STRING")=$p($p(line," ",2),"?",2,9999)
  s cgi("SERVER_PROTOCOL")=$p(line," ",3)
  f i=2:1 s line=$p(head,$c(13,10),i) q:line=""  d
- . s name=$tr($$ucase^%mgsqls($$rtrim^%mgsqls($p(line,":",1))),"-","_")
- . i name="CONTENT_LENGTH"!(name="CONTENT_TYPE") s cgi(name)=$$ltrim^%mgsqls($p(line,":",2,999)) q
- . s cgi("HTTP_"_name)=$$ltrim^%mgsqls($p(line,":",2,999))
+ . s name=$tr($$ucase^%mgsqls($$rtrim^%mgsqls($p(line,":",1)," ")),"-","_")
+ . i name="CONTENT_LENGTH"!(name="CONTENT_TYPE") s cgi(name)=$$ltrim^%mgsqls($p(line,":",2,999)," ") q
+ . s cgi("HTTP_"_name)=$$ltrim^%mgsqls($p(line,":",2,999)," ")
  . q
  s clen=+$g(cgi("CONTENT_LENGTH")) i clen=0 q 1
  s data="",len=0 f  r x#(clen-len) s data=data_x,len=len+$l(x) i len=clen q
@@ -114,8 +114,8 @@ sql(sql) ; run query
  . i cname["(" d  q
  . . s ag=$p(cname,"("),cname=$p($p(cname,"(",2,999),")",1)
  . . i cname["." s cname=$p(cname,".",2)
- . . s ag=$$trim^%mgsqln(ag)
- . . s cname=$$trim^%mgsqln(cname)
+ . . s ag=$$trim^%mgsqln(ag," ")
+ . . s cname=$$trim^%mgsqln(cname," ")
  . . i cname="" s cname="col_"_i
  . . s cname=ag_"-"_cname
  . . s cname=$tr(cname,":","")

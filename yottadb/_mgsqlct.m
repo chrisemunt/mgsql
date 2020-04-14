@@ -68,6 +68,7 @@ table2 ; get details for primary key (for indexed search)
  ;
 table3 ; process data item to be retrieved/derived
  i x="*" q
+ i x["(",x[")" s x=$p($p(x,"(",2),")",1)
  s cname=x,ext="",f=""
  i x["." s cname=$p(x,".",2),f=$p(x,".",1)
  i f'=alias,f'=alias_"g" q

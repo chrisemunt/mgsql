@@ -128,7 +128,7 @@ verify1 s ln=ln+1 i '$d(sql(qnum,ln)) g verifyx
  i cmnd="group" d group^%mgsqlv2(dbid,.sql,qnum,.arg,.error) i $l(error) g verifyx
  i cmnd="having" d having^%mgsqlv2(dbid,.sql,qnum,.arg,.error) i $l(error) g verifyx
  g verify1
-verifyx i '$l(error),qnum=1,$d(sql("union",qnum)) s ^mgtmp($j,"sel",qnum)="distinct"
+verifyx i '$l(error),qnum=1,$d(sql("union",qnum)) s ^mgtmp($j,"sel",qnum,0)="distinct"
  q
  ;
 grp ; look for auto-group situation in outer query
