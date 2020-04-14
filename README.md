@@ -276,13 +276,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 ### v1.2.10 (14 April 2020)
 
 * Introduce support for the SQL TOP clause.
- * **select top columns..., from table...** (return just the first row of data).
- * **select top 3 columns..., from table...** (return just the first 3 rows of data).
+	* **select top columns..., from table...** (return just the first row of data).
+	* **select top 3 columns..., from table...** (return just the first 3 rows of data).
 * The embedded functions **trim**, **rtrim** and **ltrim** have been implemented.
- * **trim((string) input[, (string) characters])** (remove listed characters from the beginning and end of the supplied string).
- * **rtrim((string) input[, (string) characters])** (remove listed characters from the end of the supplied string).
- * **ltrim((string) input[, (string) characters])** (remove listed characters from the beginning of the supplied). string.
- * In all cases the default value for **characters** (if this argument is not supplied) is white space - ' '.
+	* **trim((string) input[, (string) characters])** (remove listed characters from the beginning and end of the supplied string).
+	* **rtrim((string) input[, (string) characters])** (remove listed characters from the end of the supplied string).
+	* **ltrim((string) input[, (string) characters])** (remove listed characters from the beginning of the supplied). string.
+	* In all cases the default value for **characters** (if this argument is not supplied) is white space - ' '.
 * Correct a fault in the compilation of the SQL LIKE operator.
 * Finally, run the **upgrade** procedure.  This will clean-up any temporary files previously used by **mgsql** and force the recompilation of all queries.
- * **Do upgrade^%mgsql(0)**  
+	* **Do upgrade^%mgsql(0)**  
