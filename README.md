@@ -1,32 +1,81 @@
-# mgsql
+# mgsi
 
-An SQL engine for **YottaDB** and other **M-like** databases.
+M/Gateway Service Integration Gateway (**SIG**) for InterSystems **Cache/IRIS** and **YottaDB**.
 
 Chris Munt <cmunt@mgateway.com>  
-15 January 2020, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+13 March 2020, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.1; Revision 9 (15 January 2020)
+* Current Release: Version: 3.1; Revision 102.
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
 ## Overview
 
-**mgsql** is an Open Source SQL engine developed primarily for the **YottaDB** database.  It will also work with the **GT.M** database and other **M-like** databases.
+The M/Gateway Service Integration Gateway (**SIG**) is an Open Source network-based service developed for InterSystems **Cache/IRIS** and the **YottaDB** Database Servers.  It will also work with the **GT.M** database and other **M-like** Databases Servers.  Its core function is to manage connectivity, process and resource pooling for **M-like** DB Servers.  The pooled resources can be used by any of the client-facing technologies in this product series (for example **mg\_php** and **mg\_go** etc ...).
 
-SQL access is provided via the following routes:
-
-* Embedded SQL statements in M code.
-* REST.
-* ODBC.
-
-Note that the **mgsql** project is very much 'work in progress'.  Use cautiously! 
 
 ## Pre-requisites
 
-The **YottaDB** database (or similar M database):
+InterSystems **Cache/IRIS** or **YottaDB** (or similar M DB Server):
 
+       https://www.intersystems.com/
        https://yottadb.com/
 
-## Installing mgsql
+## Installing the SIG
+
+There are three parts to the **SIG** installation and configuration.
+
+* The **SIG** executable (a UNIX Daemon or Windows Service) (**mgsi** or **mgsi.exe**).
+* The database (or server) side code: **zmgsi**
+* A network configuration to bind the former two elements together.
+
+### Building the SIG executable
+
+The **SIG** (**mgsi** or **mgsi.exe**) is written in standard C.  The GNU C compiler (gcc) can be used for Linux systems:
+
+Ubuntu:
+
+       apt-get install gcc
+
+Red Hat and CentOS:
+
+       yum install gcc
+
+Apple OS X can use the freely available **Xcode** development environment.
+
+Windows can use the free "Microsoft Visual Studio Community" edition of Visual Studio for building the **SIG**:
+
+* Microsoft Visual Studio Community: [https://www.visualstudio.com/vs/community/](https://www.visualstudio.com/vs/community/)
+
+There are built Windows x64 binaries available from:
+
+* [https://github.com/chrisemunt/mgsi/blob/master/bin/winx64](https://github.com/chrisemunt/mgsi/blob/master/bin/winx64)
+
+Having created a suitable development environment, **Makefiles** are provided to build the **SIG** for UNIX and Windows.
+
+#### UNIX
+
+Invoke the build procedure from the /src directory (i.e. the directory containing the **Makefile** file).
+
+       make
+
+#### Windows
+
+Invoke the build procedure from the /src directory (i.e. the directory containing the **Makefile.win** file).
+
+       nmake /f Makefile.win
+
+### InterSystems Cache/IRIS
+
+Log in to the Manager UCI and install the **zmgsi** routines held in either **/m/zmgsi\_cache.xml** or **/m/zmgsi\_iris.xml** as appropriate.
+
+       do $system.OBJ.Load("/m/zmgsi_cache.xml","ck")
+
+Change to your development UCI and check the installation:
+
+       do ^%zmgsi
+
+       M/Gateway Developments Ltd - Service Integration Gateway
+       Version: 3.2; Revision 6 (3 February 2020)
 
 ### YottaDB
 
@@ -47,69 +96,36 @@ Change directory to the following location and start a **YottaDB** command shell
        cd /usr/local/lib/yottadb/r122
        ./ydb
 
-Link all the **mgsql** routines and check the installation:
+Link all the **zmgsi** routines and check the installation:
 
-       do ylink^%mgsql
+       do ylink^%zmgsi
 
-       do ^%mgsql
+       do ^%zmgsi
 
-       MGSQL by M/Gateway Developments Ltd.
-       Version: 1.1; Revision 9 (15 January 2020) %mgsql
+       M/Gateway Developments Ltd - Service Integration Gateway
+       Version: 3.2; Revision 6 (3 February 2020)
 
 
-Note that the version of **mgsql** is successfully displayed.
+Note that the version of **zmgsi** is successfully displayed.
 
-### Other M systems
-
-All routines are held in **/m/mgsql.ro** but for InterSystems Cache and IRIS, log in to the Manager UCI and install the **mgsql** routines held in either **/m/mgsql\_cache.xml** or **/m/mgsql\_iris.xml** as appropriate.  For example:
-
-       do $system.OBJ.Load("/m/zmgsi_mgsql.xml","ck")
-
-Change to your development UCI and check the installation:
-
-       do ^%mgsql
-
-       MGSQL by M/Gateway Developments Ltd.
-       Version: 1.1; Revision 9 (15 January 2020) %mgsql
-
-## Executing SQL statements from the YottaDB/M command line
-
-Before executing SQL statements do familiarise yourself with the M system resources (i.e. globals) used by **mgsql**.  Refer to the *Resources used by mgsql* section.
-
-The general form for executing SQL statements from within M code (or from the M command line) is as follows:
-
-       set status=$$exec^%mgsql(<schema>,<sql statement>,.%zi,.%zo)
-
-Where:
-
-* %zi is an M array representing data that needs to be input to the script.
-* %zo is an M array representing parameters controlling output from the script.
-
-The top level routine **%mgsql** (physical file _mgsql.m) contains a number of sample SQL scripts.  These work to a simple database representing hospital patients and their associated admissions.  View the embedded scripts in this routine.
-
-Create the test schema:
-
-       do create^%mgsql
-
-Insert a few test records:
-
-       do insert^%mgsql
-
-Run the various SQL retrieval scripts:
-
-       do sel1^%mgsql
-
-A number of SQL scripts are available at line labels sel1 to sel8.
 
 ## Setting up the network service
 
-So far we have covered the basics of executing SQL statements from M code.  In order to execute SQL queries over REST or ODBC the **mgsql** installation must be accessible over the network.  The service described here will concurrently support access to **mgsql** via REST and ODBC.  The default TCP server port for **mgsql** is **7041**.  If you wish to use an alternative port then modify the following instructions accordingly.
+The default TCP server port for **zmgsi** is **7041**.  If you wish to use an alternative port then modify the following instructions accordingly.
+
+### InterSystems Cache/IRIS
+
+Start the Cache/IRIS-hosted concurrent TCP service in the Manager UCI:
+
+       do start^%zmgsi(0) 
+
+To use a server TCP port other than 7041, specify it in the start-up command (as opposed to using zero to indicate the default port of 7041).
 
 ### YottaDB
 
-Network connectivity to **YottaDB** is managed via the **xinetd** service.  First create the following launch script (called **mgsql_ydb** here):
+Network connectivity to **YottaDB** is managed via the **xinetd** service.  First create the following launch script (called **zmgsi\_ydb** here):
 
-       /usr/local/lib/yottadb/r122/mgsql_ydb
+       /usr/local/lib/yottadb/r122/zmgsi_ydb
 
 Content:
 
@@ -119,15 +135,15 @@ Content:
        export ydb_dist=/usr/local/lib/yottadb/r122
        export ydb_routines="/root/.yottadb/r1.22_x86_64/o*(/root/.yottadb/r1.22_x86_64/r /root/.yottadb/r) /usr/local/lib/yottadb/r122/libyottadbutil.so"
        export ydb_gbldir="/root/.yottadb/r1.22_x86_64/g/yottadb.gld"
-       $ydb_dist/ydb -r xinetd^%mgsql
+       $ydb_dist/ydb -r xinetd^%zmgsi
 
-Create the **xinetd** script (called **mgsql_xinetd** here): 
+Create the **xinetd** script (called **zmgsi\_xinetd** here): 
 
-       /etc/xinetd.d/mgsql_xinetd
+       /etc/xinetd.d/zmgsi_xinetd
 
 Content:
 
-       service mgsql_xinetd
+       service zmgsi_xinetd
        {
             disable         = no
             type            = UNLISTED
@@ -135,10 +151,10 @@ Content:
             socket_type     = stream
             wait            = no
             user            = root
-            server          = /usr/local/lib/yottadb/r122/mgsql_ydb
+            server          = /usr/local/lib/yottadb/r122/zmgsi_ydb
        }
 
-* Note: sample copies of **mgsql_xinetd** and **mgsql_ydb** are included in the **/unix** directory.
+* Note: sample copies of **zmgsi\_xinetd** and **zmgsi\_ydb** are included in the **/unix** directory.
 
 Edit the services file:
 
@@ -146,96 +162,49 @@ Edit the services file:
 
 Add the following line to this file:
 
-       mgsql_xinetd          7041/tcp                        # MGSQL
+       zmgsi_xinetd          7041/tcp                        # zmgsi
 
 Finally restart the **xinetd** service:
 
        /etc/init.d/xinetd restart
 
-### Other M systems
+## Starting the SIG
 
-Start the M-hosted concurrent TCP service in the Manager UCI:
+The **SIG** executable can be installed in a directory of your choice.  When started, it will create a configuration file called **mgsi.ini**.  The event log file will be called **mgsi.log**.
 
-       do start^%mgsql(0) 
+### UNIX
 
-To use a server TCP port other than 7041, specify it in the start-up command (as opposed to using zero to indicate the default port of 7041).
+Starting the **SIG**:
 
-## Access to mgsql using REST
+       ./mgsi
 
-Now that the network service has been configured and deployed it is possible to execute SQL scripts via REST calls. Results are returned formatted as JSON.
+Stopping the **SIG**:
 
-For example, using the **curl** utility from the UNIX command line:
+       ./mgsi -stop
 
-       curl -d "select * from patient" -H "Content-Type: text/sql" http://localhost:7041/mg.sql/execute
+### Windows
 
-Assuming that the simple test database described previously has been created the above request will generate the following output: 
+Starting the **SIG**:
 
-       {"sqlcode": 0, "sqlstate": "00000", "error": "", "result": [{"num": "1","name": "Chris Munt","address": "Banstead"},{"num": "2","name": "Rob Tweed","address": "Redhill"},{"num": "3","name": "John Smith","address": "London"},{"num": "4","name": "Jane Doe","address": "Oxford"}]}
+       mgsi -start
 
-Simple invocation from a browser (Hint: Firefox does a good job of rendering JSON):
+Stopping the **SIG**:
 
-       http://127.0.0.1:7041/mgsql/mg.sql?sql=select * from patient
+       mgsi -stop
 
-Alternatively, enter an SQL statement in the form generated by:
+When the **SIG** is started for the first time it will register itself as a Windows Service.  Thereafter it can be managed from the Windows Services Control Panel if desired.
 
-       http://127.0.0.1:7041/mgsql/mg.sql
+## Using the SIG
 
-In a live environment a production-grade web server should be used.  For example, using the Apache server the **mod_proxy** module can be used to *front* the **mgsql** service.
+When the **SIG** is up and running its services are immediately available to participating clients.  The **SIG** provides a web-based user interface for the purpose of maintaining the configuration and service management.  By default the **SIG** listens on TCP port 7040.  The web-based management suite may be accessed as follows.
 
-## Access to mgsql using ODBC
+       http://[server]:7040/mgsi/mgsisys.mgw
 
-The ODBC driver is in the **/odbc** directory.  Pre-built drivers for 32 and 64-bit Windows are in the **/odbc/x86** and **/odbc/x64** directories respectively.  To install both drivers copy the contents of **/odbc/x86** to:
+## Resources used by zmgsi
 
-       C:\Program Files (x86)\mgsql\
+The **zmgsi** server-side code will write to the following global:
 
-And copy the contents of **/odbc/x64** to:
-
-       C:\Program Files\mgsql\
-
-You will have to create the **/mgsql** sub-directory if it doesn't already exist.  To register both drivers, using Windows Explorer, double click on each of the following Registry files:
-
-       C:\Program Files (x86)\mgsql\mgodbc32.reg
-       C:\Program Files\mgsql\mgodbc64.reg
-
-You can now configure an ODBC Data Source using the Windows Administrative tools for ODBC Data sources (accessed via the Windows Control Panel:
-
-       Control Panel\System and Security\Administrative Tools\ODBC Data Sources
-
-Under the **System DSN** tab. select **Add...** and choose one of the **mgsql** drivers as appropriate:
-
-       MGSQL ODBC x86
-       MGSQL ODBC x64
-
-Complete the **mgodbc** configuration dialogue box and save:
-
-* **Name:** Your Data Source Name (DSN).
-* **Description:** An optional description.
-* **Server:** IP Address of your M server.
-* **TCP Port:** TCP Port (the default is 7041).
-* **Directory or UCI:** M UCI (leave blank for YottaDB).
-* **Event Log File:** Log file (including full path).
-* **Event Log Level:** Log level (a comma separated list of log directives).
-
-Log Level Directives:
-
-* **e:** Log Errors.
-* **ft:** Log ODBC function call trace.
-* **nt:** Log all network buffers sent and received.
-
-The data source created can now be used in Windows applications.
-
-## Resources used by mgsql
-
-**mgsql** will write to the following globals
-
-* **^mgsqld**: The catalogue or schema. 
-* **^mgsqls**: The spool file for SQL output.
-* **^mgsqlx**: The cache of compiled queries.
-* **^mglog**: The event Log.
-* **^mgtmp**: A temporary file used by the SQL compiler.
-* **^mgtemp**: A temporary sort file used when executing SQL queries.
-
-* **mgsql** will generate M Routines prefixed by 'x'.
+* **^zmgsi**: The event Log. 
 
 ## License
 
@@ -255,20 +224,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 ## <a name="RelNotes"></a>Release Notes
 
-### v1.0.7 (13 June 2019)
+### v3.1.102 (13 March 2020)
 
 * Initial Release
-
-### v1.0.8 (1 November 2019)
-
-* Greater flexibility in mapping **mgsql** tables to existing M global structures.  The facility for specifying trailing M global subscripts is extended (see the 'separate' keyword in table creation).
-* A fault in the processing of outer join queries qualified with an 'on' clause has been corrected.
-
-### v1.1.9 (15 January 2020)
-
-* Introduce support for alternative date separators in the decode date function (**ddate^%mgsqls**).  Foe example, although the separator is '/' in the US locale, it is is "." in the Czech locale.
-* Introduce support for _Derived Fields_.  A _Derived Field_ is defined in the schema as an M extrinsic function and can take any number of values from the same row as input parameters.  For example, the calculation of a person's age from the stored 'date of birth' field can be implemented as a _Derived Field_ - the value of 'age' being dependant on the time of data retrieval.
-* The embedded functions **lower** and **upper** have been implemented (Convert string to lower or upper-case, respectively.
-* A fault that led to some SQL queries of the form '_update ... set ... where_' crashing has been corrected.
-* A fault that led to some secondary index names not being recognised has been corrected.
-* A fault that led to an error status (-1) being returned for some SQL DDL scripts even though the script completed successfully has been corrected.
