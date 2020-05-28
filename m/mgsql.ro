@@ -1,5 +1,5 @@
-Cache for Windows^INT^MGSQL
-%RO on 14 Apr 2020 01:00 AM
+Cache for Windows^INT^mgsql
+%RO on 28 May 2020 01:00 AM
 %mgsql
 %mgsql ;(CM) MGSQL Front end
  ;
@@ -38,7 +38,8 @@ v() ; version and date
  ;s v="1.0",r=7,d="13 June 2019"
  ;s v="1.0",r=8,d="1 November 2019"
  ;s v="1.1",r=9,d="15 January 2020"
- s v="1.2",r=10,d="14 April 2020"
+ ;s v="1.2",r=10,d="14 April 2020"
+ s v="1.2",r=11,d="28 May 2020"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -56,7 +57,7 @@ upgrade(mode) ; upgrade this installation
 exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
  s $zt="exece^%mgsql" ; new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
- ;;;d upgrade(0)
+ ;d upgrade(0)
  s error="",ok=0
  s dbid=$$schema(dbid)
  s line(1)=sql
@@ -2315,6 +2316,7 @@ defk(dbid,tname,cname) ; item defined in entity primary key
  q %defk
  ;
 defd(dbid,tname,cname) ; item defined in entity data
+ n %defd
  s %defd=$d(^mgsqld(0,dbid,"t",tname,"tc",cname))
  q %defd
  ;
@@ -2525,7 +2527,7 @@ argx s args=an
  ;
 ops(ops) ; operator list
  n i,op
- s ops=":*:/:\:#:-:+:=:is:'=:<>:!=:?:'?:>:<:'>:'<:>=:<=:'>=:'<=:[:'[:]:']:_:':in:not in:like:not like:exists:not exists:between:not between:and:&:or:!:"
+ s ops=":*:/:\:#:-:+:=:is:=:<>:!=:'=:?:>:<:>:<:>=:'<:<=:'>:[:[:]:]:in:not in:like:not like:exists:not exists:between:not between:and:&:or:!:"
  f i=2:1:$l(ops,":") s op=$p(ops,":",i) i op'="" s ops(op)=i
  q ops
  ;
@@ -2725,8 +2727,19 @@ word(en,ex,word,sqlex,ops,error) ; generate word array from expression lines en(
  q
  ;
 word1(lin,word,fun,sqlex,ops,error) ; decompose line lin
- n pn,wn,i,wrd,wrd1,wrdlc,nwrd,obr,cbr,like,mpm,in,between,extvar,ok,in,like,mpm,between
+ n pn,wn,i,wrd,wrd1,wrdlc,nwrd,obr,cbr,like,mpm,in,between,extvar,ok,in,like,mpm,between,wk,c,ca,cz,sa,sz
  f  q:$e(lin)'=" "  s lin=$e(lin,2,999)
+ s wk=lin,lin="" f i=1:1:$l(wk) d
+ . s c=$e(wk,i),sa="",sz=""
+ . s ca=$s(i>1:$e(wk,i-1),1:"")
+ . s cz=$e(wk,i+1)
+ . i c="*",ca="(",cz=")" s lin=lin_c q
+ . i c?1p,$d(ops(c)) d
+ . . i ca'="",'$d(ops(ca)),ca'=" " s sa=" "
+ . . i cz'="",'$d(ops(cz)),cz'=" " s sz=" "
+ . . q
+ . s lin=lin_sa_c_sz
+ . q
  s pn=0,wn=0,in="",like="",mpm="",between=""
 word2 s pn=pn+1 i pn>$l(lin," ") q
  s wrd=$p(lin," ",pn)
@@ -4955,6 +4968,7 @@ a d vers^%mgsql("%mgsqlp") q
 main(sql,line,error) ; entry
  n sql2,wrk
  s error=""
+ s qnummax=0
  k ^mgtmp($j,"translate")
 main1 ; re-entry
  k ^mgtmp($j,"cmnd")
@@ -5947,59 +5961,62 @@ where(dbid,sql,qnum,arg,error) ; validate 'where' statement
  s wn=0
 where1 s wn=wn+1 i '$d(word(0,wn)) g wherex
  s wrd=word(0,wn)
- i wrd[%z("dsv") d where2 i $l(error) g wherex
+ i wrd[%z("dsv") s wrd=$$where2(dbid,qnum,wrd,.error) i $l(error) g wherex
  i wrd[%z("df") s wrd=$$where3(qnum,$p(wrd,%z("df"),2),error) i $l(error) g wherex
  s wnum=$$addwhr(qnum,wrd)
  g where1
 wherex i $l(error),qnum?1n.n s error(0)="where",error(1)=qnum
  q
  ;
-where2 ; validate sql column
- n %d,%defk,%defd,%defm,x,y,z,typ,qnum1,fun,tname,alias
+where2(dbid,qnum,item,error) ; validate sql column
+ n %d,%defk,%defd,%defm,x,y,z,wrd,typ,qnum1,fun,mfun,alias,tname,cname,alias,snum
+ s wrd=item
  i qnum["g" g where2h
  s qnum1=qnum
  s x=$p(wrd,%z("dsv"),2)
- d corelate(.sql,qnum,x,.error) i $l(error) s error=error_": "_x q
- i x'["." s error="column '"_x_"' (in 'where'/'having' statement) is not qualified by table name/alias",error(5)="HY000" q
+ d corelate(.sql,qnum,x,.error) i $l(error) s error=error_": "_x q wrd
+ ;;i x'["." s error="column '"_x_"' (in 'where'/'having' statement) is not qualified by table name/alias",error(5)="HY000" q wrd
  s cname=x,fun="" i x["(" s fun=$p(x,"(",1),x=$p(x,"(",2,999) i fun="count"&(x[" ") s fun="cntd",x=$p(x," ",2,999)
- s x=$p(x,")",1)
- s f=$p(x,".",1),(x,cname)=$p(x,".",2)
- s mfun=$$sqlfun^%mgsqlv2(fun) i mfun'="" s wrd=%z("df")_mfun_"("_f_"."_x_")"_%z("df") q
- i $l(fun) s error="the 'where' statement must not contain references to sql aggregates",error(5)="HY000" q
- i $d(sql("union",qnum)),'$d(^mgtmp($j,"from","x",qnum,f)) s error="invalid alias '"_f_"': 'union' queries cannot be correlated",error(5)="HY000" q
- f j=1:1:qnum q:'$d(^mgtmp($j,"from","x",j))  i $d(^mgtmp($j,"from","x",j,f)) s y=^mgtmp($j,"from","x",j,f),y=^mgtmp($j,"from",j,y),tname=$p(y,"~",1),alias=$p(y,"~",2) q
- i '$d(^mgtmp($j,"from","x",j,f)) s error="column '"_x_"' (in the 'where' statement) is qualified by an unknown table name/alias",error(5)="HY000" q
+ s item=$p(x,")",1)
+ d table^%mgsqlv2(dbid,qnum,item,.alias,.tname,.cname,1,.error) i $l(error) q wrd
+ ;;s f=$p(x,".",1),(x,cname)=$p(x,".",2)
+ s mfun=$$sqlfun^%mgsqlv2(fun) i mfun'="" s wrd=%z("df")_mfun_"("_alias_"."_cname_")"_%z("df") q wrd
+ i $l(fun) s error="the 'where' statement must not contain references to sql aggregates",error(5)="HY000" q wrd
+ i $d(sql("union",qnum)),'$d(^mgtmp($j,"from","x",qnum,alias)) s error="invalid alias '"_alias_"': 'union' queries cannot be correlated",error(5)="HY000" q wrd
+ ;;f j=1:1:qnum q:'$d(^mgtmp($j,"from","x",j))  i $d(^mgtmp($j,"from","x",j,f)) s y=^mgtmp($j,"from","x",j,f),y=^mgtmp($j,"from",j,y),tname=$p(y,"~",1),alias=$p(y,"~",2) q wrd
+ ;;i '$d(^mgtmp($j,"from","x",j,f)) s error="column '"_x_"' (in the 'where' statement) is qualified by an unknown table name/alias",error(5)="HY000" q wrd
  g where21
 where2h ; Having predicate
  s x=$p(wrd,%z("dsv"),2)
  i x="count(*)" s fun="count" g where23
  i x'["." s error="column '"_x_"' (in 'having' statement) is not qualified by table name/alias",error(5)="HY000" q
  s cname=x,fun="" i x["(" s fun=$p(x,"(",1),x=$p(x,"(",2,999) i fun="count"&(x[" ") s fun="cntd",x=$p(x," ",2,999)
- s x=$p(x,")",1)
- s f=$p(x,".",1),(x,cname)=$p(x,".",2)
- i $d(sql("union",qnum)),'$d(^mgtmp($j,"from","x",qnum,f)) s error="invalid alias '"_f_"': 'union' queries cannot be correlated",error(5)="HY000" q
- i $d(^mgtmp($j,"from","x",1,f)) s y=^mgtmp($j,"from","x",1,f),y=^mgtmp($j,"from",1,y),tname=$p(y,"~",1),alias=$p(y,"~",2)
- i '$d(^mgtmp($j,"from","x",1,f)) s error="column '"_x_"' (in the 'having' statement) is qualified by an unknown table name/alias",error(5)="HY000" q
+ s item=$p(x,")",1)
+ d table^%mgsqlv2(dbid,1,item,.alias,.tname,.cname,0,.error) i $l(error) q
+ ;;s f=$p(x,".",1),(x,cname)=$p(x,".",2)
+ i $d(sql("union",qnum)),'$d(^mgtmp($j,"from","x",qnum,alias)) s error="invalid alias '"_alias_"': 'union' queries cannot be correlated",error(5)="HY000" q
+ ;;i $d(^mgtmp($j,"from","x",1,f)) s y=^mgtmp($j,"from","x",1,f),y=^mgtmp($j,"from",1,y),tname=$p(y,"~",1),alias=$p(y,"~",2)
+ ;;i '$d(^mgtmp($j,"from","x",1,f)) s error="column '"_x_"' (in the 'having' statement) is qualified by an unknown table name/alias",error(5)="HY000" q
 where21 ; Common
- i tname?@("1"""_%z("dq")_"""1n.n1"""_%z("dq")_"""") d  q:$l(error)  g where22
- . n qnum
- . s qnum=$p(tname,%z("dq"),2)
- . i '$d(^mgtmp($j,"vx",qnum,x)) s error="column '"_x_"' ('where'/'having' statement) is not part of derived table "_alias,error(5)="42S22" q
- . q
- s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname),%defm=$$remap^%mgsqlv2(f,cname) i '%defk,'%defd,'%defm s error="column '"_x_"' ('where'/'having' statement) is not part of table "_tname,error(5)="42S22" q
+ ;;i tname?@("1"""_%z("dq")_"""1n.n1"""_%z("dq")_"""") d  q:$l(error)  g where22
+ ;;. n qnum
+ ;;. s qnum=$p(tname,%z("dq"),2)
+ ;;. i '$d(^mgtmp($j,"vx",qnum,x)) s error="column '"_x_"' ('where'/'having' statement) is not part of derived table "_alias,error(5)="42S22" q
+ ;;. q
+ s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname),%defm=$$remap^%mgsqlv2(alias,cname) i '%defk,'%defd,'%defm s error="column '"_item_"' ('where'/'having' statement) is not part of table "_tname,error(5)="42S22" q wrd
  s %d=$$col^%mgsqld(dbid,tname,cname) s typ=$p(%d,"\",11)
-where22 s item=%z("dsv")_f_"."_cname_%z("dsv"),snum=$$addselx^%mgsqlv2(qnum,item) s ^mgtmp($j,"wsel",item)=""
- i fun="" q
-where23 i "count,cntd,sum,avg,max,min"'[fun q
+where22 s item=%z("dsv")_alias_"."_cname_%z("dsv"),snum=$$addselx^%mgsqlv2(qnum,item) s ^mgtmp($j,"wsel",item)=""
+ i fun="" q item
+where23 i "count,cntd,sum,avg,max,min"'[fun q wrd
  s qnum1=qnum+0
  i x="count(*)" s z="*"_qnum1,wrd=%z("dsv")_"count("_"*"_qnum1_")"_%z("dsv")
- i x'="count(*)" s z=f_"."_x
+ i x'="count(*)" s z=alias_"."_x
  s y=%z("dsv")_fun_"("_z_")"_%z("dsv")
  i fun["(" s y=y_")"
  s snum=$$addselx^%mgsqlv2(qnum1,y)
  s ^mgtmp($j,"wsel",y)=""
- i '$d(^mgtmp($j,"sqag",qnum1,z,fun)) s ^mgtmp($j,"sqag",qnum1,z,fun)=selct
- q
+ i '$d(^mgtmp($j,"sqag",qnum1,z,fun)) s ^mgtmp($j,"sqag",qnum1,z,fun)=snum
+ q wrd
  ;
 where3(qnum,mfun,error) ; embedded functions in 'where' statement
  n pn,i,fn,ax,outv,ex,word,zcode,fun,item,snum
@@ -6068,13 +6085,43 @@ addselx(qnum,item) ; add item to general select list
  s ^mgtmp($j,"sel",qnum,snum)=item,^mgtmp($j,"selx",qnum,item)=snum
  q snum
  ;
-table(qnum,item,alias,tname,cname,error) ; check table/alias
- n x
- s alias="",cname=item i item["." s alias=$p(item,".",1),cname=$p(item,".",2) i '$l(cname) s error="invalid sql column '"_item_"'",error(5)="HY000" q
- i alias="",$d(^mgtmp($j,"from",qnum,2)) s error="ambiguous column '"_item_"'",error(5)="HY000" q
- i alias'="" s tname="" i $d(^mgtmp($j,"from","x",qnum,alias)) s x=^mgtmp($j,"from","x",qnum,alias) s tname=$p(^mgtmp($j,"from",qnum,x),"~",1)
- i alias="" s tname=^mgtmp($j,"from",qnum,1),alias=$p(tname,"~",2),tname=$p(tname,"~",1)
- i tname="" s error="invalid alias '"_alias_"' for column '"_cname_"'",error(5)="HY000" q
+table(dbid,qnum,item,alias,tname,cname,pred,error) ; check table/alias
+ n x,i,alias1,tname1,fr,ok
+ s error="",alias="",tname="",cname=item i item["." s alias=$p(item,".",1),cname=$p(item,".",2)
+ i cname="" s error="invalid sql column '"_item_"'",error(5)="HY000" q
+ i pred d
+ . i alias'="" d  q
+ . . f i=1:1 q:'$d(^mgtmp($j,"from","x",i))  i $d(^mgtmp($j,"from","x",i,alias)) s x=^mgtmp($j,"from","x",i,alias),x=^mgtmp($j,"from",i,x),tname=$p(x,"~",1),alias=$p(x,"~",2) q
+ . . q
+ . i alias="" d  q
+ . . f i=1:1 q:'$d(^mgtmp($j,"from","x",i))  s alias1="" f  s alias1=$o(^mgtmp($j,"from","x",i,alias1)) q:alias1=""  s x=^mgtmp($j,"from","x",i,alias1),x=^mgtmp($j,"from",i,x),tname1=$p(x,"~",1) i $$defd^%mgsqld(dbid,tname1,cname) s tname=tname1,alias=$p(x,"~",2) q
+ . . q
+ . q
+ i 'pred d
+ . i alias'="" d  q
+ . . i $d(^mgtmp($j,"from","x",qnum,alias)) s x=^mgtmp($j,"from","x",qnum,alias) s tname=$p(^mgtmp($j,"from",qnum,x),"~",1)
+ . . q
+ . i alias="" d  q
+ . . s fr=0
+ . . f i=1:1 q:'$d(^mgtmp($j,"from",qnum,i))  d
+ . . . s x=^mgtmp($j,"from",qnum,i),tname1=$p(x,"~",1)
+ . . . i cname="*" s fr=fr+1,fr(fr)=i q
+ . . . i $$defd^%mgsqld(dbid,tname1,cname) s fr=fr+1,fr(fr)=i
+ . . . q
+ . . i fr>1 d
+ . . . s ok=1 f i=1:1 q:'$d(fr(i))  s x=^mgtmp($j,"from",qnum,fr(i)),tname1=$p(x,"~",1),alias1=$p(x,"~",2) i '$d(^mgtmp($j,"from","z",qnum,"join",cname,alias1)) s ok=0 q
+ . . . i ok s fr=1
+ . . . q
+ . . i fr=0 q
+ . . i fr=1 s x=^mgtmp($j,"from",qnum,fr(fr)),tname=$p(x,"~",1),alias=$p(x,"~",2) q
+ . . s error="ambiguous column name '"_item_"'",error(5)="HY000" q
+ . . q
+ . q
+ i error'="" q
+ ;;i alias="",$d(^mgtmp($j,"from",qnum,2)) s error="ambiguous column '"_item_"'",error(5)="HY000" q
+ ;;i alias'="" s tname="" i $d(^mgtmp($j,"from","x",qnum,alias)) s x=^mgtmp($j,"from","x",qnum,alias) s tname=$p(^mgtmp($j,"from",qnum,x),"~",1)
+ ;;i alias="" s tname=^mgtmp($j,"from",qnum,1),alias=$p(tname,"~",2),tname=$p(tname,"~",1)
+ i tname=""!(alias="") s error="unable to find source of column '"_$s(alias'="":alias_".",1:"")_cname_"'",error(5)="HY000" q
  q
  ;
 group(dbid,sql,qnum,arg,error) ; validate 'group by' statement
@@ -6087,7 +6134,7 @@ group(dbid,sql,qnum,arg,error) ; validate 'group by' statement
  ;
 group1(dbid,qnum,itemno,item,error) ; for each element grouped by
  n %defk,%defd,alias,tname,cname
- d table(qnum,item,.alias,.tname,.cname,.error) i $l(error) q
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) q
  s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname) i '%defk,'%defd s error="column '"_cname_"' (in 'group by' statement) is not part of table '"_tname_"'",error(5)="42S22" q
  s ^mgtmp($j,"group",qnum,itemno)=%z("dsv")_alias_"."_cname_%z("dsv")
  q
@@ -6113,15 +6160,18 @@ remap(alias,cname) ; look for extra column defined for soft view only
 order(dbid,sql,qnum,arg,error) ; validate 'order by'
  n i,argn,item,args
  s argn=$$arg^%mgsqle(arg,.args)
- f i=1:1:args s item=args(i) d order1(qnum,i,item,.error) i $l(error) s error(0)="order",error(1)=0 q
+ f i=1:1:args s item=args(i) d order1(dbid,qnum,i,item,.error) i $l(error) s error(0)="order",error(1)=0 q
  q
  ;
-order1(qnum,itemno,item,error) ; validate order by item
- n num,len,sel,dir,x
+order1(dbid,qnum,itemno,item,error) ; validate order by item
+ n num,len,sel,dir,i,x,alias,tname,cname,sqag
  s dir="asc" i item[" " s dir=$p(item," ",2),item=$p(item," ",1)
  i dir'="asc",dir'="desc" s error="the 'order' for item '"_item_"' must be defined as 'asc' (ascending) or 'desc' (descending)",error(5)="HY000" q
  i item?1n.n,'$d(^mgtmp($j,"sel",1,item)) s error="invalid 'order by' item no. '"_item_"'",error(5)="HY000" q
  i item?1n.n s num=item,sel=^mgtmp($j,"sel",1,num) g order2
+ s sqag="" i item["(",item[")" s sqag=$p(item,"(",1),item=$p($p(item,"(",2,999),")",1)
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) b  q
+ s item=alias_"."_cname i sqag'="" s item=sqag_"("_item_")"
  s sel="",len=$l(item,".") f num=1:1 q:'$d(^mgtmp($j,"sel",1,num))  s x=$p(^(num),%z("dsv"),2) i $p(x,".",1,len)=item s sel=%z("dsv")_item_%z("dsv") q
  i '$l(sel) s error="'order by' item '"_item_"' is not in the 'select' statement",error(5)="HY000" q
 order2 s ^mgtmp($j,"order",itemno)=sel,^mgtmp($j,"order",itemno,0)=num_"~"_dir
@@ -6165,7 +6215,7 @@ select1(dbid,qnum,itemno,item,error) ; validate specific item in 'select' line
  ;
 select2(dbid,qnum,itemno,item,error) ; columns
  n %defk,%defd,%defm,ok,alias,tname,cname
- d table(qnum,item,.alias,.tname,.cname,.error) i $l(error) q
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) q
  i item?1a.e1"."1"{".e1"}"1"."1a.e g select21
  i tname?@("1"""_%z("dq")_"""1n.n1"""_%z("dq")_"""") d  q:$l(error)  g select21
  . n qnum
@@ -6179,7 +6229,7 @@ select21 s item=%z("dsv")_alias_"."_cname_%z("dsv"),snum=$$addsel(qnum,item)
  ;
 select3(dbid,qnum,itemno,item,error) ; x="*" - get all key & data columns
  n %ind,%data,pkey,ino,pkeyx,datax,i,n,x,r,sc,alias,tname,cname
- d table(qnum,item,.alias,.tname,.cname,.error) i $l(error) q
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) q
  s ino=$$pkey^%mgsqld(dbid,tname),sc=$$key^%mgsqld(dbid,tname,ino,.%ind)
  s pkey=0 f i=1:1 q:'$d(%ind(ino,i))  s x=%ind(ino,i) i x?1a.e s pkey=pkey+1,pkey(pkey)=x,pkeyx(x)=pkey
  i qnum'=1,$d(pkey(1)) s item=pkey(1),item=%z("dsv")_alias_"."_item_%z("dsv"),snum=$$addsel(qnum,item) q
@@ -6202,7 +6252,7 @@ select4(dbid,qnum,itemno,item,error) ; aggregates
  . i $d(^mgtmp($j,"sqag",qnum,item_qnum,fun)) s error="duplication of aggregate in 'select' line",error(5)="HY000" q
  . s key=item_qnum,newx=fun_"("_item_qnum_")"
  . q
- d table(qnum,item,.alias,.tname,.cname,.error) i $l(error) q
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) q
  s ok=0,%defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname),%defm=$$remap(alias,cname) s ok=%defk!%defd!%defm
  i 'ok s error="'select' item '"_cname_"' is not a column of table '"_tname_"'",error(5)="42S22" q
  s key=alias_"."_cname,newx=fun_"("_alias_"."_cname s newx=newx_")"
