@@ -114,6 +114,7 @@ defk(dbid,tname,cname) ; item defined in entity primary key
  q %defk
  ;
 defd(dbid,tname,cname) ; item defined in entity data
+ n %defd
  s %defd=$d(^mgsqld(0,dbid,"t",tname,"tc",cname))
  q %defd
  ;

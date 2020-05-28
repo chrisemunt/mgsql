@@ -37,13 +37,43 @@ addselx(qnum,item) ; add item to general select list
  s ^mgtmp($j,"sel",qnum,snum)=item,^mgtmp($j,"selx",qnum,item)=snum
  q snum
  ;
-table(qnum,item,alias,tname,cname,error) ; check table/alias
- n x
- s alias="",cname=item i item["." s alias=$p(item,".",1),cname=$p(item,".",2) i '$l(cname) s error="invalid sql column '"_item_"'",error(5)="HY000" q
- i alias="",$d(^mgtmp($j,"from",qnum,2)) s error="ambiguous column '"_item_"'",error(5)="HY000" q
- i alias'="" s tname="" i $d(^mgtmp($j,"from","x",qnum,alias)) s x=^mgtmp($j,"from","x",qnum,alias) s tname=$p(^mgtmp($j,"from",qnum,x),"~",1)
- i alias="" s tname=^mgtmp($j,"from",qnum,1),alias=$p(tname,"~",2),tname=$p(tname,"~",1)
- i tname="" s error="invalid alias '"_alias_"' for column '"_cname_"'",error(5)="HY000" q
+table(dbid,qnum,item,alias,tname,cname,pred,error) ; check table/alias
+ n x,i,alias1,tname1,fr,ok
+ s error="",alias="",tname="",cname=item i item["." s alias=$p(item,".",1),cname=$p(item,".",2)
+ i cname="" s error="invalid sql column '"_item_"'",error(5)="HY000" q
+ i pred d
+ . i alias'="" d  q
+ . . f i=1:1 q:'$d(^mgtmp($j,"from","x",i))  i $d(^mgtmp($j,"from","x",i,alias)) s x=^mgtmp($j,"from","x",i,alias),x=^mgtmp($j,"from",i,x),tname=$p(x,"~",1),alias=$p(x,"~",2) q
+ . . q
+ . i alias="" d  q
+ . . f i=1:1 q:'$d(^mgtmp($j,"from","x",i))  s alias1="" f  s alias1=$o(^mgtmp($j,"from","x",i,alias1)) q:alias1=""  s x=^mgtmp($j,"from","x",i,alias1),x=^mgtmp($j,"from",i,x),tname1=$p(x,"~",1) i $$defd^%mgsqld(dbid,tname1,cname) s tname=tname1,alias=$p(x,"~",2) q
+ . . q
+ . q
+ i 'pred d
+ . i alias'="" d  q
+ . . i $d(^mgtmp($j,"from","x",qnum,alias)) s x=^mgtmp($j,"from","x",qnum,alias) s tname=$p(^mgtmp($j,"from",qnum,x),"~",1)
+ . . q
+ . i alias="" d  q
+ . . s fr=0
+ . . f i=1:1 q:'$d(^mgtmp($j,"from",qnum,i))  d
+ . . . s x=^mgtmp($j,"from",qnum,i),tname1=$p(x,"~",1)
+ . . . i cname="*" s fr=fr+1,fr(fr)=i q
+ . . . i $$defd^%mgsqld(dbid,tname1,cname) s fr=fr+1,fr(fr)=i
+ . . . q
+ . . i fr>1 d
+ . . . s ok=1 f i=1:1 q:'$d(fr(i))  s x=^mgtmp($j,"from",qnum,fr(i)),tname1=$p(x,"~",1),alias1=$p(x,"~",2) i '$d(^mgtmp($j,"from","z",qnum,"join",cname,alias1)) s ok=0 q
+ . . . i ok s fr=1
+ . . . q
+ . . i fr=0 q
+ . . i fr=1 s x=^mgtmp($j,"from",qnum,fr(fr)),tname=$p(x,"~",1),alias=$p(x,"~",2) q
+ . . s error="ambiguous column name '"_item_"'",error(5)="HY000" q
+ . . q
+ . q
+ i error'="" q
+ ;;i alias="",$d(^mgtmp($j,"from",qnum,2)) s error="ambiguous column '"_item_"'",error(5)="HY000" q
+ ;;i alias'="" s tname="" i $d(^mgtmp($j,"from","x",qnum,alias)) s x=^mgtmp($j,"from","x",qnum,alias) s tname=$p(^mgtmp($j,"from",qnum,x),"~",1)
+ ;;i alias="" s tname=^mgtmp($j,"from",qnum,1),alias=$p(tname,"~",2),tname=$p(tname,"~",1)
+ i tname=""!(alias="") s error="unable to find source of column '"_$s(alias'="":alias_".",1:"")_cname_"'",error(5)="HY000" q
  q
  ;
 group(dbid,sql,qnum,arg,error) ; validate 'group by' statement
@@ -56,7 +86,7 @@ group(dbid,sql,qnum,arg,error) ; validate 'group by' statement
  ;
 group1(dbid,qnum,itemno,item,error) ; for each element grouped by
  n %defk,%defd,alias,tname,cname
- d table(qnum,item,.alias,.tname,.cname,.error) i $l(error) q
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) q
  s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname) i '%defk,'%defd s error="column '"_cname_"' (in 'group by' statement) is not part of table '"_tname_"'",error(5)="42S22" q
  s ^mgtmp($j,"group",qnum,itemno)=%z("dsv")_alias_"."_cname_%z("dsv")
  q
@@ -82,15 +112,18 @@ remap(alias,cname) ; look for extra column defined for soft view only
 order(dbid,sql,qnum,arg,error) ; validate 'order by'
  n i,argn,item,args
  s argn=$$arg^%mgsqle(arg,.args)
- f i=1:1:args s item=args(i) d order1(qnum,i,item,.error) i $l(error) s error(0)="order",error(1)=0 q
+ f i=1:1:args s item=args(i) d order1(dbid,qnum,i,item,.error) i $l(error) s error(0)="order",error(1)=0 q
  q
  ;
-order1(qnum,itemno,item,error) ; validate order by item
- n num,len,sel,dir,x
+order1(dbid,qnum,itemno,item,error) ; validate order by item
+ n num,len,sel,dir,i,x,alias,tname,cname,sqag
  s dir="asc" i item[" " s dir=$p(item," ",2),item=$p(item," ",1)
  i dir'="asc",dir'="desc" s error="the 'order' for item '"_item_"' must be defined as 'asc' (ascending) or 'desc' (descending)",error(5)="HY000" q
  i item?1n.n,'$d(^mgtmp($j,"sel",1,item)) s error="invalid 'order by' item no. '"_item_"'",error(5)="HY000" q
  i item?1n.n s num=item,sel=^mgtmp($j,"sel",1,num) g order2
+ s sqag="" i item["(",item[")" s sqag=$p(item,"(",1),item=$p($p(item,"(",2,999),")",1)
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) b  q
+ s item=alias_"."_cname i sqag'="" s item=sqag_"("_item_")"
  s sel="",len=$l(item,".") f num=1:1 q:'$d(^mgtmp($j,"sel",1,num))  s x=$p(^(num),%z("dsv"),2) i $p(x,".",1,len)=item s sel=%z("dsv")_item_%z("dsv") q
  i '$l(sel) s error="'order by' item '"_item_"' is not in the 'select' statement",error(5)="HY000" q
 order2 s ^mgtmp($j,"order",itemno)=sel,^mgtmp($j,"order",itemno,0)=num_"~"_dir
@@ -134,7 +167,7 @@ select1(dbid,qnum,itemno,item,error) ; validate specific item in 'select' line
  ;
 select2(dbid,qnum,itemno,item,error) ; columns
  n %defk,%defd,%defm,ok,alias,tname,cname
- d table(qnum,item,.alias,.tname,.cname,.error) i $l(error) q
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) q
  i item?1a.e1"."1"{".e1"}"1"."1a.e g select21
  i tname?@("1"""_%z("dq")_"""1n.n1"""_%z("dq")_"""") d  q:$l(error)  g select21
  . n qnum
@@ -148,7 +181,7 @@ select21 s item=%z("dsv")_alias_"."_cname_%z("dsv"),snum=$$addsel(qnum,item)
  ;
 select3(dbid,qnum,itemno,item,error) ; x="*" - get all key & data columns
  n %ind,%data,pkey,ino,pkeyx,datax,i,n,x,r,sc,alias,tname,cname
- d table(qnum,item,.alias,.tname,.cname,.error) i $l(error) q
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) q
  s ino=$$pkey^%mgsqld(dbid,tname),sc=$$key^%mgsqld(dbid,tname,ino,.%ind)
  s pkey=0 f i=1:1 q:'$d(%ind(ino,i))  s x=%ind(ino,i) i x?1a.e s pkey=pkey+1,pkey(pkey)=x,pkeyx(x)=pkey
  i qnum'=1,$d(pkey(1)) s item=pkey(1),item=%z("dsv")_alias_"."_item_%z("dsv"),snum=$$addsel(qnum,item) q
@@ -171,7 +204,7 @@ select4(dbid,qnum,itemno,item,error) ; aggregates
  . i $d(^mgtmp($j,"sqag",qnum,item_qnum,fun)) s error="duplication of aggregate in 'select' line",error(5)="HY000" q
  . s key=item_qnum,newx=fun_"("_item_qnum_")"
  . q
- d table(qnum,item,.alias,.tname,.cname,.error) i $l(error) q
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) q
  s ok=0,%defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname),%defm=$$remap(alias,cname) s ok=%defk!%defd!%defm
  i 'ok s error="'select' item '"_cname_"' is not a column of table '"_tname_"'",error(5)="42S22" q
  s key=alias_"."_cname,newx=fun_"("_alias_"."_cname s newx=newx_")"

@@ -115,8 +115,19 @@ word(en,ex,word,sqlex,ops,error) ; generate word array from expression lines en(
  q
  ;
 word1(lin,word,fun,sqlex,ops,error) ; decompose line lin
- n pn,wn,i,wrd,wrd1,wrdlc,nwrd,obr,cbr,like,mpm,in,between,extvar,ok,in,like,mpm,between
+ n pn,wn,i,wrd,wrd1,wrdlc,nwrd,obr,cbr,like,mpm,in,between,extvar,ok,in,like,mpm,between,wk,c,ca,cz,sa,sz
  f  q:$e(lin)'=" "  s lin=$e(lin,2,999)
+ s wk=lin,lin="" f i=1:1:$l(wk) d
+ . s c=$e(wk,i),sa="",sz=""
+ . s ca=$s(i>1:$e(wk,i-1),1:"")
+ . s cz=$e(wk,i+1)
+ . i c="*",ca="(",cz=")" s lin=lin_c q
+ . i c?1p,$d(ops(c)) d
+ . . i ca'="",'$d(ops(ca)),ca'=" " s sa=" "
+ . . i cz'="",'$d(ops(cz)),cz'=" " s sz=" "
+ . . q
+ . s lin=lin_sa_c_sz
+ . q
  s pn=0,wn=0,in="",like="",mpm="",between=""
 word2 s pn=pn+1 i pn>$l(lin," ") q
  s wrd=$p(lin," ",pn)

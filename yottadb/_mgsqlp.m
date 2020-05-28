@@ -27,6 +27,7 @@ a d vers^%mgsql("%mgsqlp") q
 main(sql,line,error) ; entry
  n sql2,wrk
  s error=""
+ s qnummax=0
  k ^mgtmp($j,"translate")
 main1 ; re-entry
  k ^mgtmp($j,"cmnd")

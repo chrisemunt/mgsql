@@ -62,7 +62,7 @@ argx s args=an
  ;
 ops(ops) ; operator list
  n i,op
- s ops=":*:/:\:#:-:+:=:is:'=:<>:!=:?:'?:>:<:'>:'<:>=:<=:'>=:'<=:[:'[:]:']:_:':in:not in:like:not like:exists:not exists:between:not between:and:&:or:!:"
+ s ops=":*:/:\:#:-:+:=:is:=:<>:!=:'=:?:>:<:>:<:>=:'<:<=:'>:[:[:]:]:in:not in:like:not like:exists:not exists:between:not between:and:&:or:!:"
  f i=2:1:$l(ops,":") s op=$p(ops,":",i) i op'="" s ops(op)=i
  q ops
  ;

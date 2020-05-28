@@ -39,59 +39,62 @@ where(dbid,sql,qnum,arg,error) ; validate 'where' statement
  s wn=0
 where1 s wn=wn+1 i '$d(word(0,wn)) g wherex
  s wrd=word(0,wn)
- i wrd[%z("dsv") d where2 i $l(error) g wherex
+ i wrd[%z("dsv") s wrd=$$where2(dbid,qnum,wrd,.error) i $l(error) g wherex
  i wrd[%z("df") s wrd=$$where3(qnum,$p(wrd,%z("df"),2),error) i $l(error) g wherex
  s wnum=$$addwhr(qnum,wrd)
  g where1
 wherex i $l(error),qnum?1n.n s error(0)="where",error(1)=qnum
  q
  ;
-where2 ; validate sql column
- n %d,%defk,%defd,%defm,x,y,z,typ,qnum1,fun,tname,alias
+where2(dbid,qnum,item,error) ; validate sql column
+ n %d,%defk,%defd,%defm,x,y,z,wrd,typ,qnum1,fun,mfun,alias,tname,cname,alias,snum
+ s wrd=item
  i qnum["g" g where2h
  s qnum1=qnum
  s x=$p(wrd,%z("dsv"),2)
- d corelate(.sql,qnum,x,.error) i $l(error) s error=error_": "_x q
- i x'["." s error="column '"_x_"' (in 'where'/'having' statement) is not qualified by table name/alias",error(5)="HY000" q
+ d corelate(.sql,qnum,x,.error) i $l(error) s error=error_": "_x q wrd
+ ;;i x'["." s error="column '"_x_"' (in 'where'/'having' statement) is not qualified by table name/alias",error(5)="HY000" q wrd
  s cname=x,fun="" i x["(" s fun=$p(x,"(",1),x=$p(x,"(",2,999) i fun="count"&(x[" ") s fun="cntd",x=$p(x," ",2,999)
- s x=$p(x,")",1)
- s f=$p(x,".",1),(x,cname)=$p(x,".",2)
- s mfun=$$sqlfun^%mgsqlv2(fun) i mfun'="" s wrd=%z("df")_mfun_"("_f_"."_x_")"_%z("df") q
- i $l(fun) s error="the 'where' statement must not contain references to sql aggregates",error(5)="HY000" q
- i $d(sql("union",qnum)),'$d(^mgtmp($j,"from","x",qnum,f)) s error="invalid alias '"_f_"': 'union' queries cannot be correlated",error(5)="HY000" q
- f j=1:1:qnum q:'$d(^mgtmp($j,"from","x",j))  i $d(^mgtmp($j,"from","x",j,f)) s y=^mgtmp($j,"from","x",j,f),y=^mgtmp($j,"from",j,y),tname=$p(y,"~",1),alias=$p(y,"~",2) q
- i '$d(^mgtmp($j,"from","x",j,f)) s error="column '"_x_"' (in the 'where' statement) is qualified by an unknown table name/alias",error(5)="HY000" q
+ s item=$p(x,")",1)
+ d table^%mgsqlv2(dbid,qnum,item,.alias,.tname,.cname,1,.error) i $l(error) q wrd
+ ;;s f=$p(x,".",1),(x,cname)=$p(x,".",2)
+ s mfun=$$sqlfun^%mgsqlv2(fun) i mfun'="" s wrd=%z("df")_mfun_"("_alias_"."_cname_")"_%z("df") q wrd
+ i $l(fun) s error="the 'where' statement must not contain references to sql aggregates",error(5)="HY000" q wrd
+ i $d(sql("union",qnum)),'$d(^mgtmp($j,"from","x",qnum,alias)) s error="invalid alias '"_alias_"': 'union' queries cannot be correlated",error(5)="HY000" q wrd
+ ;;f j=1:1:qnum q:'$d(^mgtmp($j,"from","x",j))  i $d(^mgtmp($j,"from","x",j,f)) s y=^mgtmp($j,"from","x",j,f),y=^mgtmp($j,"from",j,y),tname=$p(y,"~",1),alias=$p(y,"~",2) q wrd
+ ;;i '$d(^mgtmp($j,"from","x",j,f)) s error="column '"_x_"' (in the 'where' statement) is qualified by an unknown table name/alias",error(5)="HY000" q wrd
  g where21
 where2h ; Having predicate
  s x=$p(wrd,%z("dsv"),2)
  i x="count(*)" s fun="count" g where23
  i x'["." s error="column '"_x_"' (in 'having' statement) is not qualified by table name/alias",error(5)="HY000" q
  s cname=x,fun="" i x["(" s fun=$p(x,"(",1),x=$p(x,"(",2,999) i fun="count"&(x[" ") s fun="cntd",x=$p(x," ",2,999)
- s x=$p(x,")",1)
- s f=$p(x,".",1),(x,cname)=$p(x,".",2)
- i $d(sql("union",qnum)),'$d(^mgtmp($j,"from","x",qnum,f)) s error="invalid alias '"_f_"': 'union' queries cannot be correlated",error(5)="HY000" q
- i $d(^mgtmp($j,"from","x",1,f)) s y=^mgtmp($j,"from","x",1,f),y=^mgtmp($j,"from",1,y),tname=$p(y,"~",1),alias=$p(y,"~",2)
- i '$d(^mgtmp($j,"from","x",1,f)) s error="column '"_x_"' (in the 'having' statement) is qualified by an unknown table name/alias",error(5)="HY000" q
+ s item=$p(x,")",1)
+ d table^%mgsqlv2(dbid,1,item,.alias,.tname,.cname,0,.error) i $l(error) q
+ ;;s f=$p(x,".",1),(x,cname)=$p(x,".",2)
+ i $d(sql("union",qnum)),'$d(^mgtmp($j,"from","x",qnum,alias)) s error="invalid alias '"_alias_"': 'union' queries cannot be correlated",error(5)="HY000" q
+ ;;i $d(^mgtmp($j,"from","x",1,f)) s y=^mgtmp($j,"from","x",1,f),y=^mgtmp($j,"from",1,y),tname=$p(y,"~",1),alias=$p(y,"~",2)
+ ;;i '$d(^mgtmp($j,"from","x",1,f)) s error="column '"_x_"' (in the 'having' statement) is qualified by an unknown table name/alias",error(5)="HY000" q
 where21 ; Common
- i tname?@("1"""_%z("dq")_"""1n.n1"""_%z("dq")_"""") d  q:$l(error)  g where22
- . n qnum
- . s qnum=$p(tname,%z("dq"),2)
- . i '$d(^mgtmp($j,"vx",qnum,x)) s error="column '"_x_"' ('where'/'having' statement) is not part of derived table "_alias,error(5)="42S22" q
- . q
- s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname),%defm=$$remap^%mgsqlv2(f,cname) i '%defk,'%defd,'%defm s error="column '"_x_"' ('where'/'having' statement) is not part of table "_tname,error(5)="42S22" q
+ ;;i tname?@("1"""_%z("dq")_"""1n.n1"""_%z("dq")_"""") d  q:$l(error)  g where22
+ ;;. n qnum
+ ;;. s qnum=$p(tname,%z("dq"),2)
+ ;;. i '$d(^mgtmp($j,"vx",qnum,x)) s error="column '"_x_"' ('where'/'having' statement) is not part of derived table "_alias,error(5)="42S22" q
+ ;;. q
+ s %defk=$$defk^%mgsqld(dbid,tname,cname),%defd=$$defd^%mgsqld(dbid,tname,cname),%defm=$$remap^%mgsqlv2(alias,cname) i '%defk,'%defd,'%defm s error="column '"_item_"' ('where'/'having' statement) is not part of table "_tname,error(5)="42S22" q wrd
  s %d=$$col^%mgsqld(dbid,tname,cname) s typ=$p(%d,"\",11)
-where22 s item=%z("dsv")_f_"."_cname_%z("dsv"),snum=$$addselx^%mgsqlv2(qnum,item) s ^mgtmp($j,"wsel",item)=""
- i fun="" q
-where23 i "count,cntd,sum,avg,max,min"'[fun q
+where22 s item=%z("dsv")_alias_"."_cname_%z("dsv"),snum=$$addselx^%mgsqlv2(qnum,item) s ^mgtmp($j,"wsel",item)=""
+ i fun="" q item
+where23 i "count,cntd,sum,avg,max,min"'[fun q wrd
  s qnum1=qnum+0
  i x="count(*)" s z="*"_qnum1,wrd=%z("dsv")_"count("_"*"_qnum1_")"_%z("dsv")
- i x'="count(*)" s z=f_"."_x
+ i x'="count(*)" s z=alias_"."_x
  s y=%z("dsv")_fun_"("_z_")"_%z("dsv")
  i fun["(" s y=y_")"
  s snum=$$addselx^%mgsqlv2(qnum1,y)
  s ^mgtmp($j,"wsel",y)=""
- i '$d(^mgtmp($j,"sqag",qnum1,z,fun)) s ^mgtmp($j,"sqag",qnum1,z,fun)=selct
- q
+ i '$d(^mgtmp($j,"sqag",qnum1,z,fun)) s ^mgtmp($j,"sqag",qnum1,z,fun)=snum
+ q wrd
  ;
 where3(qnum,mfun,error) ; embedded functions in 'where' statement
  n pn,i,fn,ax,outv,ex,word,zcode,fun,item,snum

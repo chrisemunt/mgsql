@@ -35,7 +35,8 @@ v() ; version and date
  ;s v="1.0",r=7,d="13 June 2019"
  ;s v="1.0",r=8,d="1 November 2019"
  ;s v="1.1",r=9,d="15 January 2020"
- s v="1.2",r=10,d="14 April 2020"
+ ;s v="1.2",r=10,d="14 April 2020"
+ s v="1.2",r=11,d="28 May 2020"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -53,7 +54,7 @@ upgrade(mode) ; upgrade this installation
 exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
  new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
- ;;;d upgrade(0)
+ ;d upgrade(0)
  s error="",ok=0
  s dbid=$$schema(dbid)
  s line(1)=sql
