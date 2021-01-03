@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -38,7 +38,7 @@ endsq1 ; unique result but expected as a list
  n com
  i qnum=1,$g(^mgtmp($j,"unique",qnum)) d row(grp,qnum,0,"")
  i qnum=1 q
- i '^mgtmp($j,"unique",qnum) q
+ i '$g(^mgtmp($j,"unique",qnum)) q
  s com=^mgtmp($j,"sqcom",qnum)
  i com'["in",com'["exists" q
  s line=line_" ;" d addline^%mgsqlc(grp,.line)

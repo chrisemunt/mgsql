@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -36,7 +36,8 @@ v() ; version and date
  ;s v="1.0",r=8,d="1 November 2019"
  ;s v="1.1",r=9,d="15 January 2020"
  ;s v="1.2",r=10,d="14 April 2020"
- s v="1.2",r=11,d="28 May 2020"
+ ;s v="1.2",r=11,d="28 May 2020"
+ s v="1.2",r=12,d="3 January 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -291,9 +292,20 @@ sel10 ; select all patients older than 40.  Convert names to upper case
  s ok=$$exec^%mgsql("","select a.num,upper(a.name),a.dob,a.age from patient a where a.age > 40")
  q
  ;
+sel11 ; select distinct patient names
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","select distinct name from patient",.%zi,.%zo)
+ q
+ ;
+sel12 ; select distinct patient names
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","select distinct a.name from patient a where upper(a.address) like '%BANSTEAD%'",.%zi,.%zo)
+ q
+ ;
 proc ; create stored procedures
  s ok=$$exec^%mgsql("","CREATE PROCEDURE patient_getdata (num int, name varchar(255), address varchar(255))",.%zi,.%zo)
  s ok=$$exec^%mgsql("","CREATE PROCEDURE SelectAllPatients AS SELECT * FROM patient GO;",.%zi,.%zo)
  q
  ;
  
+

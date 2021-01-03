@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -45,6 +45,11 @@ isdsm() ; see if this is DSM
 ism21() ; see if this is M21
  i $zv["M21" q 1
  q 0
+ ;
+crc(str,mode) ; cyclic redundancy check
+ n x,i
+ s x=0 f i=1:1:$l(str) s x=x+$a(str,i)
+ q x
  ;
 error() ; get last error
  i $$isydb() q $zs

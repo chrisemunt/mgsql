@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2020 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -107,7 +107,7 @@ outrec ; set up record for output and test for 'distinct'
  i $d(^mgtmp($j,"order")) s rec=recc
  i $g(^mgtmp($j,"sel",qnum,0))'="distinct"!$d(^mgtmp($j,"group",qnum)) q
  s line=" s "_rec d addline^%mgsqlc(grp,.line)
- s line=" s "_%z("vck")_"="_recc_","_%z("vckcrc")_"="_"$zcrc("_%z("vck")_",7)" d addline^%mgsqlc(grp,.line)
+ s line=" s "_%z("vck")_"="_recc_","_%z("vckcrc")_"="_"$$crc^%mgsqls("_%z("vck")_",7)" d addline^%mgsqlc(grp,.line)
  s line=" i $d("_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_"""x""_"_%z("vck")_")) g "_%zq("tag",qnum)
  ; cope with long select lines
  s line=" s "_%z("vckcrcdef")_"=0,"_%z("vnx")_"="""" f  s "_%z("vnx")_"=$o("_%z("ctg")_"("_%z("cts")_","_"""d"","_%z("vckcrc")_","_%z("vnx")_")) q:"_%z("vnx")_"=""""  i $g("_%z("ctg")_"("_%z("cts")_",""d"","_%z("vckcrc")_","_%z("vnx")_"))="_%z("vck")_" s "_%z("vckcrcdef")_"=1 q"
