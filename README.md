@@ -3,9 +3,9 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-28 May 2020, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+3 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.2; Revision 11
+* Current Release: Version: 1.2; Revision 12
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
 ## Overview
@@ -18,7 +18,6 @@ SQL access is provided via the following routes:
 * REST.
 * ODBC.
 
-Note that the **mgsql** project is very much 'work in progress'.  Use cautiously! 
 
 ## Pre-requisites
 
@@ -32,19 +31,19 @@ The **YottaDB** database (or similar M database):
 
 The instructions given here assume a standard 'out of the box' installation of **YottaDB** deployed in the following location:
 
-       /usr/local/lib/yottadb/r122
+       /usr/local/lib/yottadb/r130
 
 The primary default location for routines:
 
-       /root/.yottadb/r1.22_x86_64/r
+       /root/.yottadb/r1.30_x86_64/r
 
 Copy all the routines (i.e. all files with an 'm' extension) held in the GitHub **/yottadb** directory to:
 
-       /root/.yottadb/r1.22_x86_64/r
+       /root/.yottadb/r1.30_x86_64/r
 
 Change directory to the following location and start a **YottaDB** command shell:
 
-       cd /usr/local/lib/yottadb/r122
+       cd /usr/local/lib/yottadb/r130
        ./ydb
 
 Link all the **mgsql** routines and check the installation:
@@ -54,23 +53,31 @@ Link all the **mgsql** routines and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 11 (28 May 2020) %mgsql
-
+       Version: 1.2; Revision 12 (3 January 2021) %mgsql
 
 Note that the version of **mgsql** is successfully displayed.
 
-### Other M systems
+### InterSystems Cache/IRIS
 
-All routines are held in **/m/mgsql.ro** but for InterSystems Cache and IRIS, log in to the Manager UCI and install the **mgsql** routines held in either **/m/mgsql\_cache.xml** or **/m/mgsql\_iris.xml** as appropriate.  For example:
+Log in to the %SYS Namespace and install the **mgsql** routines held in **/isc/mgsql\_isc.ro**.
 
-       do $system.OBJ.Load("/m/zmgsi_mgsql.xml","ck")
+       do $system.OBJ.Load("/isc/mgsql_isc.ro","ck")
 
-Change to your development UCI and check the installation:
+Change to your development Namespace and check the installation:
 
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 11 (28 May 2020) %mgsql
+       Version: 1.2; Revision 12 (3 January 2021) %mgsql
+
+### Other M systems
+
+All routines are held in **/m/mgsql.ro**, use an appropriate utility to install them in the Manager then change to your development UCI and check the installation:
+
+       do ^%mgsql
+
+       MGSQL by M/Gateway Developments Ltd.
+       Version: 1.2; Revision 12 (3 January 2021) %mgsql
 
 ## Executing SQL statements from the YottaDB/M command line
 
@@ -109,16 +116,16 @@ So far we have covered the basics of executing SQL statements from M code.  In o
 
 Network connectivity to **YottaDB** is managed via the **xinetd** service.  First create the following launch script (called **mgsql_ydb** here):
 
-       /usr/local/lib/yottadb/r122/mgsql_ydb
+       /usr/local/lib/yottadb/r130/mgsql_ydb
 
 Content:
 
        #!/bin/bash
-       cd /usr/local/lib/yottadb/r122
+       cd /usr/local/lib/yottadb/r130
        export ydb_dir=/root/.yottadb
-       export ydb_dist=/usr/local/lib/yottadb/r122
-       export ydb_routines="/root/.yottadb/r1.22_x86_64/o*(/root/.yottadb/r1.22_x86_64/r /root/.yottadb/r) /usr/local/lib/yottadb/r122/libyottadbutil.so"
-       export ydb_gbldir="/root/.yottadb/r1.22_x86_64/g/yottadb.gld"
+       export ydb_dist=/usr/local/lib/yottadb/r130
+       export ydb_routines="/root/.yottadb/r1.30_x86_64/o*(/root/.yottadb/r1.30_x86_64/r /root/.yottadb/r) /usr/local/lib/yottadb/r130/libyottadbutil.so"
+       export ydb_gbldir="/root/.yottadb/r1.30_x86_64/g/yottadb.gld"
        $ydb_dist/ydb -r xinetd^%mgsql
 
 Create the **xinetd** script (called **mgsql_xinetd** here): 
@@ -135,7 +142,7 @@ Content:
             socket_type     = stream
             wait            = no
             user            = root
-            server          = /usr/local/lib/yottadb/r122/mgsql_ydb
+            server          = /usr/local/lib/yottadb/r130/mgsql_ydb
        }
 
 * Note: sample copies of **mgsql_xinetd** and **mgsql_ydb** are included in the **/unix** directory.
@@ -290,4 +297,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 ### v1.2.11 (28 May 2020)
 
 * Improve the parsing of expressions embedded in SQL scripts - notably the SQL **WHERE** predicate.
-* Remove the need to fully qualify column names with table names (or table name aliases) in SQL scripts except in cases where ambiguities would otherwise occur. 
+* Remove the need to fully qualify column names with table names (or table name aliases) in SQL scripts except in cases where ambiguities would otherwise occur.
+
+### v1.2.12 (3 January 2021)
+
+* Correct a number of faults in the compilation of 'Select distinct ...' queries.
