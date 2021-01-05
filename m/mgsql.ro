@@ -1,5 +1,5 @@
 Cache for Windows^INT^mgsql
-%RO on 03 Jan 2021 01:00 AM
+%RO on 05 Jan 2021 01:00 AM
 %mgsql
 %mgsql ;(CM) MGSQL Front end
  ;
@@ -40,7 +40,8 @@ v() ; version and date
  ;s v="1.1",r=9,d="15 January 2020"
  ;s v="1.2",r=10,d="14 April 2020"
  ;s v="1.2",r=11,d="28 May 2020"
- s v="1.2",r=12,d="3 January 2021"
+ ;s v="1.2",r=12,d="3 January 2021"
+ s v="1.2",r=13,d="5 January 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -396,7 +397,7 @@ begin ; code to be executed at start of query
  f i=1:1:vsub s line=line_","_%z("pv")_i
  s invs=$g(^mgtmp($j,"in")) i invs f i=1:1:invs s line=line_","_"iv"_i
  s line=" n "_line d addline(grp,.line)
- i $d(^mgtmp($j,"ktmp")) s line=" k "_%z("ctg")_"("_%z("cts")_")"
+ s line=" k "_%z("ctg")_"("_%z("cts")_")" d addline(grp,.line)
  s lvar="" f  s lvar=$o(^mgtmp($j,"in",lvar)) q:lvar=""  s pvar=$$subvar3(lvar),r=$g(^mgtmp($j,"in",lvar)) d
  . s pvar=$p(r,"~",1)
  . s line=" i '$d(%zi("""_lvar_""")) s %zo(""error"")=""<ERROR>input '"_lvar_"' not supplied"" q -1" d addline(grp,.line)
@@ -972,11 +973,12 @@ outrec ; set up record for output and test for 'distinct'
  s line=" s "_%z("vck")_"="_recc_","_%z("vckcrc")_"="_"$$crc^%mgsqls("_%z("vck")_",7)" d addline^%mgsqlc(grp,.line)
  s line=" i $d("_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_"""x""_"_%z("vck")_")) g "_%zq("tag",qnum)
  ; cope with long select lines
- s line=" s "_%z("vckcrcdef")_"=0,"_%z("vnx")_"="""" f  s "_%z("vnx")_"=$o("_%z("ctg")_"("_%z("cts")_","_"""d"","_%z("vckcrc")_","_%z("vnx")_")) q:"_%z("vnx")_"=""""  i $g("_%z("ctg")_"("_%z("cts")_",""d"","_%z("vckcrc")_","_%z("vnx")_"))="_%z("vck")_" s "_%z("vckcrcdef")_"=1 q"
+ s line=" s "_%z("vckcrcdef")_"=0,"_%z("vnx")_"="""" f  s "_%z("vnx")_"=$o("_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_%z("vckcrc")_","_%z("vnx")_")) q:"_%z("vnx")_"=""""  i $g("_%z("ctg")_"("_%z("cts")_",""d"","_qnum_","_%z("vckcrc")_","_%z("vnx")_"))="_%z("vck")_" s "_%z("vckcrcdef")_"=1 q"
  d addline^%mgsqlc(grp,.line)
  s line=" i "_%z("vckcrcdef")_" g "_%zq("tag",qnum)
  d addline^%mgsqlc(grp,.line)
- s line=" s "_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_"""x""_"_%z("vck")_")"_"=""""" d addline^%mgsqlc(grp,.line)
+ ;s line=" s "_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_"""x""_"_%z("vck")_")"_"=""""" d addline^%mgsqlc(grp,.line)
+ s line=" s "_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_%z("vckcrc")_","_"$i("_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_%z("vckcrc")_"))"_")="_%z("vck") d addline^%mgsqlc(grp,.line)
  s ^mgtmp($j,"ktmp")=1
  q
  ;
