@@ -3,9 +3,9 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-3 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+5 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.2; Revision 12
+* Current Release: Version: 1.2; Revision 13
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
 ## Overview
@@ -53,7 +53,7 @@ Link all the **mgsql** routines and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 12 (3 January 2021) %mgsql
+       Version: 1.2; Revision 13 (5 January 2021) %mgsql
 
 Note that the version of **mgsql** is successfully displayed.
 
@@ -68,16 +68,16 @@ Change to your development Namespace and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 12 (3 January 2021) %mgsql
+       Version: 1.2; Revision 13 (5 January 2021) %mgsql
 
 ### Other M systems
 
-All routines are held in **/m/mgsql.ro**, use an appropriate utility to install them in the Manager then change to your development UCI and check the installation:
+All routines are held in **/m/mgsql.ro**, use an appropriate utility to install them in the Manager UCI then change to your development UCI and check the installation:
 
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 12 (3 January 2021) %mgsql
+       Version: 1.2; Revision 13 (5 January 2021) %mgsql
 
 ## Executing SQL statements from the YottaDB/M command line
 
@@ -106,7 +106,7 @@ Run the various SQL retrieval scripts:
 
        do sel1^%mgsql
 
-A number of SQL scripts are available at line labels sel1 to sel8.
+A number of SQL scripts are available at line labels sel1 to sel12.
 
 ## Setting up the network service
 
@@ -246,7 +246,7 @@ The data source created can now be used in Windows applications.
 
 ## License
 
-Copyright (c) 2018-2020 M/Gateway Developments Ltd,
+Copyright (c) 2018-2021 M/Gateway Developments Ltd,
 Surrey UK.                                                      
 All rights reserved.
  
@@ -292,7 +292,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 	* In all cases the default value for **characters** (if this argument is not supplied) is white space - ' '.
 * Correct a fault in the compilation of the SQL LIKE operator.
 * Finally, run the **upgrade** procedure.  This will clean-up any temporary files previously used by **mgsql** and force the recompilation of all queries.
-	* **Do upgrade^%mgsql(0)**  
+	* **set status=$$upgrade^%mgsql(0)**
 
 ### v1.2.11 (28 May 2020)
 
@@ -302,3 +302,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 ### v1.2.12 (3 January 2021)
 
 * Correct a number of faults in the compilation of 'Select distinct ...' queries.
+
+### v1.2.13 (5 January 2021)
+
+* Correct a fault that led to duplicate values being erroneously returned for 'Select distinct ...' queries.
+* For this update, run the **upgrade** procedure after installation.  This will clean-up any temporary files previously used by **mgsql** and force the recompilation of all queries.
+	* **set status=$$upgrade^%mgsql(0)** 
