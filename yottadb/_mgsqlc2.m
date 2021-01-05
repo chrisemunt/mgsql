@@ -110,11 +110,12 @@ outrec ; set up record for output and test for 'distinct'
  s line=" s "_%z("vck")_"="_recc_","_%z("vckcrc")_"="_"$$crc^%mgsqls("_%z("vck")_",7)" d addline^%mgsqlc(grp,.line)
  s line=" i $d("_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_"""x""_"_%z("vck")_")) g "_%zq("tag",qnum)
  ; cope with long select lines
- s line=" s "_%z("vckcrcdef")_"=0,"_%z("vnx")_"="""" f  s "_%z("vnx")_"=$o("_%z("ctg")_"("_%z("cts")_","_"""d"","_%z("vckcrc")_","_%z("vnx")_")) q:"_%z("vnx")_"=""""  i $g("_%z("ctg")_"("_%z("cts")_",""d"","_%z("vckcrc")_","_%z("vnx")_"))="_%z("vck")_" s "_%z("vckcrcdef")_"=1 q"
+ s line=" s "_%z("vckcrcdef")_"=0,"_%z("vnx")_"="""" f  s "_%z("vnx")_"=$o("_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_%z("vckcrc")_","_%z("vnx")_")) q:"_%z("vnx")_"=""""  i $g("_%z("ctg")_"("_%z("cts")_",""d"","_qnum_","_%z("vckcrc")_","_%z("vnx")_"))="_%z("vck")_" s "_%z("vckcrcdef")_"=1 q"
  d addline^%mgsqlc(grp,.line)
  s line=" i "_%z("vckcrcdef")_" g "_%zq("tag",qnum)
  d addline^%mgsqlc(grp,.line)
- s line=" s "_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_"""x""_"_%z("vck")_")"_"=""""" d addline^%mgsqlc(grp,.line)
+ ;s line=" s "_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_"""x""_"_%z("vck")_")"_"=""""" d addline^%mgsqlc(grp,.line)
+ s line=" s "_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_%z("vckcrc")_","_"$i("_%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_","_%z("vckcrc")_"))"_")="_%z("vck") d addline^%mgsqlc(grp,.line)
  s ^mgtmp($j,"ktmp")=1
  q
  ;

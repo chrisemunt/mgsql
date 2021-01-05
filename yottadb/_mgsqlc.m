@@ -72,7 +72,7 @@ begin ; code to be executed at start of query
  f i=1:1:vsub s line=line_","_%z("pv")_i
  s invs=$g(^mgtmp($j,"in")) i invs f i=1:1:invs s line=line_","_"iv"_i
  s line=" n "_line d addline(grp,.line)
- i $d(^mgtmp($j,"ktmp")) s line=" k "_%z("ctg")_"("_%z("cts")_")"
+ s line=" k "_%z("ctg")_"("_%z("cts")_")" d addline(grp,.line)
  s lvar="" f  s lvar=$o(^mgtmp($j,"in",lvar)) q:lvar=""  s pvar=$$subvar3(lvar),r=$g(^mgtmp($j,"in",lvar)) d
  . s pvar=$p(r,"~",1)
  . s line=" i '$d(%zi("""_lvar_""")) s %zo(""error"")=""<ERROR>input '"_lvar_"' not supplied"" q -1" d addline(grp,.line)
