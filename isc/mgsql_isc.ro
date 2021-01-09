@@ -1,6 +1,6 @@
 Cache for Windows^INT^mgsql^~Format=Cache.S~^RAW
-%RO on 05 Jan 2021 01:00 AM
-%mgsql^INT^1^65749,33748.0^0
+%RO on 09 Jan 2021 01:00 AM
+%mgsql^INT^1^65753,33387.0^0
 %mgsql ;(CM) MGSQL Front end
  ;
  ;  ----------------------------------------------------------------------------
@@ -41,7 +41,8 @@ v() ; version and date
  ;s v="1.2",r=10,d="14 April 2020"
  ;s v="1.2",r=11,d="28 May 2020"
  ;s v="1.2",r=12,d="3 January 2021"
- s v="1.2",r=13,d="5 January 2021"
+ ;s v="1.2",r=13,d="5 January 2021"
+ s v="1.2",r=14,d="8 January 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -59,8 +60,9 @@ upgrade(mode) ; upgrade this installation
 exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
  s $zt="exece^%mgsql" ; new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
- ;d upgrade(0)
+ ;s ok=$$upgrade(0)
  s error="",ok=0
+ i $g(%zi("stmt"))'="" s %zi(0,"stmt")=$g(%zi("stmt")) ; for backwards compatibility
  s dbid=$$schema(dbid)
  s line(1)=sql
  s rou=$$main^%mgsqlx(dbid,.line,.info,.error)
@@ -314,6 +316,43 @@ sel12 ; select distinct patient names
  s ok=$$exec^%mgsql("","select distinct a.name from patient a where upper(a.address) like '%BANSTEAD%'",.%zi,.%zo)
  q
  ;
+sel13 ; providing variable inputs to a query
+ k %zi,%zo
+ s %zi("number")=1
+ s ok=$$exec^%mgsql("","select * from patient where num = :number",.%zi,.%zo)
+ q
+ ;
+sel14 ; directing query output to a spool file
+ k %zi,%zo,x1,x2,len1
+ s %zi(0,"stmt")="MyQuery"
+ s ok=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+ w !,"Query output will be in spool file: ^mgsqls($job,"""_%zi(0,"stmt")_""") ..."
+ s x1="^mgsqls("_$j_","""_%zi(0,"stmt")_""""
+ s len1=$l(x1)
+ s x2=x1_")" f  s x2=$q(@x2) q:$e(x2,1,len1)'=x1  w !,x2,"=",@x2
+ q
+ ;
+sel15 ; directing query output to a callback function
+ k %zi,%zo,x1,x2,len1
+ s %zi(0,"callback")="sel15cb^%mgsql"
+ s ok=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+ q
+ ;
+sel15cb(%zi,%zo,rn) ; callback for query sel15
+ n n,stop
+ s stop=0
+ w !,"row number: ",rn
+ f n=1:1 q:'$d(%zo(0,n))  d
+ . w !,"  column name: ",$g(%zo(0,n)),"; type: ",$g(%zo(0,n,0))
+ . w !,"     value: ",$g(%zo(rn,n))
+ k %zo(rn)
+ q stop
+ ;
+sel16 ; using 'or' in the where predicate
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","select * from patient where num = 1 or num = 2",.%zi,.%zo)
+ q
+ ;
 proc ; create stored procedures
  s ok=$$exec^%mgsql("","CREATE PROCEDURE patient_getdata (num int, name varchar(255), address varchar(255))",.%zi,.%zo)
  s ok=$$exec^%mgsql("","CREATE PROCEDURE SelectAllPatients AS SELECT * FROM patient GO;",.%zi,.%zo)
@@ -322,7 +361,7 @@ proc ; create stored procedures
  
 
 
-%mgsqlc^INT^1^65749,33748.0^0
+%mgsqlc^INT^1^65753,33387.0^0
 %mgsqlc ;(CM) sql compiler - main driver ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -620,7 +659,7 @@ sort ; sort stand-alone sql code into contiguous routine
  
  
 
-%mgsqlc1^INT^1^65749,33748.0^0
+%mgsqlc1^INT^1^65753,33387.0^0
 %mgsqlc1 ; was 2 (CM) sql compiler - parse files ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -733,13 +772,14 @@ parse1x s tagn=tagn+1
  q
  ;
 or(grp,qnum,tnum,zkey,kno,got,data,cond,key,tagn) ; generate code to handle 'or' predicate for subscript
- n var,nxtag,pretag,pastag,datag,lcase,orn,tagv,tagvp
+ n var,nxtag,pretag,pastag,datag,lcase,orn,tag,tagv,tagvp
  s var=$p(zkey,",",kno)
+ s tag=%z("dl")_%z("pt")_qnum_tnum
  s lcase="abcdefghijklmnopqrstuvwxyz"
  s orn=0,tagv=%z("pv")_"("_tnum_","_i_")",tagvp=%z("pv")_"("_tnum_","_kno_",""p"")",datag=%z("dl")_%z("pt")_qnum_tnum_tagn_"x"_%z("dl")
-or1 s orn=orn+1 i '$d(cond(y,"pre",orn)) g orx
+or1 s orn=orn+1 i '$d(cond(var,"pre",orn)) g orx
  s pretag=%z("dl")_%z("pt")_qnum_tnum_tagn_"or"_orn_%z("dl"),pastag=%z("dl")_%z("pt")_qnum_tnum_tagn_"or"_$e(lcase,orn)_%z("dl")
- s nxtag=$s($d(cond(y,"pre",orn+1)):tag_tagn_"or"_(orn+1)_%z("dl"),1:%zq("tagp"))
+ s nxtag=$s($d(cond(var,"pre",orn+1)):tag_tagn_"or"_(orn+1)_%z("dl"),1:%zq("tagp"))
  i $d(cond(var,"fixed",orn)) g or2
  ; generate code to pass on subscript
  s line="" i orn>1 s line=pretag_" ;" d addline^%mgsqlc(grp,.line)
@@ -760,14 +800,14 @@ orx s line=datag_" ;" d addline^%mgsqlc(grp,.line)
  q
  ;
 fixed(grp,qnum,tnum,zkey,kno,got,data,cond,key) ; generate definition test for fixed subscript(s)
- n reset,mxi,var,npn,lines,coms,linet,or,sub,trans,com,to,alias,qual,goto
+ n reset,mxi,var,npn,lines,coms,linet,or,sub,trans,to,alias,qual,goto
  s (reset,reset(0))="" i qnum=1,$g(^mgtmp($j,"unique",qnum)) d reset(qnum,.reset,.data)
  s mxi=kno,(lines,coms,linet,or)=""
  ; build key and null subscript tests
  f npn=kno:1:$l(zkey,",") s var=$p(zkey,",",npn) q:'$d(cond(var,"fixed"))!$d(cond(var,"pre",2))  s mxi=npn d
  . s sub=var,set=$p(cond(var,"pre",1)," ",3,999),to=$p(set,"=",2,999),alias=$p($p(var,%z("dsv"),2),".",1)
  . s trans=0 i '$d(^mgtmp($j,"from",2)),to'["(",to'[")",$l(to,%z("dsv"))'>3,$l(to,%z("dev"))'>3,'$d(^mgtmp($j,"outselx",1,var)),'$d(^mgtmp($j,"from","z",qnum,"pass",alias)) s trans=1,(sub,^mgtmp($j,"trans",$p(var,%z("dsv"),2)))=to
- . i npn>kno s key=key_com_sub
+ . i npn>kno s key=key_key(0)_sub
  . i 'trans s lines=lines_coms_set,coms=","
  . i to'[%z("dsv"),to'[%z("dev"),to?1""""1e.e1""""!(to?1n.n)!(to[%z("ds")) q
  . s linet=linet_or_"'$l("_sub_")",or="!"
@@ -860,7 +900,7 @@ temps ; determine subscripts for order/group sort file
  q
  ;
 
-%mgsqlc2^INT^1^65749,33748.0^0
+%mgsqlc2^INT^1^65753,33387.0^0
 %mgsqlc2 ; was 3 (CM) sql compiler - sub driver ; 27 apr 2003  12:44 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1115,7 +1155,7 @@ delrec ; delete selected record
  
  
 
-%mgsqlc3^INT^1^65749,33748.0^0
+%mgsqlc3^INT^1^65753,33387.0^0
 %mgsqlc3 ;(CM) sql compiler ; 27 apr 2003  12:14 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1271,7 +1311,7 @@ row(grp,qnum,havezo,codezo) ; output a line of sql data
  . s outsel=^mgtmp($j,"outsel",qnum)
  . f i=1:1:outsel s line=line_" s %zo("_%z("vrc")_","_i_")="_^mgtmp($j,"outsel",qnum,i) d addline^%mgsqlc(grp,.line)
  . q
- s line=line_" s "_%z("vok")_"=$$ss^%mgsqlz(.%zi,.%zo,"_%z("vrc")_")" d addline^%mgsqlc(grp,.line)
+ s line=line_" s "_%z("vok")_"=$$ss^%mgsqlz(.%zi,.%zo,"_%z("vrc")_") i "_%z("vok")_" g "_%zq("tagx") d addline^%mgsqlc(grp,.line)
  q
  ;
 top(grp,qnum,sort) ; sql top
@@ -1285,7 +1325,7 @@ top(grp,qnum,sort) ; sql top
  
  
 
-%mgsqlc4^INT^1^65749,33748.0^0
+%mgsqlc4^INT^1^65753,33387.0^0
 %mgsqlc4 ;(CM) sql compiler - restrictions ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1431,7 +1471,7 @@ mtype(dbid,qnum,tnum,item,other) ; determine sort of data
  ;
  
 
-%mgsqlc5^INT^1^65749,33748.0^0
+%mgsqlc5^INT^1^65753,33387.0^0
 %mgsqlc5 ;(CM) sql compiler - get data ; 19 jan 2003  4:34 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1558,7 +1598,7 @@ klind(grp,qnum) ; kill off index to be created
  
  
 
-%mgsqlc6^INT^1^65749,33748.0^0
+%mgsqlc6^INT^1^65753,33387.0^0
 %mgsqlc6 ;(CM) sql compiler - aggregates ; 19 jan 2003  4:34 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1703,7 +1743,7 @@ init(grp,qnum) ; initialise select statement for unique queries
  ;
  
 
-%mgsqlcd^INT^1^65749,33748.0^0
+%mgsqlcd^INT^1^65753,33387.0^0
 %mgsqlcd ;(CM) sql compiler - delete ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1771,7 +1811,7 @@ hilev1 ; kill off single index
  ;
  
 
-%mgsqlci^INT^1^65749,33748.0^0
+%mgsqlci^INT^1^65753,33387.0^0
 %mgsqlci ;(CM) sql compiler - insert ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2035,7 +2075,7 @@ dbg ; set up referential actions audit trail
  ;
  
 
-%mgsqlct^INT^1^65749,33748.0^0
+%mgsqlct^INT^1^65753,33387.0^0
 %mgsqlct ;(CM) sql compiler - get table details ; 19 jan 2003  7:12 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2138,7 +2178,7 @@ dtyp ; get attribute details
  q
  ;
 
-%mgsqlcu^INT^1^65749,33748.0^0
+%mgsqlcu^INT^1^65753,33387.0^0
 %mgsqlcu ;(CM) sql compiler update ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2213,7 +2253,7 @@ setto1 ; add to line
  ;
  
 
-%mgsqld^INT^1^65749,33748.0^0
+%mgsqld^INT^1^65753,33387.0^0
 %mgsqld ;(CM) data model access points ; 14 aug 2002  4:08 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2476,7 +2516,7 @@ cno() ; next column name number
  ;
  
 
-%mgsqle^INT^1^65749,33748.0^0
+%mgsqle^INT^1^65753,33387.0^0
 %mgsqle ;(CM) SQL : Embedded expressions ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2623,7 +2663,7 @@ funlin(funlin,error) ; extract function & parameters wrd from funlin
  
  
 
-%mgsqle1^INT^1^65749,33748.0^0
+%mgsqle1^INT^1^65753,33387.0^0
 %mgsqle1 ;(CM) SQL : Bracket expression in word array ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2887,7 +2927,7 @@ tmpxk(tmp,sn,wrd,wn) ; remove node from snx array
  q
  ;
 
-%mgsqle2^INT^1^65749,33748.0^0
+%mgsqle2^INT^1^65753,33387.0^0
 %mgsqle2 ;(CM) SQL : Compile code for an expression ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -3061,7 +3101,7 @@ mpmx i chr'?1a.u,chr'["""" s error="invalid pattern match "_wrd,error(5)="HY000"
  ;
  
 
-%mgsqln^INT^1^65749,33748.0^0
+%mgsqln^INT^1^65753,33387.0^0
 %mgsqln ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -3178,13 +3218,13 @@ sql ; sql
  i $d(info("sp")) d  g sql2
  . s ok=-1
  . s %zo("routine")=rou
- . s %zi("stmt")=stmt
+ . s %zi(0,"stmt")=stmt
  . s rc=$$so^%mgsqlz()
  . s @("ok=$$"_rou_"(.%zi,.%zo)")
  . s rc=$$sc^%mgsqlz()
  . q
  m %zi=param("i")
- s %zo("routine")=rou,%zi("stmt")=stmt,@("ok=$$exec^"_rou_"(.%zi,.%zo)")
+ s %zo("routine")=rou,%zi(0,"stmt")=stmt,@("ok=$$exec^"_rou_"(.%zi,.%zo)")
  i $d(%zo("error")) s error=$g(%zo("error")),error(5)="HY000" g sqlerror
 sql2 ; 
  d send(line,$l(line),0,"s",0) ; send data
@@ -3525,7 +3565,7 @@ m ; test
  q
  ;
 
-%mgsqln1^INT^1^65749,33748.0^0
+%mgsqln1^INT^1^65753,33387.0^0
 %mgsqln1 ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4059,7 +4099,7 @@ test ; test harness
  q
  
 
-%mgsqln2^INT^1^65749,33748.0^0
+%mgsqln2^INT^1^65753,33387.0^0
 %mgsqln2 ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4457,7 +4497,7 @@ sqltypeid(type) ; get sql/odbc type ID
  ;
  
 
-%mgsqlo^INT^1^65749,33748.0^0
+%mgsqlo^INT^1^65753,33388.0^0
 %mgsqlo ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4545,7 +4585,7 @@ rec2 ; record work involved at each level
  
  
 
-%mgsqlo1^INT^1^65749,33748.0^0
+%mgsqlo1^INT^1^65753,33388.0^0
 %mgsqlo1 ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4623,6 +4663,17 @@ blks5 s ln=$o(whr(no,ln)) i ln="" g blks4
 blksx ;
  q
  ;
+recomb(whr,stat)
+ n n,bn,pre,pst
+ f  q:stat'[bdel  d
+ . s bn=$p(stat,bdel,2)
+ . s pre=$p(stat,bdel,1)
+ . s pst=$p(stat,bdel,3,999)
+ . s n="" f  s n=$o(whr(bn,n)) q:n=""  s pre=pre_whr(bn,n)
+ . s stat=pre_pst
+ . q
+ q stat
+ ;
 rstr ; find useful restrictions
  n orbrn,orn
  s orbrn=0
@@ -4662,7 +4713,7 @@ rstr31 s n=$o(tmp(5,n)) i n="" g rstr32
  g rstr31
 rstr32 ; file restriction
  s rstr(orbrn,sqvar,orn,andn,"op")=opc
- s rstr(orbrn,sqvar,orn,andn,"cnst")=cnst
+ s rstr(orbrn,sqvar,orn,andn,"cnst")=$$recomb(.whr,cnst)
  i cnst'[%z("dev") q
  s (alias,tname)=$p(sqvar,".",1),cname=$p(sqvar,".",2)
  i alias'="" s tno=$g(^mgtmp($j,"from","x",qnum,alias)) i tno'="" s tname=$p($g(^mgtmp($j,"from",qnum,tno)),"~",1)
@@ -4780,7 +4831,7 @@ vrfyx ;
  ;
  
 
-%mgsqlo2^INT^1^65749,33748.0^0
+%mgsqlo2^INT^1^65753,33388.0^0
 %mgsqlo2 ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4952,7 +5003,7 @@ comp1 ; disallow all indices except chosen one
  ;
  
 
-%mgsqlp^INT^1^65749,33748.0^0
+%mgsqlp^INT^1^65753,33388.0^0
 %mgsqlp ;(CM) sql language processor ; 14 aug 2002  6:16 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5179,7 +5230,7 @@ test2 ;
  ;
  
 
-%mgsqlp1^INT^1^65749,33748.0^0
+%mgsqlp1^INT^1^65753,33388.0^0
 %mgsqlp1 ;(CM) sql language processor ; 14 aug 2002  6:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5456,7 +5507,7 @@ unix2 s ln=ln+1 i '$d(sql(qnum,ln)) g unix1
  ;
  
 
-%mgsqlr^INT^1^65749,33748.0^0
+%mgsqlr^INT^1^65753,33388.0^0
 %mqsqlr ;(CM) MGSQL routine management ; 11 feb 2002  2:40 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5530,7 +5581,7 @@ zsydb ; yottadb
  ;
   
 
-%mgsqls^INT^1^65749,33748.0^0
+%mgsqls^INT^1^65753,33388.0^0
 %mgsqls ;(CM) general utilities ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5773,7 +5824,7 @@ logarray(array,title,context) ; log event
  q
  ;
 
-%mgsqlv^INT^1^65749,33748.0^0
+%mgsqlv^INT^1^65753,33388.0^0
  
 %mqsqlv ;(CM) sql - validate query ; 14 aug 2002  6:23 pm
  ;
@@ -5941,7 +5992,7 @@ trx(wrd) ; data translation
  
  
 
-%mgsqlv1^INT^1^65749,33748.0^0
+%mgsqlv1^INT^1^65753,33388.0^0
 %mgsqlv1 ;(CM) sql - validate query part 2 ; 14 aug 2002  6:24 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6067,7 +6118,7 @@ corelate(sql,qnum,item,error) ; determine if sql variable comes from different s
  ;
  
 
-%mgsqlv2^INT^1^65749,33748.0^0
+%mgsqlv2^INT^1^65753,33388.0^0
 %mgsqlv2 ;(CM) sql - validate query part 3 ; 14 aug 2002  6:24 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6324,7 +6375,7 @@ sqlfun(sqlfun) ; translate SQL function name to M equivalent
  ;
  
 
-%mgsqlv3^INT^1^65749,33748.0^0
+%mgsqlv3^INT^1^65753,33388.0^0
 %mgsqlv3 ;(CM) sql - validate query part 4 ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6554,7 +6605,7 @@ asn21 s eq1(wrd)=set,eq1(wrd,"c")=setc,eq1(wrd,"f")=alias,eq1=eq1+1
  q
  ;
 
-%mgsqlv4^INT^1^65749,33748.0^0
+%mgsqlv4^INT^1^65753,33388.0^0
 %mgsqlv4 ;(CM) sql - validate query part 5 ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6783,7 +6834,7 @@ inssa ; select all items from table
  q
  ;
 
-%mgsqlv5^INT^1^65749,33748.0^0
+%mgsqlv5^INT^1^65753,33388.0^0
 %mgsqlv5 ;(CM) sql - validate query - part 6 ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6976,7 +7027,7 @@ natv1(dbid,qnum,tname1,tname2,cname,error) ; column in tables test
  ;
  
 
-%mgsqlv6^INT^1^65749,33748.0^0
+%mgsqlv6^INT^1^65753,33388.0^0
 %mgsqlv6 ;(CM) sql - set expansion ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7098,7 +7149,7 @@ links ; substitute select column
  q
  ;
 
-%mgsqlw^INT^1^65749,33748.0^0
+%mgsqlw^INT^1^65753,33388.0^0
 %mgsqlw ;(CM) MGSQL HTTP ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7202,7 +7253,7 @@ sql(sql) ; run query
  s sql=$tr(sql,$c(13,10),"")
  s error=""
  s line(1)=sql
- s %zi("stmt")=0
+ s %zi(0,"stmt")=0
  s rou=$$main^%mgsqlx(dbid,.line,.info,.error)
  i rou="" s error="Invalid Query",error(5)="HY000"
  i error'="" g sql1
@@ -7228,7 +7279,7 @@ sql(sql) ; run query
  i $d(info("sp")) d  g sql1
  . s ok=-1
  . s %zo("routine")=rou
- . s %zi("stmt")=stmt
+ . s %zi(0,"stmt")=stmt
  . s rc=$$so^%mgsqlz()
  . s @("ok=$$"_rou_"(.%zi,.%zo)")
  . s rc=$$sc^%mgsqlz()
@@ -7249,13 +7300,13 @@ json ; output results as JSON document
  i $g(error)'="" s out="{""sqlcode"": "_"-1"_", ""sqlstate"": """_$s($d(error(5)):error(5),1:"HY000")_""", ""error"": """_error_"""}" g json1
  s out="{""sqlcode"": "_"0"_", ""sqlstate"": """_"00000"_""", ""error"": "_""""""
  s out=out_", ""result"": [",ecom=""
- f rn=1:1 q:'$d(^mgsqls($j,%zi("stmt"),0,rn))  d
+ f rn=1:1 q:'$d(^mgsqls($j,%zi(0,"stmt"),0,rn))  d
  . s out=out_ecom_"{",com="",ecom=","
- . f cn=1:1 q:'$d(^mgsqls($j,%zi("stmt"),0,rn,cn))  d
+ . f cn=1:1 q:'$d(^mgsqls($j,%zi(0,"stmt"),0,rn,cn))  d
  .. s name=$g(cols(cn))
  .. i name[%z("dsv") s name=$p(name,%z("dsv"),2)
  .. s name=$tr(name,".","_")
- .. s value=$g(^mgsqls($j,%zi("stmt"),0,rn,cn))
+ .. s value=$g(^mgsqls($j,%zi(0,"stmt"),0,rn,cn))
  .. s out=out_com_""""_name_""""_": """_value_"""",com=","
  .. q
  . s out=out_"}"
@@ -7311,7 +7362,7 @@ test ; test harness
  ;
  
 
-%mgsqlx^INT^1^65749,33748.0^0
+%mgsqlx^INT^1^65753,33388.0^0
 %mgsqlx ;(CM) sql - MGSQL as a server ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7505,7 +7556,7 @@ gcvars(dbid,qid,vars) ; initialize global variables
  q
  ;
 
-%mgsqlz^INT^1^65749,33748.0^0
+%mgsqlz^INT^1^65753,33388.0^0
 %mgsqlz ;(CM) MGSQL : client-server computing ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7533,14 +7584,18 @@ gcvars(dbid,qid,vars) ; initialize global variables
 a d vers^%mgsql("%mgsqlz") q
  ;
 so(%zi,%zo) ; server: open
- i $g(%zi("stmt"))'="" k ^mgsqls($j,%zi("stmt"))
+ i $g(%zi(0,"stmt"))'="" k ^mgsqls($j,%zi(0,"stmt"))
  q 0
  ;
 ss(%zi,%zo,rn) ; server: row of data
- n i
- i $g(%zi("stmt"))'="" d  k %zo(rn) q 0
+ n i,stop
+ i $g(%zi(0,"stmt"))'="" d  k %zo(rn) q 0
  . f i=1:1 q:'$d(%zo(rn,i))  i $g(%zo(0,i,0))="date" s %zo(rn,i)=$$ddate^%mgsqls($g(%zo(rn,i)),1)
- . m ^mgsqls($j,%zi("stmt"),0,rn)=%zo(rn)
+ . m ^mgsqls($j,%zi(0,"stmt"),0,rn)=%zo(rn)
+ . q
+ i $g(%zi(0,"callback"))'="" d  k %zo(rn) q stop
+ . f i=1:1 q:'$d(%zo(rn,i))  i $g(%zo(0,i,0))="date" s %zo(rn,i)=$$ddate^%mgsqls($g(%zo(rn,i)),1)
+ . s @("stop=$$"_$g(%zi(0,"callback"))_"(.%zi,.%zo,rn)")
  . q
  w ! f i=1:1 q:'$d(%zo(rn,i))  d
  . i i>1 w ","
@@ -7552,7 +7607,7 @@ ss(%zi,%zo,rn) ; server: row of data
  q 0
  ;
 sc(%zi,%zo) ; server: close
- i $g(%zi("stmt"))'="" k ^mgsqls($j,%zi("stmt"),1),^mgsqls($j,%zi("stmt"),2),^mgsqls($j,%zi("stmt"),3)
+ i $g(%zi(0,"stmt"))'="" k ^mgsqls($j,%zi(0,"stmt"),1),^mgsqls($j,%zi(0,"stmt"),2),^mgsqls($j,%zi(0,"stmt"),3)
  q 0
  ;
 
