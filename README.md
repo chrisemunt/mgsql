@@ -3,9 +3,9 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-5 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+8 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.2; Revision 13
+* Current Release: Version: 1.2; Revision 14
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
 ## Overview
@@ -53,7 +53,7 @@ Link all the **mgsql** routines and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 13 (5 January 2021) %mgsql
+       Version: 1.2; Revision 14 (8 January 2021) %mgsql
 
 Note that the version of **mgsql** is successfully displayed.
 
@@ -68,7 +68,7 @@ Change to your development Namespace and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 13 (5 January 2021) %mgsql
+       Version: 1.2; Revision 14 (8 January 2021) %mgsql
 
 ### Other M systems
 
@@ -77,7 +77,7 @@ All routines are held in **/m/mgsql.ro**, use an appropriate utility to install 
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 13 (5 January 2021) %mgsql
+       Version: 1.2; Revision 14 (8 January 2021) %mgsql
 
 ## Executing SQL statements from the YottaDB/M command line
 
@@ -106,7 +106,7 @@ Run the various SQL retrieval scripts:
 
        do sel1^%mgsql
 
-A number of SQL scripts are available at line labels sel1 to sel12.
+A number of SQL scripts are available at line labels sel1, sel2, sel3 ... to *sel[n]*.
 
 ## Setting up the network service
 
@@ -307,4 +307,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 * Correct a fault that led to duplicate values being erroneously returned for 'Select distinct ...' queries.
 * For this update, run the **upgrade** procedure after installation.  This will clean-up any temporary files previously used by **mgsql** and force the recompilation of all queries.
-	* **set status=$$upgrade^%mgsql(0)** 
+	* **set status=$$upgrade^%mgsql(0)**
+
+### v1.2.14 (8 January 2021)
+
+* Introduce further options for embedding SQL queries in M code. Including:
+	* The use of the spool file.
+	* The use of callback functions.
+* Update the documentation.
+* Miscellaneous bug fixes.
