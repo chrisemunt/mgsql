@@ -75,6 +75,17 @@ blks5 s ln=$o(whr(no,ln)) i ln="" g blks4
 blksx ;
  q
  ;
+recomb(whr,stat)
+ n n,bn,pre,pst
+ f  q:stat'[bdel  d
+ . s bn=$p(stat,bdel,2)
+ . s pre=$p(stat,bdel,1)
+ . s pst=$p(stat,bdel,3,999)
+ . s n="" f  s n=$o(whr(bn,n)) q:n=""  s pre=pre_whr(bn,n)
+ . s stat=pre_pst
+ . q
+ q stat
+ ;
 rstr ; find useful restrictions
  n orbrn,orn
  s orbrn=0
@@ -114,7 +125,7 @@ rstr31 s n=$o(tmp(5,n)) i n="" g rstr32
  g rstr31
 rstr32 ; file restriction
  s rstr(orbrn,sqvar,orn,andn,"op")=opc
- s rstr(orbrn,sqvar,orn,andn,"cnst")=cnst
+ s rstr(orbrn,sqvar,orn,andn,"cnst")=$$recomb(.whr,cnst)
  i cnst'[%z("dev") q
  s (alias,tname)=$p(sqvar,".",1),cname=$p(sqvar,".",2)
  i alias'="" s tno=$g(^mgtmp($j,"from","x",qnum,alias)) i tno'="" s tname=$p($g(^mgtmp($j,"from",qnum,tno)),"~",1)

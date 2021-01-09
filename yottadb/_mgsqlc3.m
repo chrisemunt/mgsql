@@ -153,7 +153,7 @@ row(grp,qnum,havezo,codezo) ; output a line of sql data
  . s outsel=^mgtmp($j,"outsel",qnum)
  . f i=1:1:outsel s line=line_" s %zo("_%z("vrc")_","_i_")="_^mgtmp($j,"outsel",qnum,i) d addline^%mgsqlc(grp,.line)
  . q
- s line=line_" s "_%z("vok")_"=$$ss^%mgsqlz(.%zi,.%zo,"_%z("vrc")_")" d addline^%mgsqlc(grp,.line)
+ s line=line_" s "_%z("vok")_"=$$ss^%mgsqlz(.%zi,.%zo,"_%z("vrc")_") i "_%z("vok")_" g "_%zq("tagx") d addline^%mgsqlc(grp,.line)
  q
  ;
 top(grp,qnum,sort) ; sql top

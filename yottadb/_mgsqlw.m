@@ -101,7 +101,7 @@ sql(sql) ; run query
  s sql=$tr(sql,$c(13,10),"")
  s error=""
  s line(1)=sql
- s %zi("stmt")=0
+ s %zi(0,"stmt")=0
  s rou=$$main^%mgsqlx(dbid,.line,.info,.error)
  i rou="" s error="Invalid Query",error(5)="HY000"
  i error'="" g sql1
@@ -127,7 +127,7 @@ sql(sql) ; run query
  i $d(info("sp")) d  g sql1
  . s ok=-1
  . s %zo("routine")=rou
- . s %zi("stmt")=stmt
+ . s %zi(0,"stmt")=stmt
  . s rc=$$so^%mgsqlz()
  . s @("ok=$$"_rou_"(.%zi,.%zo)")
  . s rc=$$sc^%mgsqlz()
@@ -148,13 +148,13 @@ json ; output results as JSON document
  i $g(error)'="" s out="{""sqlcode"": "_"-1"_", ""sqlstate"": """_$s($d(error(5)):error(5),1:"HY000")_""", ""error"": """_error_"""}" g json1
  s out="{""sqlcode"": "_"0"_", ""sqlstate"": """_"00000"_""", ""error"": "_""""""
  s out=out_", ""result"": [",ecom=""
- f rn=1:1 q:'$d(^mgsqls($j,%zi("stmt"),0,rn))  d
+ f rn=1:1 q:'$d(^mgsqls($j,%zi(0,"stmt"),0,rn))  d
  . s out=out_ecom_"{",com="",ecom=","
- . f cn=1:1 q:'$d(^mgsqls($j,%zi("stmt"),0,rn,cn))  d
+ . f cn=1:1 q:'$d(^mgsqls($j,%zi(0,"stmt"),0,rn,cn))  d
  .. s name=$g(cols(cn))
  .. i name[%z("dsv") s name=$p(name,%z("dsv"),2)
  .. s name=$tr(name,".","_")
- .. s value=$g(^mgsqls($j,%zi("stmt"),0,rn,cn))
+ .. s value=$g(^mgsqls($j,%zi(0,"stmt"),0,rn,cn))
  .. s out=out_com_""""_name_""""_": """_value_"""",com=","
  .. q
  . s out=out_"}"

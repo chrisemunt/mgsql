@@ -110,13 +110,14 @@ parse1x s tagn=tagn+1
  q
  ;
 or(grp,qnum,tnum,zkey,kno,got,data,cond,key,tagn) ; generate code to handle 'or' predicate for subscript
- n var,nxtag,pretag,pastag,datag,lcase,orn,tagv,tagvp
+ n var,nxtag,pretag,pastag,datag,lcase,orn,tag,tagv,tagvp
  s var=$p(zkey,",",kno)
+ s tag=%z("dl")_%z("pt")_qnum_tnum
  s lcase="abcdefghijklmnopqrstuvwxyz"
  s orn=0,tagv=%z("pv")_"("_tnum_","_i_")",tagvp=%z("pv")_"("_tnum_","_kno_",""p"")",datag=%z("dl")_%z("pt")_qnum_tnum_tagn_"x"_%z("dl")
-or1 s orn=orn+1 i '$d(cond(y,"pre",orn)) g orx
+or1 s orn=orn+1 i '$d(cond(var,"pre",orn)) g orx
  s pretag=%z("dl")_%z("pt")_qnum_tnum_tagn_"or"_orn_%z("dl"),pastag=%z("dl")_%z("pt")_qnum_tnum_tagn_"or"_$e(lcase,orn)_%z("dl")
- s nxtag=$s($d(cond(y,"pre",orn+1)):tag_tagn_"or"_(orn+1)_%z("dl"),1:%zq("tagp"))
+ s nxtag=$s($d(cond(var,"pre",orn+1)):tag_tagn_"or"_(orn+1)_%z("dl"),1:%zq("tagp"))
  i $d(cond(var,"fixed",orn)) g or2
  ; generate code to pass on subscript
  s line="" i orn>1 s line=pretag_" ;" d addline^%mgsqlc(grp,.line)
@@ -137,14 +138,14 @@ orx s line=datag_" ;" d addline^%mgsqlc(grp,.line)
  q
  ;
 fixed(grp,qnum,tnum,zkey,kno,got,data,cond,key) ; generate definition test for fixed subscript(s)
- n reset,mxi,var,npn,lines,coms,linet,or,sub,trans,com,to,alias,qual,goto
+ n reset,mxi,var,npn,lines,coms,linet,or,sub,trans,to,alias,qual,goto
  s (reset,reset(0))="" i qnum=1,$g(^mgtmp($j,"unique",qnum)) d reset(qnum,.reset,.data)
  s mxi=kno,(lines,coms,linet,or)=""
  ; build key and null subscript tests
  f npn=kno:1:$l(zkey,",") s var=$p(zkey,",",npn) q:'$d(cond(var,"fixed"))!$d(cond(var,"pre",2))  s mxi=npn d
  . s sub=var,set=$p(cond(var,"pre",1)," ",3,999),to=$p(set,"=",2,999),alias=$p($p(var,%z("dsv"),2),".",1)
  . s trans=0 i '$d(^mgtmp($j,"from",2)),to'["(",to'[")",$l(to,%z("dsv"))'>3,$l(to,%z("dev"))'>3,'$d(^mgtmp($j,"outselx",1,var)),'$d(^mgtmp($j,"from","z",qnum,"pass",alias)) s trans=1,(sub,^mgtmp($j,"trans",$p(var,%z("dsv"),2)))=to
- . i npn>kno s key=key_com_sub
+ . i npn>kno s key=key_key(0)_sub
  . i 'trans s lines=lines_coms_set,coms=","
  . i to'[%z("dsv"),to'[%z("dev"),to?1""""1e.e1""""!(to?1n.n)!(to[%z("ds")) q
  . s linet=linet_or_"'$l("_sub_")",or="!"

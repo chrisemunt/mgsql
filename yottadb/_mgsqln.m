@@ -114,13 +114,13 @@ sql ; sql
  i $d(info("sp")) d  g sql2
  . s ok=-1
  . s %zo("routine")=rou
- . s %zi("stmt")=stmt
+ . s %zi(0,"stmt")=stmt
  . s rc=$$so^%mgsqlz()
  . s @("ok=$$"_rou_"(.%zi,.%zo)")
  . s rc=$$sc^%mgsqlz()
  . q
  m %zi=param("i")
- s %zo("routine")=rou,%zi("stmt")=stmt,@("ok=$$exec^"_rou_"(.%zi,.%zo)")
+ s %zo("routine")=rou,%zi(0,"stmt")=stmt,@("ok=$$exec^"_rou_"(.%zi,.%zo)")
  i $d(%zo("error")) s error=$g(%zo("error")),error(5)="HY000" g sqlerror
 sql2 ; 
  d send(line,$l(line),0,"s",0) ; send data

@@ -38,7 +38,8 @@ v() ; version and date
  ;s v="1.2",r=10,d="14 April 2020"
  ;s v="1.2",r=11,d="28 May 2020"
  ;s v="1.2",r=12,d="3 January 2021"
- s v="1.2",r=13,d="5 January 2021"
+ ;s v="1.2",r=13,d="5 January 2021"
+ s v="1.2",r=14,d="8 January 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -56,8 +57,9 @@ upgrade(mode) ; upgrade this installation
 exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
  new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
- ;d upgrade(0)
+ ;s ok=$$upgrade(0)
  s error="",ok=0
+ i $g(%zi("stmt"))'="" s %zi(0,"stmt")=$g(%zi("stmt")) ; for backwards compatibility
  s dbid=$$schema(dbid)
  s line(1)=sql
  s rou=$$main^%mgsqlx(dbid,.line,.info,.error)
@@ -301,6 +303,43 @@ sel11 ; select distinct patient names
 sel12 ; select distinct patient names
  k %zi,%zo
  s ok=$$exec^%mgsql("","select distinct a.name from patient a where upper(a.address) like '%BANSTEAD%'",.%zi,.%zo)
+ q
+ ;
+sel13 ; providing variable inputs to a query
+ k %zi,%zo
+ s %zi("number")=1
+ s ok=$$exec^%mgsql("","select * from patient where num = :number",.%zi,.%zo)
+ q
+ ;
+sel14 ; directing query output to a spool file
+ k %zi,%zo,x1,x2,len1
+ s %zi(0,"stmt")="MyQuery"
+ s ok=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+ w !,"Query output will be in spool file: ^mgsqls($job,"""_%zi(0,"stmt")_""") ..."
+ s x1="^mgsqls("_$j_","""_%zi(0,"stmt")_""""
+ s len1=$l(x1)
+ s x2=x1_")" f  s x2=$q(@x2) q:$e(x2,1,len1)'=x1  w !,x2,"=",@x2
+ q
+ ;
+sel15 ; directing query output to a callback function
+ k %zi,%zo,x1,x2,len1
+ s %zi(0,"callback")="sel15cb^%mgsql"
+ s ok=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+ q
+ ;
+sel15cb(%zi,%zo,rn) ; callback for query sel15
+ n n,stop
+ s stop=0
+ w !,"row number: ",rn
+ f n=1:1 q:'$d(%zo(0,n))  d
+ . w !,"  column name: ",$g(%zo(0,n)),"; type: ",$g(%zo(0,n,0))
+ . w !,"     value: ",$g(%zo(rn,n))
+ k %zo(rn)
+ q stop
+ ;
+sel16 ; using 'or' in the where predicate
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","select * from patient where num = 1 or num = 2",.%zi,.%zo)
  q
  ;
 proc ; create stored procedures

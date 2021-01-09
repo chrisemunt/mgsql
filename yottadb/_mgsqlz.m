@@ -25,14 +25,18 @@
 a d vers^%mgsql("%mgsqlz") q
  ;
 so(%zi,%zo) ; server: open
- i $g(%zi("stmt"))'="" k ^mgsqls($j,%zi("stmt"))
+ i $g(%zi(0,"stmt"))'="" k ^mgsqls($j,%zi(0,"stmt"))
  q 0
  ;
 ss(%zi,%zo,rn) ; server: row of data
- n i
- i $g(%zi("stmt"))'="" d  k %zo(rn) q 0
+ n i,stop
+ i $g(%zi(0,"stmt"))'="" d  k %zo(rn) q 0
  . f i=1:1 q:'$d(%zo(rn,i))  i $g(%zo(0,i,0))="date" s %zo(rn,i)=$$ddate^%mgsqls($g(%zo(rn,i)),1)
- . m ^mgsqls($j,%zi("stmt"),0,rn)=%zo(rn)
+ . m ^mgsqls($j,%zi(0,"stmt"),0,rn)=%zo(rn)
+ . q
+ i $g(%zi(0,"callback"))'="" d  k %zo(rn) q stop
+ . f i=1:1 q:'$d(%zo(rn,i))  i $g(%zo(0,i,0))="date" s %zo(rn,i)=$$ddate^%mgsqls($g(%zo(rn,i)),1)
+ . s @("stop=$$"_$g(%zi(0,"callback"))_"(.%zi,.%zo,rn)")
  . q
  w ! f i=1:1 q:'$d(%zo(rn,i))  d
  . i i>1 w ","
@@ -44,6 +48,6 @@ ss(%zi,%zo,rn) ; server: row of data
  q 0
  ;
 sc(%zi,%zo) ; server: close
- i $g(%zi("stmt"))'="" k ^mgsqls($j,%zi("stmt"),1),^mgsqls($j,%zi("stmt"),2),^mgsqls($j,%zi("stmt"),3)
+ i $g(%zi(0,"stmt"))'="" k ^mgsqls($j,%zi(0,"stmt"),1),^mgsqls($j,%zi(0,"stmt"),2),^mgsqls($j,%zi(0,"stmt"),3)
  q 0
  ;
