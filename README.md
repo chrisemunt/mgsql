@@ -3,9 +3,9 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-8 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+10 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.2; Revision 14
+* Current Release: Version: 1.2; Revision 15
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
 ## Overview
@@ -53,7 +53,7 @@ Link all the **mgsql** routines and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 14 (8 January 2021) %mgsql
+       Version: 1.2; Revision 15 (10 January 2021) %mgsql
 
 Note that the version of **mgsql** is successfully displayed.
 
@@ -68,7 +68,7 @@ Change to your development Namespace and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 14 (8 January 2021) %mgsql
+       Version: 1.2; Revision 15 (10 January 2021) %mgsql
 
 ### Other M systems
 
@@ -77,7 +77,7 @@ All routines are held in **/m/mgsql.ro**, use an appropriate utility to install 
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 14 (8 January 2021) %mgsql
+       Version: 1.2; Revision 15 (10 January 2021) %mgsql
 
 ## Executing SQL statements from the YottaDB/M command line
 
@@ -316,3 +316,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 	* The use of callback functions.
 * Update the documentation.
 * Miscellaneous bug fixes.
+
+### v1.2.15 (10 January 2021)
+
+* Correct a regression in the processing of SQL queries containing **'in'** or **'or'** in the **WHERE** predicate.
