@@ -42,7 +42,8 @@ v() ; version and date
  ;s v="1.2",r=11,d="28 May 2020"
  ;s v="1.2",r=12,d="3 January 2021"
  ;s v="1.2",r=13,d="5 January 2021"
- s v="1.2",r=14,d="8 January 2021"
+ ;s v="1.2",r=14,d="8 January 2021"
+ s v="1.2",r=15,d="10 January 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -350,7 +351,12 @@ sel15cb(%zi,%zo,rn) ; callback for query sel15
  ;
 sel16 ; using 'or' in the where predicate
  k %zi,%zo
- s ok=$$exec^%mgsql("","select * from patient where num = 1 or num = 2",.%zi,.%zo)
+ s ok=$$exec^%mgsql("","select * from patient where num = 1 or num = 2 or num = 9 or num = 3",.%zi,.%zo)
+ q
+ ;
+sel17 ; using 'in' in the where predicate
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","select * from patient where num in (1,2,9,3)",.%zi,.%zo)
  q
  ;
 proc ; create stored procedures
@@ -2581,7 +2587,7 @@ argx s args=an
  ;
 ops(ops) ; operator list
  n i,op
- s ops=":*:/:\:#:-:+:=:is:=:<>:!=:'=:?:>:<:>:<:>=:'<:<=:'>:[:[:]:]:in:not in:like:not like:exists:not exists:between:not between:and:&:or:!:"
+ s ops=":*:/:\:#:-:+:=:i=:<>:!=:'=:?:>:<:>:<:>=:'<:<=:'>:[:[:]:]:in:not in:like:not like:exists:not exists:between:not between:and:&:or:!:"
  f i=2:1:$l(ops,":") s op=$p(ops,":",i) i op'="" s ops(op)=i
  q ops
  ;
@@ -2719,7 +2725,7 @@ oper(tmp,ops,error) ; for each sub-statement parse operator string in order of p
 oper1(tmp,sn,op,ops,error) ; find all occurances of current operator in sub-statement
  n wn
  i '$d(tmp("x",sn,op)) q
- s wn="" f  s wn=$o(tmp("x",sn,op,wn)) q:wn=""  d obr(.tmp,sn,wn),cbr(.tmp,sn,wn)
+ s wn="" f  s wn=$o(tmp("x",sn,op,wn)) q:wn=""  d obr(.tmp,sn,.wn),cbr(.tmp,sn,.wn)
  q
  ;
 cbr(tmp,sn,wn) ; insert 'closed' bracket
@@ -5860,7 +5866,7 @@ main(dbid,line,error) ; verify query
  i '$d(sql(0,1)),$d(sql("txp",0)) s unique=1 g exit
  i '$d(sql(0,1)) s error="no sql script !!!",error(5)="HY000" g exit
  d upd(dbid,.sql,.error) i $l(error) g exit
- ;i $d(^mgtmp($j,"upd","delete")),hilev g exit
+ i $d(^mgtmp($j,"upd","delete")),hilev g exit
  i $p(sql(0,1)," ",1)="call" d sp(dbid,.sql,.error) g exit
  f qnum=1:1:qnummax d verify(dbid,.sql,qnum,.error) i $l(error) q
  i $l(error) g exit
