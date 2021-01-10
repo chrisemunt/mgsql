@@ -39,7 +39,8 @@ v() ; version and date
  ;s v="1.2",r=11,d="28 May 2020"
  ;s v="1.2",r=12,d="3 January 2021"
  ;s v="1.2",r=13,d="5 January 2021"
- s v="1.2",r=14,d="8 January 2021"
+ ;s v="1.2",r=14,d="8 January 2021"
+ s v="1.2",r=15,d="10 January 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -339,7 +340,12 @@ sel15cb(%zi,%zo,rn) ; callback for query sel15
  ;
 sel16 ; using 'or' in the where predicate
  k %zi,%zo
- s ok=$$exec^%mgsql("","select * from patient where num = 1 or num = 2",.%zi,.%zo)
+ s ok=$$exec^%mgsql("","select * from patient where num = 1 or num = 2 or num = 9 or num = 3",.%zi,.%zo)
+ q
+ ;
+sel17 ; using 'in' in the where predicate
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","select * from patient where num in (1,2,9,3)",.%zi,.%zo)
  q
  ;
 proc ; create stored procedures

@@ -33,7 +33,7 @@ main(dbid,line,error) ; verify query
  i '$d(sql(0,1)),$d(sql("txp",0)) s unique=1 g exit
  i '$d(sql(0,1)) s error="no sql script !!!",error(5)="HY000" g exit
  d upd(dbid,.sql,.error) i $l(error) g exit
- ;i $d(^mgtmp($j,"upd","delete")),hilev g exit
+ i $d(^mgtmp($j,"upd","delete")),hilev g exit
  i $p(sql(0,1)," ",1)="call" d sp(dbid,.sql,.error) g exit
  f qnum=1:1:qnummax d verify(dbid,.sql,qnum,.error) i $l(error) q
  i $l(error) g exit

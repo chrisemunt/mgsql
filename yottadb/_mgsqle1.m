@@ -53,7 +53,7 @@ oper(tmp,ops,error) ; for each sub-statement parse operator string in order of p
 oper1(tmp,sn,op,ops,error) ; find all occurances of current operator in sub-statement
  n wn
  i '$d(tmp("x",sn,op)) q
- s wn="" f  s wn=$o(tmp("x",sn,op,wn)) q:wn=""  d obr(.tmp,sn,wn),cbr(.tmp,sn,wn)
+ s wn="" f  s wn=$o(tmp("x",sn,op,wn)) q:wn=""  d obr(.tmp,sn,.wn),cbr(.tmp,sn,.wn)
  q
  ;
 cbr(tmp,sn,wn) ; insert 'closed' bracket
