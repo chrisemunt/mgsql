@@ -111,7 +111,7 @@ getold0 ; get all attibutes involved in indices
  q
  ;
 getold1 ; get all old attribute values
- n i,ii
+ n i,ii,inop
  i $d(xfidx(cname))!$d(^mgtmp($j,"got",cname)) q
  s ^mgtmp($j,"got",cname)=""
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
@@ -119,9 +119,9 @@ getold1 ; get all old attribute values
  i '$d(dtyp(cname,"e")) q
  s r=dtyp(cname,"e"),smeth=$p(r,"\",3),pce=$p(r,"\",1)
  s out(pce,pvar)=""
- s ino=$$pkey^%mgsqld(dbid,tname)
+ s inop=$$pkey^%mgsqld(dbid,tname)
  i smeth="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%d,"_dlm_","_pce_")"
- i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(ino)_"("_pkey("o",ino)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
+ i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(inop)_"("_pkey("o",inop)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
  d addline^%mgsqlc(grp,.line)
  q
  ;
