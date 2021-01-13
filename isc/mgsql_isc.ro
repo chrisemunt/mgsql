@@ -1,6 +1,6 @@
 Cache for Windows^INT^mgsql^~Format=Cache.S~^RAW
-%RO on 09 Jan 2021 01:00 AM
-%mgsql^INT^1^65753,61490.0^0
+%RO on 13 Jan 2021 01:00 AM
+%mgsql^INT^1^65757,34005.0^0
 %mgsql ;(CM) MGSQL Front end
  ;
  ;  ----------------------------------------------------------------------------
@@ -43,7 +43,8 @@ v() ; version and date
  ;s v="1.2",r=12,d="3 January 2021"
  ;s v="1.2",r=13,d="5 January 2021"
  ;s v="1.2",r=14,d="8 January 2021"
- s v="1.2",r=15,d="10 January 2021"
+ ;s v="1.2",r=15,d="10 January 2021"
+ s v="1.2",r=16,d="13 January 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -367,7 +368,7 @@ proc ; create stored procedures
  
 
 
-%mgsqlc^INT^1^65753,61490.0^0
+%mgsqlc^INT^1^65757,34005.0^0
 %mgsqlc ;(CM) sql compiler - main driver ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -665,7 +666,7 @@ sort ; sort stand-alone sql code into contiguous routine
  
  
 
-%mgsqlc1^INT^1^65753,61490.0^0
+%mgsqlc1^INT^1^65757,34005.0^0
 %mgsqlc1 ; was 2 (CM) sql compiler - parse files ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -906,7 +907,7 @@ temps ; determine subscripts for order/group sort file
  q
  ;
 
-%mgsqlc2^INT^1^65753,61490.0^0
+%mgsqlc2^INT^1^65757,34005.0^0
 %mgsqlc2 ; was 3 (CM) sql compiler - sub driver ; 27 apr 2003  12:44 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1161,7 +1162,7 @@ delrec ; delete selected record
  
  
 
-%mgsqlc3^INT^1^65753,61490.0^0
+%mgsqlc3^INT^1^65757,34005.0^0
 %mgsqlc3 ;(CM) sql compiler ; 27 apr 2003  12:14 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1331,7 +1332,7 @@ top(grp,qnum,sort) ; sql top
  
  
 
-%mgsqlc4^INT^1^65753,61490.0^0
+%mgsqlc4^INT^1^65757,34005.0^0
 %mgsqlc4 ;(CM) sql compiler - restrictions ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1477,7 +1478,7 @@ mtype(dbid,qnum,tnum,item,other) ; determine sort of data
  ;
  
 
-%mgsqlc5^INT^1^65753,61490.0^0
+%mgsqlc5^INT^1^65757,34005.0^0
 %mgsqlc5 ;(CM) sql compiler - get data ; 19 jan 2003  4:34 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1604,7 +1605,7 @@ klind(grp,qnum) ; kill off index to be created
  
  
 
-%mgsqlc6^INT^1^65753,61490.0^0
+%mgsqlc6^INT^1^65757,34005.0^0
 %mgsqlc6 ;(CM) sql compiler - aggregates ; 19 jan 2003  4:34 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1749,7 +1750,7 @@ init(grp,qnum) ; initialise select statement for unique queries
  ;
  
 
-%mgsqlcd^INT^1^65753,61490.0^0
+%mgsqlcd^INT^1^65757,34005.0^0
 %mgsqlcd ;(CM) sql compiler - delete ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1817,7 +1818,7 @@ hilev1 ; kill off single index
  ;
  
 
-%mgsqlci^INT^1^65753,61490.0^0
+%mgsqlci^INT^1^65757,34005.0^0
 %mgsqlci ;(CM) sql compiler - insert ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1931,7 +1932,7 @@ getold0 ; get all attibutes involved in indices
  q
  ;
 getold1 ; get all old attribute values
- n i,ii
+ n i,ii,inop
  i $d(xfidx(cname))!$d(^mgtmp($j,"got",cname)) q
  s ^mgtmp($j,"got",cname)=""
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
@@ -1939,9 +1940,9 @@ getold1 ; get all old attribute values
  i '$d(dtyp(cname,"e")) q
  s r=dtyp(cname,"e"),smeth=$p(r,"\",3),pce=$p(r,"\",1)
  s out(pce,pvar)=""
- s ino=$$pkey^%mgsqld(dbid,tname)
+ s inop=$$pkey^%mgsqld(dbid,tname)
  i smeth="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%d,"_dlm_","_pce_")"
- i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(ino)_"("_pkey("o",ino)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
+ i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(inop)_"("_pkey("o",inop)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
  d addline^%mgsqlc(grp,.line)
  q
  ;
@@ -2081,7 +2082,7 @@ dbg ; set up referential actions audit trail
  ;
  
 
-%mgsqlct^INT^1^65753,61490.0^0
+%mgsqlct^INT^1^65757,34005.0^0
 %mgsqlct ;(CM) sql compiler - get table details ; 19 jan 2003  7:12 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2184,7 +2185,7 @@ dtyp ; get attribute details
  q
  ;
 
-%mgsqlcu^INT^1^65753,61490.0^0
+%mgsqlcu^INT^1^65757,34005.0^0
 %mgsqlcu ;(CM) sql compiler update ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2259,7 +2260,7 @@ setto1 ; add to line
  ;
  
 
-%mgsqld^INT^1^65753,61490.0^0
+%mgsqld^INT^1^65757,34005.0^0
 %mgsqld ;(CM) data model access points ; 14 aug 2002  4:08 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2522,7 +2523,7 @@ cno() ; next column name number
  ;
  
 
-%mgsqle^INT^1^65753,61490.0^0
+%mgsqle^INT^1^65757,34005.0^0
 %mgsqle ;(CM) SQL : Embedded expressions ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2669,7 +2670,7 @@ funlin(funlin,error) ; extract function & parameters wrd from funlin
  
  
 
-%mgsqle1^INT^1^65753,61490.0^0
+%mgsqle1^INT^1^65757,34005.0^0
 %mgsqle1 ;(CM) SQL : Bracket expression in word array ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2933,7 +2934,7 @@ tmpxk(tmp,sn,wrd,wn) ; remove node from snx array
  q
  ;
 
-%mgsqle2^INT^1^65753,61490.0^0
+%mgsqle2^INT^1^65757,34005.0^0
 %mgsqle2 ;(CM) SQL : Compile code for an expression ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -3107,7 +3108,7 @@ mpmx i chr'?1a.u,chr'["""" s error="invalid pattern match "_wrd,error(5)="HY000"
  ;
  
 
-%mgsqln^INT^1^65753,61490.0^0
+%mgsqln^INT^1^65757,34005.0^0
 %mgsqln ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -3571,7 +3572,7 @@ m ; test
  q
  ;
 
-%mgsqln1^INT^1^65753,61490.0^0
+%mgsqln1^INT^1^65757,34005.0^0
 %mgsqln1 ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4105,7 +4106,7 @@ test ; test harness
  q
  
 
-%mgsqln2^INT^1^65753,61490.0^0
+%mgsqln2^INT^1^65757,34005.0^0
 %mgsqln2 ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4503,7 +4504,7 @@ sqltypeid(type) ; get sql/odbc type ID
  ;
  
 
-%mgsqlo^INT^1^65753,61490.0^0
+%mgsqlo^INT^1^65757,34005.0^0
 %mgsqlo ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4591,7 +4592,7 @@ rec2 ; record work involved at each level
  
  
 
-%mgsqlo1^INT^1^65753,61490.0^0
+%mgsqlo1^INT^1^65757,34005.0^0
 %mgsqlo1 ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4837,7 +4838,7 @@ vrfyx ;
  ;
  
 
-%mgsqlo2^INT^1^65753,61490.0^0
+%mgsqlo2^INT^1^65757,34005.0^0
 %mgsqlo2 ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5009,7 +5010,7 @@ comp1 ; disallow all indices except chosen one
  ;
  
 
-%mgsqlp^INT^1^65753,61490.0^0
+%mgsqlp^INT^1^65757,34005.0^0
 %mgsqlp ;(CM) sql language processor ; 14 aug 2002  6:16 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5236,7 +5237,7 @@ test2 ;
  ;
  
 
-%mgsqlp1^INT^1^65753,61490.0^0
+%mgsqlp1^INT^1^65757,34005.0^0
 %mgsqlp1 ;(CM) sql language processor ; 14 aug 2002  6:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5513,7 +5514,7 @@ unix2 s ln=ln+1 i '$d(sql(qnum,ln)) g unix1
  ;
  
 
-%mgsqlr^INT^1^65753,61490.0^0
+%mgsqlr^INT^1^65757,34005.0^0
 %mqsqlr ;(CM) MGSQL routine management ; 11 feb 2002  2:40 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5587,7 +5588,7 @@ zsydb ; yottadb
  ;
   
 
-%mgsqls^INT^1^65753,61490.0^0
+%mgsqls^INT^1^65757,34005.0^0
 %mgsqls ;(CM) general utilities ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5830,7 +5831,7 @@ logarray(array,title,context) ; log event
  q
  ;
 
-%mgsqlv^INT^1^65753,61490.0^0
+%mgsqlv^INT^1^65757,34005.0^0
  
 %mqsqlv ;(CM) sql - validate query ; 14 aug 2002  6:23 pm
  ;
@@ -5998,7 +5999,7 @@ trx(wrd) ; data translation
  
  
 
-%mgsqlv1^INT^1^65753,61490.0^0
+%mgsqlv1^INT^1^65757,34005.0^0
 %mgsqlv1 ;(CM) sql - validate query part 2 ; 14 aug 2002  6:24 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6124,7 +6125,7 @@ corelate(sql,qnum,item,error) ; determine if sql variable comes from different s
  ;
  
 
-%mgsqlv2^INT^1^65753,61491.0^0
+%mgsqlv2^INT^1^65757,34005.0^0
 %mgsqlv2 ;(CM) sql - validate query part 3 ; 14 aug 2002  6:24 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6381,7 +6382,7 @@ sqlfun(sqlfun) ; translate SQL function name to M equivalent
  ;
  
 
-%mgsqlv3^INT^1^65753,61491.0^0
+%mgsqlv3^INT^1^65757,34006.0^0
 %mgsqlv3 ;(CM) sql - validate query part 4 ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6611,7 +6612,7 @@ asn21 s eq1(wrd)=set,eq1(wrd,"c")=setc,eq1(wrd,"f")=alias,eq1=eq1+1
  q
  ;
 
-%mgsqlv4^INT^1^65753,61491.0^0
+%mgsqlv4^INT^1^65757,34006.0^0
 %mgsqlv4 ;(CM) sql - validate query part 5 ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6840,7 +6841,7 @@ inssa ; select all items from table
  q
  ;
 
-%mgsqlv5^INT^1^65753,61491.0^0
+%mgsqlv5^INT^1^65757,34006.0^0
 %mgsqlv5 ;(CM) sql - validate query - part 6 ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7033,7 +7034,7 @@ natv1(dbid,qnum,tname1,tname2,cname,error) ; column in tables test
  ;
  
 
-%mgsqlv6^INT^1^65753,61491.0^0
+%mgsqlv6^INT^1^65757,34006.0^0
 %mgsqlv6 ;(CM) sql - set expansion ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7155,7 +7156,7 @@ links ; substitute select column
  q
  ;
 
-%mgsqlw^INT^1^65753,61491.0^0
+%mgsqlw^INT^1^65757,34006.0^0
 %mgsqlw ;(CM) MGSQL HTTP ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7368,7 +7369,7 @@ test ; test harness
  ;
  
 
-%mgsqlx^INT^1^65753,61491.0^0
+%mgsqlx^INT^1^65757,34006.0^0
 %mgsqlx ;(CM) sql - MGSQL as a server ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7562,7 +7563,7 @@ gcvars(dbid,qid,vars) ; initialize global variables
  q
  ;
 
-%mgsqlz^INT^1^65753,61491.0^0
+%mgsqlz^INT^1^65757,34006.0^0
 %mgsqlz ;(CM) MGSQL : client-server computing ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
