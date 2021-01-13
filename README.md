@@ -3,9 +3,9 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-10 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+13 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.2; Revision 15
+* Current Release: Version: 1.2; Revision 16
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
 ## Overview
@@ -320,3 +320,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 ### v1.2.15 (10 January 2021)
 
 * Correct a regression in the processing of SQL queries containing **'in'** or **'or'** in the **WHERE** predicate.
+
+### v1.2.16 (13 January 2021)
+
+* Correct a fault in the compilation of **INSERT** queries for tables having secondary indices defined.
