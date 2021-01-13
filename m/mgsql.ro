@@ -1,5 +1,5 @@
 Cache for Windows^INT^mgsql
-%RO on 09 Jan 2021 01:00 AM
+%RO on 13 Jan 2021 01:00 AM
 %mgsql
 %mgsql ;(CM) MGSQL Front end
  ;
@@ -43,7 +43,8 @@ v() ; version and date
  ;s v="1.2",r=12,d="3 January 2021"
  ;s v="1.2",r=13,d="5 January 2021"
  ;s v="1.2",r=14,d="8 January 2021"
- s v="1.2",r=15,d="10 January 2021"
+ ;s v="1.2",r=15,d="10 January 2021"
+ s v="1.2",r=16,d="13 January 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -1931,7 +1932,7 @@ getold0 ; get all attibutes involved in indices
  q
  ;
 getold1 ; get all old attribute values
- n i,ii
+ n i,ii,inop
  i $d(xfidx(cname))!$d(^mgtmp($j,"got",cname)) q
  s ^mgtmp($j,"got",cname)=""
  i '$d(dtyp(cname)) d dtyp^%mgsqlct
@@ -1939,9 +1940,9 @@ getold1 ; get all old attribute values
  i '$d(dtyp(cname,"e")) q
  s r=dtyp(cname,"e"),smeth=$p(r,"\",3),pce=$p(r,"\",1)
  s out(pce,pvar)=""
- s ino=$$pkey^%mgsqld(dbid,tname)
+ s inop=$$pkey^%mgsqld(dbid,tname)
  i smeth="d" s line=" "_"s"_" "_pvar_"="_"$p"_"(%d,"_dlm_","_pce_")"
- i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(ino)_"("_pkey("o",ino)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
+ i smeth="s" s line=" "_"s"_" "_pvar_"="_"$g"_"("_xfid(inop)_"("_pkey("o",inop)_","_$$seps^%mgsqld(dbid,tname,cname)_"))"
  d addline^%mgsqlc(grp,.line)
  q
  ;
