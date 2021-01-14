@@ -3,9 +3,9 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-13 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+14 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.2; Revision 16
+* Current Release: Version: 1.2; Revision 17
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
 ## Overview
@@ -53,7 +53,7 @@ Link all the **mgsql** routines and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 15 (10 January 2021) %mgsql
+       Version: 1.2; Revision 17 (14 January 2021) %mgsql
 
 Note that the version of **mgsql** is successfully displayed.
 
@@ -68,7 +68,7 @@ Change to your development Namespace and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 15 (10 January 2021) %mgsql
+       Version: 1.2; Revision 17 (14 January 2021) %mgsql
 
 ### Other M systems
 
@@ -324,3 +324,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 ### v1.2.16 (13 January 2021)
 
 * Correct a fault in the compilation of **INSERT** queries for tables having secondary indices defined.
+
+### v1.2.17 (14 January 2021)
+
+* Correct a fault in the compilation of **SELECT DISTINCT** queries.
