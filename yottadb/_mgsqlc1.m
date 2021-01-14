@@ -41,12 +41,12 @@ subq ; compile sub-query data extraction
 exit ; exit
  q
  ;
-dist(grp,qnum,tnum,zkey) ; optimize select distinct
- n done,x,got,ii
+dist(grp,qnum,tnum,zkey,kno,got) ; optimize select distinct
+ n done,x,i
  s done=0
  i $g(^mgtmp($j,"sel",qnum,0))'="distinct" q done
  i $d(^mgtmp($j,"from",qnum,2)) q done
- f ii=1:1:i s x=$p(zkey,",",i) i x'="" s got(x)=""
+ f i=1:1:kno s x=$p(zkey,",",i) i x'="" s got(x)=""
  s done=1 f ii=1:1 q:'$d(^mgtmp($j,"sel",qnum,ii))  s x=$g(^(ii)) i x'="",'$d(got(x)) s done=0 q
  i done s ^mgtmp($j,"dontgetdata",qnum,tnum)=1
  q done
@@ -74,7 +74,7 @@ parse(dbid,sql,grp,qnum,tnum,data,got,error) ; parse global
  i $d(^mgtmp($j,"from","z",qnum,"pass",alias)) d ojoin(grp,qnum,tnum,.data,.error)
  k got("a")
  s %zq("tagc")=""
- f kno=1:1:$l(zkey,",") d  i $$dist(grp,qnum,tnum,zkey) q
+ f kno=1:1:$l(zkey,",") d  i $$dist(grp,qnum,tnum,zkey,kno,.got) q
  . d parse1(grp,qnum,tnum,zkey,.kno,.got,.data,.cond,.key,.tagn)
  . d gota(grp,qnum,tnum,zkey,kno,.got,.data)
  . i %zq("tagc")'="" s %zq("tag",qnum)=%zq("tagc")
