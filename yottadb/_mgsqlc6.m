@@ -79,7 +79,7 @@ updfun1 ; generate line of code to update specific aggregate
 cntd ; count distinct
  n tag,notnullx
  s notnullx="" i $l(nulltest) s notnullx="{notnull}"
- s tag=ldx_sqt_"cntd"_notnullx_x_ldx
+ s tag=%z("dl")_%z("pt")_"cntd"_notnullx_x_%z("dl")
  i $l(nulltest) s line=" i '$l("_%z("dsv")_x_%z("dsv")_") g "_tag d addline^%mgsqlc(grp,.line)
  s ref=%z("ctg")_"("_%z("cts")_","_"""d"","_qnum_$s($l(ordsub):","_ordsub,1:"")_","_""""_%z("dsv")_notnullx_x_%z("dsv")_""""_","_%z("dsv")_x_%z("dsv")_")"
  s line=" s:'$l("_%z("dsv")_x_%z("dsv")_") "_%z("dsv")_x_%z("dsv")_"="" "" i $d("_ref_") g "_tag d addline^%mgsqlc(grp,.line)
