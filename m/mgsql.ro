@@ -1,5 +1,5 @@
 Cache for Windows^INT^mgsql
-%RO on 13 Jan 2021 01:00 AM
+%RO on 14 Jan 2021 01:00 AM
 %mgsql
 %mgsql ;(CM) MGSQL Front end
  ;
@@ -44,7 +44,8 @@ v() ; version and date
  ;s v="1.2",r=13,d="5 January 2021"
  ;s v="1.2",r=14,d="8 January 2021"
  ;s v="1.2",r=15,d="10 January 2021"
- s v="1.2",r=16,d="13 January 2021"
+ ;s v="1.2",r=16,d="13 January 2021"
+ s v="1.2",r=17,d="14 January 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -710,12 +711,12 @@ subq ; compile sub-query data extraction
 exit ; exit
  q
  ;
-dist(grp,qnum,tnum,zkey) ; optimize select distinct
- n done,x,got,ii
+dist(grp,qnum,tnum,zkey,kno,got) ; optimize select distinct
+ n done,x,i
  s done=0
  i $g(^mgtmp($j,"sel",qnum,0))'="distinct" q done
  i $d(^mgtmp($j,"from",qnum,2)) q done
- f ii=1:1:i s x=$p(zkey,",",i) i x'="" s got(x)=""
+ f i=1:1:kno s x=$p(zkey,",",i) i x'="" s got(x)=""
  s done=1 f ii=1:1 q:'$d(^mgtmp($j,"sel",qnum,ii))  s x=$g(^(ii)) i x'="",'$d(got(x)) s done=0 q
  i done s ^mgtmp($j,"dontgetdata",qnum,tnum)=1
  q done
@@ -743,7 +744,7 @@ parse(dbid,sql,grp,qnum,tnum,data,got,error) ; parse global
  i $d(^mgtmp($j,"from","z",qnum,"pass",alias)) d ojoin(grp,qnum,tnum,.data,.error)
  k got("a")
  s %zq("tagc")=""
- f kno=1:1:$l(zkey,",") d  i $$dist(grp,qnum,tnum,zkey) q
+ f kno=1:1:$l(zkey,",") d  i $$dist(grp,qnum,tnum,zkey,kno,.got) q
  . d parse1(grp,qnum,tnum,zkey,.kno,.got,.data,.cond,.key,.tagn)
  . d gota(grp,qnum,tnum,zkey,kno,.got,.data)
  . i %zq("tagc")'="" s %zq("tag",qnum)=%zq("tagc")
