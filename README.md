@@ -53,7 +53,7 @@ Link all the **mgsql** routines and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 17 (14 January 2021) %mgsql
+       Version: 1.2; Revision 18 (22 January 2021) %mgsql
 
 Note that the version of **mgsql** is successfully displayed.
 
