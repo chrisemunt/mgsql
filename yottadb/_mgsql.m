@@ -42,7 +42,8 @@ v() ; version and date
  ;s v="1.2",r=14,d="8 January 2021"
  ;s v="1.2",r=15,d="10 January 2021"
  ;s v="1.2",r=16,d="13 January 2021"
- s v="1.2",r=17,d="14 January 2021"
+ ;s v="1.2",r=17,d="14 January 2021"
+ s v="1.2",r=18,d="22 January 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
