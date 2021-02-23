@@ -3,12 +3,26 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-22 January 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+22 February 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.2; Revision 18
+* Current Release: Version: 1.3; Revision 19
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
-## Overview
+Contents
+
+* [Overview](#Overview") 
+* [Pre-requisites](#PreReq") 
+* [Installing mg-dbx](#Install)
+* [Embedding SQL statements in M code](#ExecuteM)
+* [Starting the mgsql network Superserver](#Network)
+* [Access to mgsql using REST](#REST)
+* [Access to mgsql using ODBC](#ODBC)
+* [Transaction Processing](#TProcessing)
+* [Resources used by mgsql](#Resources)
+* [License](#License)
+
+
+## <a name="Overview"></a> Overview
 
 **mgsql** is an Open Source SQL engine developed primarily for the **YottaDB** database.  It will also work with the **GT.M** database and other **M-like** databases.
 
@@ -19,13 +33,14 @@ SQL access is provided via the following routes:
 * ODBC.
 
 
-## Pre-requisites
+## <a name="PreReq"></a> Pre-requisites
 
 The **YottaDB** database (or similar M database):
 
        https://yottadb.com/
 
-## Installing mgsql
+
+## <a name="Install"></a> Installing mgsql
 
 ### YottaDB
 
@@ -53,7 +68,7 @@ Link all the **mgsql** routines and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 18 (22 January 2021) %mgsql
+       Version: 1.3; Revision 19 (22 February 2021) %mgsql
 
 Note that the version of **mgsql** is successfully displayed.
 
@@ -68,7 +83,7 @@ Change to your development Namespace and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 18 (22 January 2021) %mgsql
+       Version: 1.3; Revision 19 (22 February 2021) %mgsql
 
 ### Other M systems
 
@@ -77,9 +92,10 @@ All routines are held in **/m/mgsql.ro**, use an appropriate utility to install 
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.2; Revision 18 (22 January 2021) %mgsql
+       Version: 1.3; Revision 19 (22 February 2021) %mgsql
 
-## Executing SQL statements from the YottaDB/M command line
+
+## <a name="ExecuteM"></a> Embedding SQL statements in M code
 
 Before executing SQL statements do familiarise yourself with the M system resources (i.e. globals) used by **mgsql**.  Refer to the *Resources used by mgsql* section.
 
@@ -89,8 +105,13 @@ The general form for executing SQL statements from within M code (or from the M 
 
 Where:
 
-* %zi is an M array representing data that needs to be input to the script.
-* %zo is an M array representing parameters controlling output from the script.
+* **%zi** is an M array representing data that needs to be input to the script.
+* **%zo** is an M array representing parameters controlling output from the script.
+
+In the simplest case, the query output will be written to the primary device (for example, a terminal window), line by line with columns returned as a comma-separated list.
+
+
+### Examples
 
 The top level routine **%mgsql** (physical file _mgsql.m) contains a number of sample SQL scripts.  These work to a simple database representing hospital patients and their associated admissions.  View the embedded scripts in this routine.
 
@@ -108,11 +129,87 @@ Run the various SQL retrieval scripts:
 
 A number of SQL scripts are available at line labels sel1, sel2, sel3 ... to *sel[n]*.
 
-## Setting up the network service
 
-So far we have covered the basics of executing SQL statements from M code.  In order to execute SQL queries over REST or ODBC the **mgsql** installation must be accessible over the network.  The service described here will concurrently support access to **mgsql** via REST and ODBC.  The default TCP server port for **mgsql** is **7041**.  If you wish to use an alternative port then modify the following instructions accordingly.
+### Supplying variable inputs to a query
 
-### YottaDB
+You can supply variable inputs to the query via the inputs array - **%zi** in the examples.  The rationale for doing this, as opposed to embedding values directly in the scripts, is that it reduces the amount of compilation time needed.  Once the query is compiled the same generated code can be used for all sets of input variables.  
+
+Example:
+
+       new %zi,%zo
+       set %zi("number")=100000
+       set status=$$exec^%mgsql("","select * from patient where num = :number",.%zi,.%zo)
+
+
+### Using the SQL output spool file
+
+Rather than dumping query output to the current device, it is possible to mandate that output is directed to the spool file, which is a global called **mgsqls**.  To do this, specify a query statement ID in the input array.
+
+Example:
+
+       new %zi,%zo
+       set %zi(0,"stmt")="all patients"
+       set status=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+
+The query will execute silently and write the output to the spool file, the structure of which is as follows:
+
+       ^mgsqls($Job, <statement_ID>, 0, <row_no>, <column_no>)=<value> 
+
+Where **$Job** is the current process ID.
+
+ 
+### Using an SQL output callback
+
+Finally, it is possible to mandate that query output is directed to a callback – an M function defined in the application.  To do this, specify the name of the callback function (including the routine name) in the input array.
+
+The callback function must be defined as follows:
+
+       callback(%zi, %zo, rn)
+
+Where:
+
+* **%zi** is the query input array.
+* **%zo** is the query output array.
+* **rn** is the current row number.
+
+Example:
+
+                   new %zi,%zo
+                   set %zi(0,"callback")="allpatients^thisroutine"
+                   set status=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+                   quit
+                   ;
+       allpatients(%zi,%zo,rn) ; query callback
+                   new stop
+                   set stop=0
+                   ; process the row of output here
+                   Kill %zo(rn) ; we don’t want to keep the current row
+                   quit stop
+
+Where **rn** is the current row number and **stop** is a stop flag.  Set the stop flag to 1 in the callback function to force the early termination of the query.  The data for the row is held in the output array (**%zo**), the structure of which is as follows:
+
+       %zo(<row_no>, <column_no>)=<value>
+ 
+
+## <a name="Network"></a> Starting the mgsql network Superserver
+
+So far we have covered the basics of executing SQL statements from M code.  In order to execute SQL queries over REST or ODBC the **mgsql** installation must be accessible over the network.  The Superserver service described here will concurrently support access to **mgsql** via REST and ODBC.  The default TCP server port for **mgsql** is **7041**.  If you wish to use an alternative port then modify the following instructions accordingly.
+
+For most M systems, the **mgsql** Superserver can be started from the M command prompt.  For YottaDB there is the option of starting Superserver child processes via the **xinetd** service.
+
+* Note that if you are using the generic M/Gateway Superserver (**%zmgsi**) then no action is required here as the generic Superserver is able to serve **mgsql**.
+
+
+### Starting the mgsql Superserver
+
+Start the M-hosted concurrent TCP service in the Manager UCI:
+
+       do start^%mgsql(0) 
+
+To use a server TCP port other than 7041, specify it in the start-up command (as opposed to using zero to indicate the default port of 7041).
+
+
+### Starting YottaDB Superserver child processes via xinetd
 
 Network connectivity to **YottaDB** is managed via the **xinetd** service.  First create the following launch script (called **mgsql_ydb** here):
 
@@ -159,15 +256,8 @@ Finally restart the **xinetd** service:
 
        /etc/init.d/xinetd restart
 
-### Other M systems
 
-Start the M-hosted concurrent TCP service in the Manager UCI:
-
-       do start^%mgsql(0) 
-
-To use a server TCP port other than 7041, specify it in the start-up command (as opposed to using zero to indicate the default port of 7041).
-
-## Access to mgsql using REST
+## <a name="REST"></a> Access to mgsql using REST
 
 Now that the network service has been configured and deployed it is possible to execute SQL scripts via REST calls. Results are returned formatted as JSON.
 
@@ -189,7 +279,9 @@ Alternatively, enter an SQL statement in the form generated by:
 
 In a live environment a production-grade web server should be used.  For example, using the Apache server the **mod_proxy** module can be used to *front* the **mgsql** service.
 
-## Access to mgsql using ODBC
+
+## <a name="ODBC"></a> Access to mgsql using ODBC
+
 
 The ODBC driver is in the **/odbc** directory.  Pre-built drivers for 32 and 64-bit Windows are in the **/odbc/x86** and **/odbc/x64** directories respectively.  To install both drivers copy the contents of **/odbc/x86** to:
 
@@ -231,7 +323,61 @@ Log Level Directives:
 
 The data source created can now be used in Windows applications.
 
-## Resources used by mgsql
+
+## <a name="TProcessing"></a> Transaction Processing
+
+**mgsql** supports the standard SQL Transaction Processing commands:
+
+       START TRANSACTION
+       COMMIT
+       ROLLBACK
+
+The implementation of these commands is based on the underlying M commands: **tstart**, **tcommit** and **trollback**.  SQL Transactions can be implemented in M code or via an external program connecting to **mgsql** via the ODBC driver.
+
+The M Transaction Processing commands can be used directly in M code.  For example:
+
+       new %zi,%zo
+       tstart
+       set status=$$exec^%mgsql("",<sql update statement>,.%zi,.%zo)
+       ; further update statements …
+       tcommit
+
+Alternatively, the corresponding SQL Transaction Processing commands can be used in SQL statements.  For example:
+
+       new %zi,%zo
+       set status=$$exec^%mgsql("","transaction start",.%zi,.%zo)
+       set status=$$exec^%mgsql("",<sql update statement>,.%zi,.%zo)
+       ; further update statements …
+       set status=$$exec^%mgsql("","commit",.%zi,.%zo)
+
+It is also possible to implement transactions in M callback functions.  This method is mandatory for YottaDB.
+
+The transaction callback function must be defined as follows:
+
+       callback(%zi, %zo)
+
+Where:
+
+* **%zi** is the query input array.
+* **%zo** is the query output array.
+ 
+
+For example:
+
+       tp   ; transaction implemented in a callback function
+            new %zi,%zo
+            set %zi(0,"callback")="tpcb"
+            set status=$$exec^%mgsql("","transaction start",.%zi,.%zo)
+            quit
+            ;
+       tpcb(%zi,%zo) ; callback function
+            set status=$$exec^%mgsql("",<sql update statement>,.%zi,.%zo)
+            ; further update statements …
+            set status=$$exec^%mgsql("","commit",.%zi,.%zo)
+            quit status
+
+
+## <a name="Resources"></a> Resources used by mgsql
 
 **mgsql** will write to the following globals
 
@@ -244,7 +390,8 @@ The data source created can now be used in Windows applications.
 
 * **mgsql** will generate M Routines prefixed by 'x'.
 
-## License
+
+## <a name="License"></a> License
 
 Copyright (c) 2018-2021 M/Gateway Developments Ltd,
 Surrey UK.                                                      
@@ -333,4 +480,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 * Correct a fault in the compilation of **SELECT COUNT(DISTINCT ...** queries.
 
+### v1.3.19 (22 February 2021)
 
+* Introduce SQL commands to support M Transaction Processing.
+	* SQL Commands: **START TRANSACTION**, **COMMIT** and **ROLLBACK**
+* Introduce a native concurrent TCP server for YottaDB.
+	* The Superserver can be started from the M command prompt using **d start^%mgsql(<tcp port>)**.
+	* Invocation of Superserver child processes from the **xinetd** daemon is still supported. 
