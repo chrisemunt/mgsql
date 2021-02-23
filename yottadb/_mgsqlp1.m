@@ -149,8 +149,8 @@ grpx3 i 'move g grpx1
  ;
 reds(qnummax,sql2,blk,tmp,error) ; reduce query + logic block
  n blkno,blkno1,ln,qnum,qnum1,txt,txt1,pn,trans
- s blkno="" f  s blkno=$o(blk(blkno)) q:blkno=""  s ln="",blk=0 f  s ln=$o(blk(blkno,ln)) q:ln=""  s txt=blk(blkno,ln) d rems^%mgsqlp k blk(blkno,ln) i $l(txt) s blk=blk+1,blk(blkno,blk)=txt
- s qnum="" f  s qnum=$o(tmp(qnum)) q:qnum=""  s ln="",tmp=0 f  s ln=$o(tmp(qnum,ln)) q:ln=""  s txt=tmp(qnum,ln) d rems^%mgsqlp i $l(txt) s tmp=tmp+1,tmp(qnum,tmp)=txt
+ s blkno="" f  s blkno=$o(blk(blkno)) q:blkno=""  s ln="",blk=0 f  s ln=$o(blk(blkno,ln)) q:ln=""  s txt=$$rems^%mgsqlp(blk(blkno,ln)) k blk(blkno,ln) i $l(txt) s blk=blk+1,blk(blkno,blk)=txt
+ s qnum="" f  s qnum=$o(tmp(qnum)) q:qnum=""  s ln="",tmp=0 f  s ln=$o(tmp(qnum,ln)) q:ln=""  s txt=$$rems^%mgsqlp(tmp(qnum,ln)) i $l(txt) s tmp=tmp+1,tmp(qnum,tmp)=txt
  s blkno=""
 reds1 s blkno=$o(blk(blkno)) i blkno="" g reds4
  s ln=""
@@ -255,7 +255,7 @@ updx(qnummax,sql2,blk,tmp,sql,error) ; now remove update command from body of fo
  ;
 puts(qnummax,sql,error) ; tidy up lines of statement text
  n i,lnd,txt,qnum
- f qnum=0:1 q:'$d(sql(qnum))  f i=1:1 q:'$d(sql(qnum,i))  s txt=sql(qnum,i) d rems^%mgsqlp,remsc^%mgsqlp s sql(qnum,i)=txt ;$$rstring^%mgsqlp(txt)
+ f qnum=0:1 q:'$d(sql(qnum))  f i=1:1 q:'$d(sql(qnum,i))  s txt=$$rems^%mgsqlp(sql(qnum,i)),txt=$$remsc^%mgsqlp(txt),sql(qnum,i)=txt ;$$rstring^%mgsqlp(txt)
  q
  ;
 unix(qnummax,sql2,blk,sql,error) ; extract work units for old compiler

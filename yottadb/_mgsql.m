@@ -43,7 +43,8 @@ v() ; version and date
  ;s v="1.2",r=15,d="10 January 2021"
  ;s v="1.2",r=16,d="13 January 2021"
  ;s v="1.2",r=17,d="14 January 2021"
- s v="1.2",r=18,d="22 January 2021"
+ ;s v="1.2",r=18,d="22 January 2021"
+ s v="1.3",r=19,d="22 February 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -68,14 +69,15 @@ exec(dbid,sql,%zi,%zo)
  s line(1)=sql
  s rou=$$main^%mgsqlx(dbid,.line,.info,.error)
  i error'="" s %zo("error")=error q -1
+ i rou'="" s %zo("routine")=rou
  i $d(info("sp")) d  g exec1
  . s ok=-1
- . s %zo("routine")=rou
  . s rc=$$so^%mgsqlz()
  . s @("ok=$$"_rou_"(.%zi,.%zo)")
  . s rc=$$sc^%mgsqlz()
  . q
- i rou'="" s %zo("routine")=rou,@("ok=$$exec^"_rou_"(.%zi,.%zo)")
+ i $d(info("tp")) s ok=$$tpcb^%mgsqlz(dbid,.sql,.%zi,.%zo,.info) g exec1
+ i rou'="" s @("ok=$$exec^"_rou_"(.%zi,.%zo)")
 exec1 ; exit
  q ok
  ;
@@ -101,15 +103,30 @@ schema(schema) ; schema
 start(port) ; Start daemon
  new $ztrap set $ztrap="zgoto "_$zlevel_":starte^%mgsql"
  s port=+$g(port)
- w !,"Not supported, use inetd or xinetd instead"
+ k ^%mgsql("stop")
+ ; Concurrent tcp service (Cache, IRIS, M21, MSM, YottaDB)
+ i $$isidb^%mgsqls()!$$ism21^%mgsqls()!$$ismsm^%mgsqls()!$$isydb^%mgsqls() j accept^%mgsqln($g(port)) q
+ w !,"This M system does not support a concurrent TCP server"
  q
 starte ; Error
  w $ze
  q
  ;
-killproc(pid) ; Stop this listener
+stop(port) ; stop
+ w !,"Terminating the %mgsql service ... "
+ s pport=+$g(port) i pport="" q
+ i 'pport s pport=7041
+ s job=$g(^%mgsql("server",pport))
+ d killproc(job)
+stopx ; service should have terminated
+ k ^%mgsql("server",pport)
+ w !!,"%mgsql service terminated",!
+ q
+ ;
+killproc(pid) ; stop this listener
  i '$l(pid) q
  w !,"stop: "_pid
+ zsy "kill -term "_pid
  q
  ;
 ylink ; link all routines
@@ -350,6 +367,30 @@ sel17 ; using 'in' in the where predicate
  k %zi,%zo
  s ok=$$exec^%mgsql("","select * from patient where num in (1,2,9,3)",.%zi,.%zo)
  q
+ ;
+tp1 ; using transactions in line
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","start transaction;",.%zi,.%zo) i ok<0 q
+ s sql="insert into patient (num, name, address, dob) values (:num, :name, :address, {d:dob})"
+ s %zi("num")=11,%zi("name")="Trans Action-InLine1",%zi("address")="New York",%zi("dob")="1971-07-09",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=12,%zi("name")="Trans Action-InLine2",%zi("address")="London",%zi("dob")="1980-01-12",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s ok=$$exec^%mgsql("","commit;",.%zi,.%zo)
+ ; s ok=$$exec^%mgsql("","rollback;",.%zi,.%zo)
+ q
+ ;
+tp2 ; using transactions in line
+ k %zi,%zo
+ s %zi(0,"callback")="tp2cb^%mgsql"
+ s ok=$$exec^%mgsql("","start transaction;",.%zi,.%zo)
+ q
+ ;
+tp2cb(%zi,%zo) ; using transactions in a callback (mandatory for YottaDB)
+ s sql="insert into patient (num, name, address, dob) values (:num, :name, :address, {d:dob})"
+ s %zi("num")=11,%zi("name")="Trans Action-CallBack1",%zi("address")="New York",%zi("dob")="1971-07-09",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=12,%zi("name")="Trans Action-CallBack2",%zi("address")="London",%zi("dob")="1980-01-12",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s ok=$$exec^%mgsql("","commit;",.%zi,.%zo)
+ ; s ok=$$exec^%mgsql("","rollback;",.%zi,.%zo)
+ q ok
  ;
 proc ; create stored procedures
  s ok=$$exec^%mgsql("","CREATE PROCEDURE patient_getdata (num int, name varchar(255), address varchar(255))",.%zi,.%zo)

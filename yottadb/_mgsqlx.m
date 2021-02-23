@@ -30,7 +30,9 @@ main(dbid,line,info,error) ; compile query
  new $ztrap set $ztrap="zgoto "_$zlevel_":maine^%mgsqlx"
  s rou="",error=""
  d gvars(.%z)
- s ddl=$$verify(dbid,.line,.error) i ddl=1 g exit
+ s ddl=$$verify(dbid,.line,.sql,.error) i ddl=1 g exit
+ m info("tp")=sql("txp")
+ i $d(info("tp")),'$d(sql(0,1)) g exit
  s qid=$$hash(dbid,.rou,.line)
  d gcvars(dbid,qid,.%zq)
  s info("qid")=qid
@@ -129,10 +131,10 @@ prfx() ; assign new prefix
  s qid=$$n36(n10)
  q qid
  ;
-verify(dbid,line,error) ; verify query and execute any DDL commands
+verify(dbid,line,sql,error) ; verify query and execute any DDL commands
  n ddl
  s ddl=0
- d main^%mgsqlv(dbid,.line,.error)
+ d main^%mgsqlv(dbid,.line,.sql,.error)
  i $e(error,1,5)="\ddl\" s ddl=1,error=$e(error,6,999)
  i $e(error,1,4)="\sp\" s ddl=2,error=$e(error,5,999)
  q ddl
@@ -171,16 +173,16 @@ gvars(vars) ; initialize global variables
  s vars("dl")="{l}"
  s vars("ds")="{$}"
  s vars("dc")="{z}"
- s vars("vok")=%z("dsv")_"__status"_%z("dsv")
- s vars("vdata")=%z("dsv")_"__data"_%z("dsv")
- s vars("vdatax")=%z("dsv")_"__datax"_%z("dsv")
- s vars("vrc")=%z("dsv")_"__rowcount"_%z("dsv")
- s vars("vn")=%z("dsv")_"__count"_%z("dsv")
- s vars("vnx")=%z("dsv")_"__count_d"_%z("dsv")
- s vars("vdef")=%z("dsv")_"__defined"_%z("dsv")
- s vars("vck")=%z("dsv")_"__compound_key"_%z("dsv")
- s vars("vckcrc")=%z("dsv")_"__compound_key_crc"_%z("dsv")
- s vars("vckcrcdef")=%z("dsv")_"__compound_key_crc_defined"_%z("dsv")
+ s vars("vok")=vars("dsv")_"__status"_vars("dsv")
+ s vars("vdata")=vars("dsv")_"__data"_vars("dsv")
+ s vars("vdatax")=vars("dsv")_"__datax"_vars("dsv")
+ s vars("vrc")=vars("dsv")_"__rowcount"_vars("dsv")
+ s vars("vn")=vars("dsv")_"__count"_vars("dsv")
+ s vars("vnx")=vars("dsv")_"__count_d"_vars("dsv")
+ s vars("vdef")=vars("dsv")_"__defined"_vars("dsv")
+ s vars("vck")=vars("dsv")_"__compound_key"_vars("dsv")
+ s vars("vckcrc")=vars("dsv")_"__compound_key_crc"_vars("dsv")
+ s vars("vckcrcdef")=vars("dsv")_"__compound_key_crc_defined"_vars("dsv")
  s vars("ctg")="^mgtemp"
  s vars("cts")="$j"
  q

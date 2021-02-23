@@ -24,12 +24,12 @@
  ;
 a d vers^%mgsql("%mgsqln1") q
  ;
-tab ; tables
- n a,tname,r,rn,sn,cn,nv,dtyp,i,x,n,desc,cols
+tab(dbid,data,%zi,%zo) ; tables
+ n a,tname,r,rn,sn,cn,nv,dtyp,i,x,n,desc,cols,error
  new $ztrap set $ztrap="zgoto "_$zlevel_":tabe^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"tab() array","ODBC")
  s error=""
  ; CatalogName=%s\r\nSchemaName=%s\r\nTableName=%s\r\nTableType=%s\r\n\r\n"
@@ -47,22 +47,22 @@ tab ; tables
  . s rn=0
  . s rn=rn+1
  . s cn=0
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  . q
  i $g(nv("SchemaName"))["%" d  g tab1
  . s rn=0
  . s dbid="" f  s dbid=$$nxtdbid^%mgsqld(dbid) q:dbid=""  d
  . . s rn=rn+1
  . . s cn=0
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  . . q
  . q
  i $g(nv("TableType"))["SYSTEM TABLE" d  g tab1
@@ -70,11 +70,11 @@ tab ; tables
  . s rn=0
  . s rn=rn+1
  . s cn=0
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$g(nv("TableType"))
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$g(nv("TableType"))
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  . q
  i $g(nv("TableType"))["TABLE" d  g tab1
  . s rn=0
@@ -83,11 +83,11 @@ tab ; tables
  . . . s r=$$tab^%mgsqld(dbid,tname) i r="" q
  . . . s desc=$p(r,"\",1)
  . . . s rn=rn+1,cn=0
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=tname
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$g(nv("TableType"))
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=desc
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=tname
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$g(nv("TableType"))
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=desc
  . . . q
  . . q
  . q
@@ -96,27 +96,27 @@ tab ; tables
  . s rn=0
  . s rn=rn+1
  . s cn=0
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$g(nv("TableType"))
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$g(nv("TableType"))
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  . q
 tab1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"t",1) ; send data
- q
+ q 0
 tabe ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:tab: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
-col ; table columns
- n %d,%data,%ind,%ref,a,cols,col,colx,ord,cname,cname1,tname,r,rc,rn,cn,pkey,sn,dtyp,type,i,x,cname,n,kn,knm,sc,ino,desc,pk,nv
+col(dbid,data,%zi,%zo) ; table columns
+ n %d,%data,%ind,%ref,a,cols,col,colx,ord,cname,cname1,tname,r,rc,rn,cn,pkey,sn,dtyp,type,i,x,cname,n,kn,knm,sc,ino,desc,pk,nv,error
  new $ztrap set $ztrap="zgoto "_$zlevel_":cole^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,0,stmt)
+ k ^mgsqls($j,0,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"col() array","ODBC")
  s error=""
  s tname="TABLE_COLUMNS"
@@ -169,7 +169,6 @@ col ; table columns
  . s col(ord)=cname1,col(ord,"k")=$s(pkey:1,1:0),col(ord,"d")=desc,col(ord,"t")=type
  . s colx(cname1)=ord
  . q
- ;d logevent^%mgsqls("MGSQL:col:"_fid_":"_cname, "col","ODBC")
  i cname="" d  g col1
  . s rn=0
  . f ord=1:1 q:'$d(col(ord))  d
@@ -184,43 +183,43 @@ col ; table columns
  . q
 col1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"t",1) ; send data
- q
+ q 0
 cole ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:col: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
 col2(dbid,tname,cname,rn,ord,cdata)
  n cn,type
  s type=$$ucase^%mgsqls($g(col(ord,"t")))
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=tname
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=cname
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid^%mgsqln2(type)
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=type
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="256"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="256"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid^%mgsqln2(type)
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=ord
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="NO"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=tname
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=cname
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid^%mgsqln2(type)
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=type
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="256"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="256"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid^%mgsqln2(type)
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=ord
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="NO"
  q
  ;
-stt ; table statistics
- n a,n,nv,tname,r,rn,sn,cn,cols,dtyp,i,x,kn,knx,idx,idxn
+stt(dbid,data,%zi,%zo) ; table statistics
+ n a,n,nv,tname,r,rn,sn,cn,cols,dtyp,i,x,kn,knx,idx,idxn,error
  new $ztrap set $ztrap="zgoto "_$zlevel_":stte^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"stt() array","ODBC")
  s error=""
  s tname="TABLE_STATISTICS"
@@ -240,23 +239,21 @@ stt ; table statistics
  s cn=cn+1,a(cn)="FILTER_CONDITION" ; 13
  s cols="" f cn=1:1 q:'$d(a(cn))  s cols=cols_cn_"~"_a(cn)_"~"_a(cn)_"~"_tname_$c(13,10)
  s cols=cols_$c(13,10)
- ;
- g stt1
 stt1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"n",1) ; send data
- q
+ q 0
 stte ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:stt: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
-pky ; table primary key
- n %ind,%ref,a,n,tname,r,rc,sn,kn,sc,rn,cn,nv,cols,dtyp,pk,i,ino,x,n,r,cname,kn
+pky(dbid,data,%zi,%zo) ; table primary key
+ n %ind,%ref,a,n,tname,r,rc,sn,kn,sc,rn,cn,nv,cols,dtyp,pk,i,ino,x,n,r,cname,kn,error
  new $ztrap set $ztrap="zgoto "_$zlevel_":pkye^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"pky() array","ODBC")
  s error=""
  s tname="TABLE_PRIMARY_KEY"
@@ -282,29 +279,29 @@ pky ; table primary key
  . . s cname=r,kn=kn+1
  . . s rn=rn+1
  . . s cn=0
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=tname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=cname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=kn
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pk
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=tname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=cname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=kn
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pk
  . . q
  . q
 pky1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"k",1) ; send data
- q
+ q 0
 pkye ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:pky: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
-fky ; table foreign key
- n %ind,%ref,a,n,tname,r,rc,sn,kn,sc,rn,cn,nv,cols,dtyp,pk,i,ino,x,n,r,cname,kn
+fky(dbid,data,%zi,%zo) ; table foreign key
+ n %ind,%ref,a,n,tname,r,rc,sn,kn,sc,rn,cn,nv,cols,dtyp,pk,i,ino,x,n,r,cname,kn,error
  new $ztrap set $ztrap="zgoto "_$zlevel_":fkye^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"fky() array","ODBC")
  s error=""
  s tname="TABLE_PRIMARY_KEY"
@@ -338,38 +335,38 @@ fky ; table foreign key
  . . s cname=r,kn=kn+1
  . . s rn=rn+1
  . . s cn=0
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=tname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=cname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=tname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=cname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=kn
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="cascade"
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="cascade"
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pk
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pk
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=tname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=cname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=tname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=cname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=kn
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="cascade"
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="cascade"
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pk
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pk
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
  . . q
  . q
 fky1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"m",1) ; send data
- q
+ q 0
 fkye ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:fky: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
-prc ; procedures
+prc(dbid,data,%zi,%zo) ; procedures
  ; PROCDURE_TYPE:  SQL_PT_UNKNOWN=0, SQL_PT_PROCEDURE=1, SQL_PT_FUNCTION=2
- n a,cname,pname,tname,r,rn,cn,sn,cols,nv,dtyp,i,x,n,desc,r
+ n a,cname,pname,tname,r,rn,cn,sn,cols,nv,dtyp,i,x,n,desc,r,error
  new $ztrap set $ztrap="zgoto "_$zlevel_":prce^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"prc() array","ODBC")
  s error=""
  s tname="PROCEDURES"
@@ -393,14 +390,14 @@ prc ; procedures
  . . . s desc=$p(r,"\",1)
  . . . s rn=rn+1,cn=0
  . . . s cn=0
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pname
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pname
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
  . . . q
  . . q
  . q
@@ -408,30 +405,30 @@ prc ; procedures
  s desc=$p(r,"\",1)
  s rn=1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pname
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pname
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
 prc1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"p",1) ; send data
- q
+ q 0
 prce ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:prc: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
-pcc ; procedure columns
+pcc(dbid,data,%zi,%zo) ; procedure columns
  ; PROCDURE_TYPE:  SQL_PT_UNKNOWN=0, SQL_PT_PROCEDURE=1, SQL_PT_FUNCTION=2
- n %data,a,cname,cname1,pname,tname,r,rn,sc,sn,cn,col,cols,colx,nv,ord,dtyp,type,i,x,n,desc,r
+ n %data,a,cname,cname1,pname,tname,r,rn,sc,sn,cn,col,cols,colx,nv,ord,dtyp,type,i,x,n,desc,r,error
  new $ztrap set $ztrap="zgoto "_$zlevel_":pcce^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"pcc() array","ODBC")
  s error=""
  s tname="PROCEDURE_COLUMNS"
@@ -483,42 +480,42 @@ pcc ; procedure columns
  . q
 pcc1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"q",1) ; send data
- q
+ q 0
 pcce ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:pcc: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
 pcc2(dbid,pname,cname,rn,ord,cdata)
  n cn,type
  s type=$$ucase^%mgsqls($g(col(ord,"t")))
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pname
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=cname
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="12"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="VARCHAR"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="256"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="256"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="12"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="NO"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pname
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=cname
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="12"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="VARCHAR"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="256"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="256"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="12"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="NO"
  q
  ;
 test ; test harness
  k
  s dbid="mgsql"
- s stmt=0
+ s %zi(0,"stmt")=0
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"TableName="_$c(13,10)_"TableType=TABLE"_$c(13,10,13,10) d tab
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"TableName=admission"_$c(13,10)_"ColumnName="_$c(13,10,13,10) d col
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"TableName=admission"_$c(13,10)_"ColumnName=dadm"_$c(13,10,13,10) d col
@@ -526,7 +523,8 @@ test ; test harness
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"TableName=admission"_$c(13,10,13,10) d pky
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"TableName=admission"_$c(13,10,13,10) d fky
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"ProcName="_$c(13,10,13,10) d prc
- s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"ProcName=patient_getdata"_$c(13,10)_"ColumnName="_$c(13,10,13,10) d pcc
- m z=^mgsqls($j,stmt)
+ s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"ProcName=patient_getdata"_$c(13,10)_"ColumnName="_$c(13,10,13,10) d pcc(dbid,data,.%zi,.%zo)
+ m z=^mgsqls($j,%zi(0,"stmt"))
  q
- 
+ ;
+

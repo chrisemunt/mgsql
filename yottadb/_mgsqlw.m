@@ -25,9 +25,10 @@
 a d vers^%mgsql("%mgsqlw") q
  ;
 main ; start
+ n %zi,%zo,dbid,head,ok,cgi,data,nvp,error
  new $ztrap set $ztrap="zgoto "_$zlevel_":loope^%mgsqlw"
  k ^mgtmp($j)
- d init
+ s dbid=$$init(.%zi)
  s head=buf
 loop ; next command
  new $ztrap set $ztrap="zgoto "_$zlevel_":loope^%mgsqlw"
@@ -37,11 +38,11 @@ loop ; next command
  i '$d(nvp("UCI")) s nvp("UCI")="USER"
  i $g(nvp("UCI"))'="" s ok=$$cuci^%mgsqls($g(nvp("UCI")))
  i $g(cgi("SCRIPT_NAME"))[".ico" d notfound g loop1
- i $d(nvp("SQL")) d sql($g(nvp("SQL"))) g loop1
- i $d(nvp("sql")) d sql($g(nvp("sql"))) g loop1
- i $d(nvp("QUERY")) d sql($g(nvp("QUERY"))) g loop1
- i $d(nvp("query")) d sql($g(nvp("query"))) g loop1
- i $g(cgi("CONTENT_TYPE"))["/sql" d sql(data) g loop1
+ i $d(nvp("SQL")) d sql(dbid,.%zi,$g(nvp("SQL"))) g loop1
+ i $d(nvp("sql")) d sql(dbid,.%zi,$g(nvp("sql"))) g loop1
+ i $d(nvp("QUERY")) d sql(dbid,.%zi,$g(nvp("QUERY"))) g loop1
+ i $d(nvp("query")) d sql(dbid,.%zi,$g(nvp("query"))) g loop1
+ i $g(cgi("CONTENT_TYPE"))["/sql" d sql(dbid,.%zi,data) g loop1
  d sqlform
 loop1 ; request satisfied
  c $I
@@ -52,11 +53,12 @@ loope ; error
  d logerror^%mgsqls($$error^%mgsqls(),"M Exception")
  h
  ;
-init ; essential constants
+init(%zi) ; essential constants
+ n dbid
  s dbid="mgsql"
  s %zi("df")=$c(1)
  s %zi("base")=10
- q
+ q dbid
  ;
 read(head,cgi,data) ; read request
  n x,i,line,len,clen,pathinfo
@@ -94,8 +96,8 @@ nvp(qs,nvp) ; get name/value pairs for url-encoded content
 nvpe ; Error
  q 0
  ;
-sql(sql) ; run query
- n cols
+sql(dbid,%zi,sql) ; run query
+ n %zo,cols,stmt,error,line,info,rou,qid,i,r,cname,tname,dtyp,ag,ok,rc
  s dbid=$$schema^%mgsql("")
  s stmt=0
  s sql=$tr(sql,$c(13,10),"")
@@ -134,10 +136,12 @@ sql(sql) ; run query
  . q
  i rou'="" s %zo("routine")=rou,@("ok=$$exec^"_rou_"(.%zi,.%zo)")
 sql1 ; output result
- d json
+ d json(.%zi,.%zo,.cols,.error)
  q
  ;
-json ; output results as JSON document
+json(%zi,%zo,cols,error) ; output results as JSON document
+ n %z,head,out,ecom,rn,cn,name,value,com
+ d gvars^%mgsqlx(.%z)
  s head="HTTP/1.1 200 OK"_$c(13,10)
  ;s head=head_"Content-Type: text/plain"_$c(13,10)
  ;s head=head_"Content-Type: text/x-json"_$c(13,10)
@@ -166,6 +170,7 @@ json1 ; response complete
  q
  ;
 sqlform ; output a simple form
+ n head,out
  s head="HTTP/1.1 200 OK"_$c(13,10)
  s head=head_"Content-Type: text/html"_$c(13,10)
  s head=head_"Connection: close"_$c(13,10)
@@ -187,6 +192,7 @@ sqlform ; output a simple form
  q
  ;
 notfound ; HTTP not found
+ n head
  s head="HTTP/1.1 404 Not Found"_$c(13,10)
  s head=head_"Connection: close"_$c(13,10)
  s head=head_$c(13,10)
@@ -194,6 +200,7 @@ notfound ; HTTP not found
  q
  ;
 servererror(error) ; HTTP internal server error
+ n head
  s head="HTTP/1.1 500 Internal Server Error"_$c(13,10)
  s head=head_"Connection: close"_$c(13,10)
  s head=head_$c(13,10)

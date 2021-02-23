@@ -51,3 +51,16 @@ sc(%zi,%zo) ; server: close
  i $g(%zi(0,"stmt"))'="" k ^mgsqls($j,%zi(0,"stmt"),1),^mgsqls($j,%zi(0,"stmt"),2),^mgsqls($j,%zi(0,"stmt"),3)
  q 0
  ;
+tpcb(dbid,sql,%zi,%zo,info) ; transaction processing callback
+ n ok,cb
+ s ok=0
+ s cb=$g(%zi(0,"callback")) k %zi(0,"callback")
+ i $d(info("tp",0,"start")),cb="",$$isydb^%mgsqls() s %zo("error")="A callback must be defined for transactions in YottaDB" q -1
+ i $d(info("tp",0,"start")) k info("tp",0,"start") tstart
+ i $g(%zo("routine"))'="" s @("ok=$$exec^"_%zo("routine")_"(.%zi,.%zo)")
+ i $d(info("tp",0,"commit")) k info("tp",0,"commit") i $tlevel>0 tcommit
+ i $d(info("tp",0,"rollback")) k info("tp",0,"rollback") i $tlevel>0 trollback
+ i cb'="" s @("ok=$$"_cb_"(.%zi,.%zo)")
+ q ok
+ ;
+

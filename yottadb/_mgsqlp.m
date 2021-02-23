@@ -35,7 +35,7 @@ main1 ; re-entry
  s error=""
  d cmnd(.sql2)
  d rips(.line,.wrk,.error) i $l(error) g exit
- s qnummax=$$cdel(.sql2,.wrk,.error) i $l(error) g exit
+ s qnummax=$$cdel(.sql2,.wrk,.sql,.error) i $l(error) g exit
  d main^%mgsqlp1(qnummax,.sql2,.wrk,.sql,.error) i $l(error) g exit
  i $g(sql(1,2))="from "_%z("dq")_2_%z("dq")_" t0" d cog i ok g main1
 exit k tmp,blk
@@ -50,7 +50,7 @@ cmnd(sql2) ; sql2 commands
  f x="update","delete","insert","attributes","into","values","set" s sql2(x)=3
  f x="union","intersect","except" s sql2(x)=4
  f x="transaction","create","drop","by","all" s sql2(x)=5
- f x="commit","current_date","current_time","current_timestamp","start","stop" s sql2(x)=7
+ f x="commit","current_date","current_time","current_timestamp","start","begin","stop" s sql2(x)=7
  f x="cursor","eof","last","notnull","rollback" s sql2(x)=7
  q
  ;
@@ -89,12 +89,12 @@ rstring(line) ; put strings back into line
  f  q:line'[%z("ds")  s line=$p(line,%z("ds"),1)_^mgtmp($j,"string",$p(line,%z("ds"),2))_$p(line,%z("ds"),3,9999)
  q line
  ;
-cdel(sql2,wrk,error) ; find and mark main commands
- n ln,lnd,dec,pn,wrd,wrd0,wrd1,pst,pre,txt,txt1,txtn,qnum
+cdel(sql2,wrk,sql,error) ; find and mark main commands
+ n ln,lnd,dec,pn,wrd,wrd0,wrd1,wrd2,pst,pre,txt,txt1,txtn,qnum
  s (qnum,lnd)=0,(dec,txtn)=""
  s ln=""
 cdel1 s ln=$o(wrk(ln)) i ln="" g cdelx
- s txt=wrk(ln) d rems i '$l(txt) k wrk(ln) g cdel1
+ s txt=$$rems(wrk(ln)) i '$l(txt) k wrk(ln) g cdel1
  s txt=$$cdel7(txt)
  s pn=0
 cdel2 s pn=pn+1 i pn>$l(txt," ") g cdel1r
@@ -105,9 +105,10 @@ cdel2 s pn=pn+1 i pn>$l(txt," ") g cdel1r
  i wrd="" g cdel2r
  s wrd1=$$lcase^%mgsqls(wrd)
  i $l(wrd1)>128 g cdel2r
+ i $l(wrd1)>2,$e(wrd1,$l(wrd1))=";" s wrd2=$e(wrd1,1,$l(wrd1)-1) i $d(sql2(wrd2)) s wrd1=wrd2
  i '$d(sql2(wrd1)) g cdel2r
  s (wrd0,wrd)=wrd1
- i wrd0="transaction" d cdel5 g cdel2
+ i wrd0="transaction"!(wrd0="start")!(wrd0="begin")!(wrd0="commit")!(wrd0="rollback") s pn=$$cdel5(.sql2,$p(wrd0,";",1),txt,pn,.sql,.error) g cdel2
  i wrd0="select" s qnum=qnum+1,wrd=$s(qnum=1:"(",1:"")_%z("dq")_qnum_%z("dq")_%z("dc")_wrd_%z("dc")
  i wrd0'="select",$d(sql2(wrd)),"034"[sql2(wrd) d cdel3(.wrd,.qnum)
  s ^mgtmp($j,"cmnd",qnum,wrd0)=ln
@@ -116,7 +117,7 @@ cdel2r s txtn=txtn_" "_pre_wrd_pst
 cdel1r s txtn=$$trim^%mgsqls(txtn," ") i '$l(txtn) k wrk(ln) g cdel1
  s wrk(ln)=txtn,txtn=""
  g cdel1
-cdelx ;
+cdelx ; exit
  s qnummax=qnum
  i qnummax s ln=$o(wrk(""),-1) i $l(ln) s wrk(ln)=wrk(ln)_")"
  q qnummax
@@ -127,13 +128,20 @@ cdel3(wrd,qnum) ; process main-line command
  i wrd["delete"!(wrd["update") s qnum=qnum+1,wrd=$s(qnum=1:"(",1:"")_%z("dq")_qnum_%z("dq")_%z("dc")_"select"_%z("dc")_" "_wrd
  q
  ;
-cdel5 ; transaction processing command
- n cmnd,nam
- s cmnd=$p(txt," ",pn+1),nam=$p(txt," ",pn+2),txt=$p(txt," ",1,pn-1)_" "_$p(txt," ",pn+3,9999),pn=pn-1 d rems
+cdel5(sql2,wrd,txt,pn,sql,error) ; transaction processing command
+ n cmnd,name
+ s cmnd=$p($p(txt," ",pn+1),";",1)
  s cmnd=$$lcase^%mgsqls(cmnd)
- i cmnd'="start",cmnd'="commit",cmnd'="rollback" s error="invalid command '"_cmnd_"' for transaction processing",error(5)="HY000" q
- s sql("txp",0,cmnd)=nam i nam?1":"1a.e s inv($p(nam,":",2,9999))=""
- q
+ i cmnd="transaction"!(wrd="transaction") s pn=pn+1
+ i cmnd=""!(cmnd="transaction") s cmnd=wrd
+ i cmnd="begin" s cmnd="start"
+ s name="" i cmnd="start"!(cmnd="begin") s name=$p(txt," ",pn+1)
+ i name'="",$d(sql2(name)) s name=""
+ i $l(name)>2,$e(name,$l(name))=";",$d(sql2($e(name,1,$l(name)-1))) s name=""
+ i name'="",$d s pn=pn+1
+ i cmnd'="begin",cmnd'="start",cmnd'="commit",cmnd'="rollback" s error="invalid command '"_cmnd_"' for transaction processing",error(5)="HY000" q pn
+ s sql("txp",0,cmnd)=name i name?1":"1a.e s inv($p(name,":",2,9999))=""
+ q pn
  ;
 cdel7(line) ; remove ambiguous syntax
  n dlm,len,pn,pn1,pre,post,post1,obr,cbr,i,c,wrd,wrduc
@@ -156,17 +164,17 @@ cdel71 s pre=$p(line,dlm,1,pn-1),post=$p(line,dlm,pn,9999)
  s pn=pn-1 i pn>1 g cdel71
  q line
  ;
-rems ; trim and remove surplus spaces from txt
+rems(txt) ; trim and remove surplus spaces from txt
  n pn,wrd,txt1
  i '$l(txt) q
  s txt=$$trim^%mgsqls(txt," ") i '$l(txt) q
  f pn=1:1:$l(txt," ") s txt1=$p(txt," ",pn+1,9999) i txt1?1" ".e s txt1=$$ltrim^%mgsqls(txt1," "),txt=$p(txt," ",1,pn)_" "_txt1
- q
+ q txt
  ;
-remsc ; remove spaces from comma in context of natural separator
+remsc(txt) ; remove spaces from comma in context of natural separator
  n pn,wrd,txt1
  f pn=1:1 q:txt'[" "!(pn=$l(txt," "))  s wrd=$p(txt," ",pn) q:wrd=""  s txt1=$p(txt," ",pn+1,9999) i $e(wrd,$l(wrd))=","!($e(txt1,1)=",") s txt=$p(txt," ",1,pn)_$p(txt," ",pn+1,9999),pn=pn-1
- q
+ q txt
  ;
 cog ; cognos translations
  s ok=0

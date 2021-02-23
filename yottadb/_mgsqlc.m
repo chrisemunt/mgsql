@@ -82,18 +82,6 @@ begin ; code to be executed at start of query
  s line=" s "_%z("vok")_"=$$so^%mgsqlz(.%zi,.%zo)" d addline(grp,.line)
  d trx
  i $d(sql("union",1)) d union
- i $d(sql("txp",0)) d txp
- q
- ;
-txp ; transaction processing
- f cmnd="commit","rollback","start" d txp1
- q
- ;
-txp1 ; transaction process
- i '$d(sql("txp",0,cmnd)) q
- s nam=sql("txp",0,cmnd) i nam="" s nam=""""""
- i nam?1":"1a.e s nam=del_$p(nam,":",2,999)_del
- s line=" s %txp(2)="_nam_" d txp"_$e(cmnd)_"^%"_$c(72,88)_"lnk" d addline(grp,.line)
  q
  ;
 union ; reserve variables for union in uvar

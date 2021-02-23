@@ -25,9 +25,9 @@
  ;
 a d vers^%mgsql("%mgsqlv") q
  ;
-main(dbid,line,error) ; verify query
+main(dbid,line,sql,error) ; verify query
  k ^mgtmp($j)
- k %link,%delrec,union,adhoc,txp,error
+ k %link,%delrec,union,adhoc,error
  s error=""
  s qnummax=$$main^%mgsqlp(.sql,.line,.error) i $l(error) g exit
  i '$d(sql(0,1)),$d(sql("txp",0)) s unique=1 g exit

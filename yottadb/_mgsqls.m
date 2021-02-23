@@ -24,8 +24,16 @@
  ;
 a d vers^%mgsql("%mgsqls") q
  ;
-isydb() ; see if this is yottadb
- i $zv["GT.M" q 1
+isydb() ; see if this is YottaDB
+ n zv
+ s zv=$$getzv()
+ i zv["YottaDB" q 1
+ q 0
+ ;
+isgtm() ; see if this is GT.M
+ n zv
+ s zv=$$getzv()
+ i zv["GT.M" q 1
  q 0
  ;
 isidb() ; see if this is an InterSystems database
@@ -45,6 +53,35 @@ isdsm() ; see if this is DSM
 ism21() ; see if this is M21
  i $zv["M21" q 1
  q 0
+ ;
+getzv() ; Get $ZV
+ ; ISC IRIS:  IRIS for Windows (x86-64) 2019.2 (Build 107U) Wed Jun 5 2019 17:05:10 EDT
+ ; ISC Cache: Cache for Windows (x86-64) 2019.1 (Build 192) Sun Nov 18 2018 23:37:14 EST
+ ; GT.M:      GT.M V6.3-004 Linux x86_64
+ ; YottaDB:   YottaDB r1.22 Linux x86_64
+ new $ztrap set $ztrap="zgoto "_$zlevel_":getzve^%mgsqls"
+ q $zyrelease
+getzve ; Error
+ q $zv
+ ;
+getzvv() ; Get version from $ZV
+ n zv,i,ii,x,version
+ s zv=$$getzv()
+ i $$isidb() d  q version
+ . f i=1:1 s x=$p(zv," ",i) q:x=""  i x["(Build" s version=$p(zv," ",i-1) q
+ . q
+ s x=$$isydb()
+ i x=1 s version=$p($p(zv," V",2)," ",1) q version
+ i x=2 s version=$p($p(zv," r",2)," ",1) q version
+ s version="" f i=1:1 s x=$e(zv,i) q:x=""  i x?1n d  q
+ . f ii=i:1 s x=$e(zv,ii)  q:x=""!('((x?1n)!(x=".")))  s version=version_x
+ . q
+ q version
+ ;
+getsys() ; Get system type
+ n systype
+ s systype=$s($$isidb()>2:"IRIS",$$isidb()=2:"Cache",$$isidb()=1:"ISM",$$ism21():"M21",$$ismsm():"MSM",$$isdsm():"DSM",$$isydb()>1:"YottaDB",$$isgtm()=1:"GTM",1:"")
+ q systype
  ;
 crc(str,mode) ; cyclic redundancy check
  n x,i
