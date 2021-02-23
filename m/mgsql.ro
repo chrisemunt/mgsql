@@ -1,5 +1,5 @@
 Cache for Windows^INT^mgsql
-%RO on 16 Feb 2021 01:00 AM
+%RO on 23 Feb 2021 01:00 AM
 %mgsql
 %mgsql ;(CM) MGSQL Front end
  ;
@@ -46,7 +46,8 @@ v() ; version and date
  ;s v="1.2",r=15,d="10 January 2021"
  ;s v="1.2",r=16,d="13 January 2021"
  ;s v="1.2",r=17,d="14 January 2021"
- s v="1.2",r=18,d="22 January 2021"
+ ;s v="1.2",r=18,d="22 January 2021"
+ s v="1.3",r=19,d="22 February 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -71,14 +72,15 @@ exec(dbid,sql,%zi,%zo)
  s line(1)=sql
  s rou=$$main^%mgsqlx(dbid,.line,.info,.error)
  i error'="" s %zo("error")=error q -1
+ i rou'="" s %zo("routine")=rou
  i $d(info("sp")) d  g exec1
  . s ok=-1
- . s %zo("routine")=rou
  . s rc=$$so^%mgsqlz()
  . s @("ok=$$"_rou_"(.%zi,.%zo)")
  . s rc=$$sc^%mgsqlz()
  . q
- i rou'="" s %zo("routine")=rou,@("ok=$$exec^"_rou_"(.%zi,.%zo)")
+ i $d(info("tp")) s ok=$$tpcb^%mgsqlz(dbid,.sql,.%zi,.%zo,.info) g exec1
+ i rou'="" s @("ok=$$exec^"_rou_"(.%zi,.%zo)")
 exec1 ; exit
  q ok
  ;
@@ -104,23 +106,38 @@ schema(schema) ; schema
 start(port) ; Start daemon
  s $zt="starte^%mgsql" ; new $ztrap set $ztrap="zgoto "_$zlevel_":starte^%mgsql"
  s port=+$g(port)
- ; +not_ydb
- j accept^%mgsqln($g(port)) q
- ; -not_ydb
- ; +ydb
- ; w !,"Not supported, use inetd or xinetd instead"
- ; -ydb
+ k ^%mgsql("stop")
+ ; Concurrent tcp service (Cache, IRIS, M21, MSM, YottaDB)
+ i $$isidb^%mgsqls()!$$ism21^%mgsqls()!$$ismsm^%mgsqls()!$$isydb^%mgsqls() j accept^%mgsqln($g(port)) q
+ w !,"This M system does not support a concurrent TCP server"
  q
 starte ; Error
  w $ze
  q
  ;
-killproc(pid) ; Stop this listener
+stop(port) ; stop
+ w !,"Terminating the %mgsql service ... "
+ s pport=+$g(port) i pport="" q
+ i 'pport s pport=7041
+ s job=$g(^%mgsql("server",pport))
+ ; +not_ydb
+ i $$isidb^%mgsqls(),job'="" d $SYSTEM.Process.Terminate(job) g stopx
+ ; -not_ydb
+ d killproc(job)
+stopx ; service should have terminated
+ k ^%mgsql("server",pport)
+ w !!,"%mgsql service terminated",!
+ q
+ ;
+killproc(pid) ; stop this listener
  i '$l(pid) q
  w !,"stop: "_pid
  ; +not_ydb
- i $$isidb^%mgsqls() s x=$SYSTEM.Process.Terminate(pid,0)
+ i $$isidb^%mgsql() s x=$system.process.terminate(pid,0)
  ; -not_ydb
+ ; +ydb
+ ; zsy "kill -term "_pid
+ ; -ydb
  q
  ;
 ylink ; link all routines
@@ -362,6 +379,30 @@ sel17 ; using 'in' in the where predicate
  s ok=$$exec^%mgsql("","select * from patient where num in (1,2,9,3)",.%zi,.%zo)
  q
  ;
+tp1 ; using transactions in line
+ k %zi,%zo
+ s ok=$$exec^%mgsql("","start transaction;",.%zi,.%zo) i ok<0 q
+ s sql="insert into patient (num, name, address, dob) values (:num, :name, :address, {d:dob})"
+ s %zi("num")=11,%zi("name")="Trans Action-InLine1",%zi("address")="New York",%zi("dob")="1971-07-09",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=12,%zi("name")="Trans Action-InLine2",%zi("address")="London",%zi("dob")="1980-01-12",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s ok=$$exec^%mgsql("","commit;",.%zi,.%zo)
+ ; s ok=$$exec^%mgsql("","rollback;",.%zi,.%zo)
+ q
+ ;
+tp2 ; using transactions in line
+ k %zi,%zo
+ s %zi(0,"callback")="tp2cb^%mgsql"
+ s ok=$$exec^%mgsql("","start transaction;",.%zi,.%zo)
+ q
+ ;
+tp2cb(%zi,%zo) ; using transactions in a callback (mandatory for YottaDB)
+ s sql="insert into patient (num, name, address, dob) values (:num, :name, :address, {d:dob})"
+ s %zi("num")=11,%zi("name")="Trans Action-CallBack1",%zi("address")="New York",%zi("dob")="1971-07-09",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s %zi("num")=12,%zi("name")="Trans Action-CallBack2",%zi("address")="London",%zi("dob")="1980-01-12",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s ok=$$exec^%mgsql("","commit;",.%zi,.%zo)
+ ; s ok=$$exec^%mgsql("","rollback;",.%zi,.%zo)
+ q ok
+ ;
 proc ; create stored procedures
  s ok=$$exec^%mgsql("","CREATE PROCEDURE patient_getdata (num int, name varchar(255), address varchar(255))",.%zi,.%zo)
  s ok=$$exec^%mgsql("","CREATE PROCEDURE SelectAllPatients AS SELECT * FROM patient GO;",.%zi,.%zo)
@@ -455,18 +496,6 @@ begin ; code to be executed at start of query
  s line=" s "_%z("vok")_"=$$so^%mgsqlz(.%zi,.%zo)" d addline(grp,.line)
  d trx
  i $d(sql("union",1)) d union
- i $d(sql("txp",0)) d txp
- q
- ;
-txp ; transaction processing
- f cmnd="commit","rollback","start" d txp1
- q
- ;
-txp1 ; transaction process
- i '$d(sql("txp",0,cmnd)) q
- s nam=sql("txp",0,cmnd) i nam="" s nam=""""""
- i nam?1":"1a.e s nam=del_$p(nam,":",2,999)_del
- s line=" s %txp(2)="_nam_" d txp"_$e(cmnd)_"^%"_$c(72,88)_"lnk" d addline(grp,.line)
  q
  ;
 union ; reserve variables for union in uvar
@@ -3137,29 +3166,36 @@ mpmx i chr'?1a.u,chr'["""" s error="invalid pattern match "_wrd,error(5)="HY000"
  ;
 a d vers^%mgsql("%mgsqln") q
  ;
-main ; start
+main ; start xDBC service
+ n %user,%zi,%zo,dbid,data,info,line,status,error,cmnd
  s $zt="loope^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":loope^%mgsqln"
  k ^mgtmp($j)
- d logevent^%mgsqls("Process: "_$j,"Initialize Connection","ODBC")
+ ; d logevent^%mgsqls("Process: "_$j,"Initialize Connection","ODBC")
  s data=$$v^%mgsql()
  d send(data,$l(data),0,"c",1)
 loop ; next command
  s $zt="loope^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":loope^%mgsqln"
+ k %zi,%zo,info,line,error
+ s status=0,error="",%user=""
  s dbid=$$schema^%mgsql("")
- s stmt=$$read(.head,.cmnd,.size,.data)
- ;d logevent^%mgsqls("stmt="_stmt_"; cmnd="_cmnd_"; data="_data,"start","ODBC")
- i cmnd="i" d info g loop
- i cmnd="a" d typ^%mgsqln2  g loop
- i cmnd="s" d sql g loop
- i cmnd="b" d prp g loop
- i cmnd="t" d tab^%mgsqln1 g loop
- i cmnd="h" d col^%mgsqln1 g loop
- i cmnd="n" d stt^%mgsqln1 g loop
- i cmnd="k" d pky^%mgsqln1 g loop
- i cmnd="m" d fky^%mgsqln1 g loop
- i cmnd="p" d prc^%mgsqln1 g loop
- i cmnd="q" d pcc^%mgsqln1 g loop
- i cmnd="f" d fetch g loop
+ s %zi(0,"stmt")=$$read(.head,.cmnd,.size,.data)
+ ; d logevent^%mgsqls("stmt="_%zi(0,"stmt")_"; cmnd="_cmnd_"; data="_data,"start","ODBC")
+ i cmnd="i" s %user=$$info(dbid,data) g loop
+ i cmnd="a" s status=$$typ^%mgsqln2(dbid,data,.%zi,.%zo) g loop
+ i cmnd="s" s status=$$sql(dbid,data,.%zi,.%zo,%user,.info) i status=0 d send(%zo("xr"),$l(%zo("xr")),0,%zo("xc"),0) g loop
+ i status=11 tstart  k info("tp",0,"start") s status=$$sql2(dbid,data,.%zi,.%zo,.info) i status=0 d send(%zo("xr"),$l(%zo("xr")),0,%zo("xc"),0) g loop
+ i status=12 tstart  k info("tp",0,"start") d send(%zo("xr"),$l(%zo("xr")),0,%zo("xc"),0) g loop
+ i status=13 tcommit  k info("tp",0,"commit") d send(%zo("xr"),$l(%zo("xr")),0,%zo("xc"),0) g loop
+ i status=14 trollback  k info("tp",0,"rollback") d send(%zo("xr"),$l(%zo("xr")),0,%zo("xc"),0) g loop
+ i cmnd="b" s status=$$prp(dbid,data,.%zi,.%zo,) g loop
+ i cmnd="t" s status=$$tab^%mgsqln1(dbid,data,.%zi,.%zo) g loop
+ i cmnd="h" s status=$$col^%mgsqln1(dbid,data,.%zi,.%zo) g loop
+ i cmnd="n" s status=$$stt^%mgsqln1(dbid,data,.%zi,.%zo) g loop
+ i cmnd="k" s status=$$pky^%mgsqln1(dbid,data,.%zi,.%zo) g loop
+ i cmnd="m" s status=$$fky^%mgsqln1(dbid,data,.%zi,.%zo) g loop
+ i cmnd="p" s status=$$prc^%mgsqln1(dbid,data,.%zi,.%zo) g loop
+ i cmnd="q" s status=$$pcc^%mgsqln1(dbid,data,.%zi,.%zo) g loop
+ i cmnd="f" s status=$$fetch(dbid,data,.%zi,.%zo) g loop
  d logerror^%mgsqls("MGSQL: bad message: "_cmnd,"ODBC Error")
  g loop
 loope ; error
@@ -3176,89 +3212,82 @@ base() ; get base for chunk headers
  q 10
  q
  ;
-info ; information
- n nv
+info(dbid,data) ; information
+ n nv,uci,user,error
  s $zt="infoe^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":infoee^%mgsqln"
- d logevent^%mgsqls(data,"Information","ODBC")
+ s error=""
+ ; d logevent^%mgsqls(data,"Information","ODBC")
  d nv(data,.nv)
  s uci=$g(nv("UCI"))
- s %user=$g(nv("User"))
+ s user=$g(nv("User"))
  i uci'="" s rc=$$cuci^%mgsqls(uci)
  s data=""
  s data=data_"mgv="_$$v^%mgsql()_$c(13,10)
  s data=data_"$zv="_$zv_$c(13,10)
  s data=data_$c(13,10)
  d send(data,$l(data),0,"i",1) ; send data
- q
+ q user
 infoe ; error
  s error=$$error^%mgsqls(),error(5)="HY000"
  d logerror^%mgsqls("MGSQL:info: "_error,"M Exception")
  d send(error,$l(error),0,"e",0)
- q
+ q ""
  ;
-prp ; prepare sql
- n at,tname,r,sn,dtyp,i,x,line
+prp(dbid,data,%zi,%zo,%user) ; prepare sql
+ n line,error
  s $zt="prpe^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":prpe^%mgsqln"
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  d sqline(data,.line)
  d logarray^%mgsqls(.line,"prp() array","ODBC")
  s error=""
- d sql1 i $l(error) g sqlerror
- d send(line,$l(line),0,"b",0) ; send data
+ s response=$$sql1(dbid,.line,.%zi,.%zo,%user,.info,.error) i $l(error) g prperror
+ d send(response,$l(response),0,"b",0) ; send data
  q
 prperror ; prepare sql error
  d logerror^%mgsqls(error,"SQL Error")
  d send(error,$l(error),0,"e",0)
  q
-prpe ; error
+prpe ; M error
  s error=$$error^%mgsqls(),error(5)="HY000"
  d logerror^%mgsqls("MGSQL:prp: "_error,"M Exception")
  d send(error,$l(error),0,"e",0)
  q
  q
  ;
-sql ; sql
- n %zi,%zo,at,tname,r,sn,dtyp,i,x,line,param
- s $zt="sqle^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":sqle^%mgsqln"
- d sqline(data,.line,.param)
- ;d logarray^%mgsqls(.line,"sql()","ODBC")
+sql(dbid,data,%zi,%zo,%user,info) ; sql
+ n at,tname,r,sn,dtyp,i,x,line,status,error
+ s status=0,error=""
+ d sqline(data,.line,.%zi)
+ d logarray^%mgsqls(.line,"sql()","ODBC")
  s error=""
- d sql1 i $l(error) g sqlerror
- i $d(info("sp")) d  g sql2
- . s ok=-1
- . s %zo("routine")=rou
- . s %zi(0,"stmt")=stmt
- . s rc=$$so^%mgsqlz()
- . s @("ok=$$"_rou_"(.%zi,.%zo)")
- . s rc=$$sc^%mgsqlz()
+ s response=$$sql1(dbid,.line,.%zi,.%zo,%user,.info,.error) i $l(error) g sqlerror
+ s %zo("xr")=response,%zo("xrl")=$l(response),%zo("xc")="s"
+ i $d(info("tp",0)) d  i status=11 q status
+ . i $d(info("tp",0,"start")),$g(%zo("routine"))'="" s status=11 q
+ . i $d(info("tp",0,"start")) s status=12
+ . i $d(info("tp",0,"commit")) s status=13
+ . i $d(info("tp",0,"rollback")) s status=14
  . q
- m %zi=param("i")
- s %zo("routine")=rou,%zi(0,"stmt")=stmt,@("ok=$$exec^"_rou_"(.%zi,.%zo)")
- i $d(%zo("error")) s error=$g(%zo("error")),error(5)="HY000" g sqlerror
-sql2 ; 
- d send(line,$l(line),0,"s",0) ; send data
- q
+ i $g(%zo("routine"))="" q status
+ s ok=$$sql2(dbid,data,.%zi,.%zo,.info)
+ q status
 sqlerror ; sql error
  d logerror^%mgsqls(error,"SQL Error")
  i $g(error(5))="" s error(5)="HY000"
- d send(":"_$g(error(5))_":"_error,$l(error),0,"e",0)
- q
-sqle ; error
- s error=$$error^%mgsqls(),error(5)="HY000"
- d logerror^%mgsqls("MGSQL:sql: "_error,"M Exception")
- d send(error,$l(error),0,"e",0)
- q
+ s %zo("xr")=":"_$g(error(5))_":"_error,%zo("xrl")=$l(error),%zo("xc")="e"
+ ;d send(":"_$g(error(5))_":"_error,$l(error),0,"e",0)
+ q status
  ;
-sql1 ; sql - process/compile and fire off routine
- n %txt,i,cname,dtyp,qid,lvar,res,n,type,qid,x,sqlcnt,sn,com,info
- s error=""
- k ^mgsqls($j,stmt)
- s rou=$$main^%mgsqlx(dbid,.line,.info,.error)
- i $l(error) q
- s qid=$g(info("qid"))
- s x="" f  s x=$o(^mgsqlx(1,dbid,qid,"t",x)) q:x=""  i '$$acc(%user,"0",x,0,.error,.%user) s error="No Permission",error(5)="42000" q
- i $l(error) q
- s line="" f i=1:1 q:'$d(^mgsqlx(1,dbid,qid,"out",i))  d
+sql1(dbid,line,%zi,%zo,%user,info,error) ; sql - compile query
+ n i,x,qid,cname,cname,dtyp,ag,sn,response
+ s error="",response=""
+ k ^mgsqls($j,%zi(0,"stmt"))
+ s %zo("routine")=$$main^%mgsqlx(dbid,.line,.info,.error)
+ i $l(error) q error
+ s qid=$g(info("qid")) i qid="" s response=response_$c(13,10) q response
+ s x="" f  s x=$o(^mgsqlx(1,dbid,qid,"t",x)) q:x=""  i '$$acc(%user,"0",x,0,.error,.info) s error="No Permission",error(5)="42000" q
+ i $l(error) q error
+ s response="" f i=1:1 q:'$d(^mgsqlx(1,dbid,qid,"out",i))  d
  . s r=$g(^(i))
  . s cname=$p(r,"~",1)
  . s tname=$p(r,"~",2)
@@ -3274,29 +3303,53 @@ sql1 ; sql - process/compile and fire off routine
  . . q
  . i cname["." s cname=$p(cname,".",2)
  . i cname="" s cname="xxx"
- . s line=line_i_"~"_cname_"~"_cname_"~"_tname_$c(13,10)
+ . s response=response_i_"~"_cname_"~"_cname_"~"_tname_$c(13,10)
  . q
- s sn=i-1,line=line_$c(13,10)
- q
+ s sn=i-1,response=response_$c(13,10)
+ q response
  ;
-fetch ; get data
- n eod,rn,cn,val
+sql2(dbid,sql,%zi,%zo,info) ; sql - run compiled code
+ n ok,rc,error,status
+ s $zt="sqle^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":sqle^%mgsqln"
+ s error="",status=0
+ i $d(info("sp")) d  g sql21
+ . s ok=-1
+ . s rc=$$so^%mgsqlz()
+ . s @("ok=$$"_%zo("routine")_"(.%zi,.%zo)")
+ . s rc=$$sc^%mgsqlz()
+ . q
+ i %zo("routine")'="" s @("ok=$$exec^"_%zo("routine")_"(.%zi,.%zo)")
+ i $d(%zo("error")) s error=$g(%zo("error")),error(5)="HY000" g sqle1
+sql21 ; sql success
+ i $d(info("tp",0,"commit")) s status=13
+ i $d(info("tp",0,"rollback")) s status=14
+ ; d logevent^%mgsqls($g(zo("xr")),"sql2() response","ODBC")
+ q status
+sqle ; M error
+ s error=$$error^%mgsqls(),error(5)="HY000"
+sqle1 ; SQL error
+ d logerror^%mgsqls("MGSQL:sql: "_error,"M Exception")
+ s %zo("xr")=error,%zo("xrl")=$l(error),%zo("xc")="e"
+ q status
+ ;
+fetch(dbid,data,%zi,%zo) ; get data
+ n eod,rn,cn,val,line,error
  s $zt="fetche^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":fetche^%mgsqln"
- s rn=$i(^mgsqls($j,stmt,0,-10))
- i '$d(^mgsqls($j,stmt,0,rn)) s line="",eod=1 g fetchx
+ s rn=$i(^mgsqls($j,%zi(0,"stmt"),0,-10))
+ i '$d(^mgsqls($j,%zi(0,"stmt"),0,rn)) s line="",eod=1 g fetchx
  s line="",eod=0
- f cn=1:1 q:'$d(^mgsqls($j,stmt,0,rn,cn))  d
- . s val=$g(^mgsqls($j,stmt,0,rn,cn))
+ f cn=1:1 q:'$d(^mgsqls($j,%zi(0,"stmt"),0,rn,cn))  d
+ . s val=$g(^mgsqls($j,%zi(0,"stmt"),0,rn,cn))
  . s line=line_$$esize($l(val),4,$$base())_val
  . q
 fetchx ; dispatch result
- d send(line,$l(line),stmt,"f",eod) ; send data
- q
+ d send(line,$l(line),%zi(0,"stmt"),"f",eod) ; send data
+ q 0
 fetche ; error
  s error=$$error^%mgsqls(),error(5)="HY000"
  d logerror^%mgsqls("MGSQL:fetch: "_error,"M Exception")
  d send(error,$l(error),0,"e",0)
- q
+ q 0
  ;
 read(head,cmnd,size,data) ; read
  s $zt="reade^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":reade^%mgsqln"
@@ -3323,11 +3376,7 @@ send(data,len,stmt,type,eod) ; send data
  n head
  s len=$l(data)
  s head=$$esize(len,4,$$base())_"0000"_$$esize(stmt,4,$$base())_eod_type
- i $$isydb^%mgsqls() g sendy
  w head_data d flush^%mgsqls()
- q
-sendy ; yottadb
- w head_data
  q
  ;
 esize(dsize,len,base)
@@ -3346,12 +3395,12 @@ nv(data,nv) ; name/value pairs
  f i=1:1:$l(data,$c(13,10)) s r=$p(data,$c(13,10),i) s n=$p(r,"=",1),v=$p(r,"=",2,9999) i n'="" s nv(n)=v
  q
  ;
-sqline(sql,line,param)
+sqline(sql,line,%zi)
  n i,x,y,ln
  s ln=0
  f i=1:1:$l(sql,$c(10))  s x=$p(sql,$c(10),i) s y=$p(x,$c(13),1) d
  . i y="" q
- . i y?1"$:iv"1n.n.e s param("i",$p(y,":",2))=$p(y,":",5) q
+ . i y?1"$:iv"1n.n.e s %zi($p(y,":",2))=$p(y,":",5) q
  . s ln=ln+1,line(ln)=y
  . q
  q
@@ -3363,8 +3412,8 @@ oname(cname) ; name
 op(op,type,val) ; operation
  s res=val ; q res
  s $zt="ope^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":ope^%mgsqln"
- i '$d(%sql("op",stmt,op,type)) q res
- s in=val x %sql("op",stmt,op,type) s res=$g(out1)
+ i '$d(%sql("op",%zi(0,"stmt"),op,type)) q res
+ s in=val x %sql("op",%zi(0,"stmt"),op,type) s res=$g(out1)
  ; double decode ???
  i res="",in'="" s res=in
  q res
@@ -3374,7 +3423,7 @@ ope ; error
 test ; test
  k
  s %user="cm"
- s stmt=0
+ s %zi(0,"stmt")=0
  ;s nv("sql")="select * from patient1 a"
  ;s nv("sql")="create table patient (num int not null, name varchar(255), address varchar(255), constraint pk_patient primary key (num))"
  s nv("sql")="select a.num, a.name from patient a"
@@ -3388,15 +3437,16 @@ test ; test
  f i=1:1 q:'$d(^mgsqls($j,i,0))  w !,$g(^(0))
  q
  ;
- ; +not_ydb
 accept(port) ; Concurrent TCP service (Cache, M21, MSM)
  s $zt="accepth^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":accepth^%mgsqln"
- d logevent^%mgsqls("cmcmcm try "_$g(port),"title","ODBC")
  d seterror^%mgsqls("")
  s port=+$g(port)
  i 'port s port=7041
-   d logevent^%mgsqls("cmcmcm try a1 "_$g(port),"title","ODBC")
- 
+ s ^%mgsql("server",port)=$j 
+ ; +ydb
+ ; s dev="server$"_$j
+ ; -ydb
+ ; +not_ydb
  i $$isidb^%mgsqls() s dev="|TCP|"_port
  i $$ism21^%mgsqls() s dev=9050
  i $$ismsm^%mgsqls() d
@@ -3404,16 +3454,22 @@ accept(port) ; Concurrent TCP service (Cache, M21, MSM)
  . ; Determine OS type, NT or not
  . x "s nt=($zb($v(0,-4,2),#F,1)=10)"
  . q
-  d logevent^%mgsqls("cmcmcm try a2 "_$g(port),"title","ODBC")
- 
+ ; -not_ydb
  s errors=0
  s timeout=10
- d logevent^%mgsqls("cmcmcm try 1 "_$g(port),"title","ODBC")
 accept1 ; Main accept loop
  ; Set up Socket Server
  c dev
-  d logevent^%mgsqls("cmcmcm try a1 "_$g(port),"title","ODBC")
- 
+ ; +ydb
+ ; ; open tcp server device
+ ; open dev:(listen=port_":tcp":attach="server"):timeout:"socket"
+ ; ;
+ ; ; use tcp server device
+ ; use dev
+ ; write /listen(5) 
+ ; ;
+ ; -ydb
+ ; +not_ydb
  i $$isidb^%mgsqls() o dev:(:port:"SA"::8192:8192:10):10 i '$t d logevent^%mgsqls("Server StartUp timed-out","Server","ODBC") g acceptx
  i $$ism21^%mgsqls() d
  . o dev:("TCP"::port):10 i '$t  d logevent^%mgsqls("Server StartUp timed-out","Server","ODBC") g acceptx
@@ -3431,15 +3487,30 @@ accept1 ; Main accept loop
  . i $device d logerror^%mgsqls("Unable to set queue depth on new listening socket for port "_port_" "_$device,"ODBC Error") g acceptx
  . i $zsocket(dev)="" d logerror^%mgsqls("Aborting server startup for port"_port,"ODBC Error") g acceptx
  . q
+ ; -not_ydb
 accept2 ; Accept connection
  s $zt="accepte^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":accepte^%mgsqln"
+ ; +ydb
+ ; set %znsock="",%znfrom="",timeout=30
+ ; s ok=1 f  d  q:ok  i $d(^%mgsql("stop")) s ok=0 k ^%mgsql("stop") q
+ ; . write /wait(timeout)
+ ; . i $key'="" s ok=1 q
+ ; . s ok=0
+ ; . q
+ ; i 'ok g acceptx
+ ; d logevent^%mgsqls("incoming connection from "_$piece($key,"|",3)_", starting child server process","Server","ODBC")
+ ; s childsock=$p($key,"|",2)
+ ; u dev:(detach=childsock)
+ ; s childproc="child^%mgsqln(port,port):(output="_"""SOCKET:"_childsock_""""_":input="_"""SOCKET:"_childsock_""""_")"
+ ; j @childproc ; fork a process to handle the detached socket
+ ; -ydb
+ ; +not_ydb
  ; For Cache :
  i $$isidb^%mgsqls() d
  . r x
  . d logevent^%mgsqls("Incoming connection from "_$A($ZU(111,0),1)_"."_$A($ZU(111,0),2)_"."_$A($ZU(111,0),3)_"."_$A($ZU(111,0),4)_":"_($A($ZU(111,0),5)*256+$A($ZU(111,0),6))_", starting child server process","Server","ODBC")
  . i $v(0,-2,$ZU(40,0,1))\(2**16)#2 d logevent^%mgsqls("System shutting down","Server","ODBC") G acceptx
- .  d logevent^%mgsqls("cmcmcm try stae"_$g(port),"title","ODBC")
- . j child^%mgsqln(port,port,1,""):(:24):timeout
+ . j child^%mgsqln(port,port):(:24):timeout
  . i '$t d logerror^%mgsqls("Unable to start a child process","ODBC Error") w *-2
  ; For M21
  i $$ism21^%mgsqls() d
@@ -3457,8 +3528,8 @@ accept2 ; Accept connection
  . . . d logerror^%mgsqls("Client socket closed $device="_$device,"ODBC Error")
  . . . g acceptx
  . s ok=1 
- . i $s($$Validate^%MuDate($p($p($zv,"(",2),")",1),0)>59470:$zinfo(1,"svector","ostype"),1:1)=1 j child^%mgsqln(port,%MuNsock,1,"")::timeout i '$T s ok=0
- . i $s($$Validate^%MuDate($p($p($zv,"(",2),")",1),0)>59470:$zinfo(1,"svector","ostype"),1:1)=2 j child^%mgsqln(port,%MuNsock,1,""):(::1:%MuNsock):timeout i '$T s ok=0
+ . i $s($$Validate^%MuDate($p($p($zv,"(",2),")",1),0)>59470:$zinfo(1,"svector","ostype"),1:1)=1 j child^%mgsqln(port,%MuNsock)::timeout i '$T s ok=0
+ . i $s($$Validate^%MuDate($p($p($zv,"(",2),")",1),0)>59470:$zinfo(1,"svector","ostype"),1:1)=2 j child^%mgsqln(port,%MuNsock):(::1:%MuNsock):timeout i '$T s ok=0
  . i 'ok d logerror^%mgsqls("Unable to start a child process","ODBC Error") w !
  . q
  ; For MSM
@@ -3468,9 +3539,10 @@ accept2 ; Accept connection
  . ; Check for accept error
  . q:lzc&(lzb=-8)
  . i lzc d logerror^%mgsqls("Error on Server socket - restarting","ODBC Error") g acceptx
- . j child^%mgsqls(port,$zh(%xddb),1,"")::timeout s jobno=$zb
+ . j child^%mgsqls(port,$zh(%xddb))::timeout s jobno=$zb
  . i jobno=0 d logerror^%mgsqls("Unable to start a child process","ODBC Error") w !
  . q
+ ; -not_ydb
  ;
  s errors=0
  g accept2
@@ -3486,56 +3558,46 @@ accepte ; Error
  d logerror^%mgsqls("Accept Loop - Program Error: "_$$error^%mgsqls(),"ODBC Error")
  i errors>7 d logerror^%mgsqls("Accept Loop - Too many errors - Closing Down","ODBC Error") h
  i $g(dev)'="" u dev
+ ; +not_ydb
  i $$isidb^%mgsqls() w *-2
  i $$ism21^%mgsqls() w !
  i $$ismsm^%mgsqls() w !
+ ; -not_ydb
  g accept2
 accepth ; Halt
  h
  ;
-child(pport,port,conc,uci) ; Child
+child(pport,port) ; Child
+ n nato,buf,x
  s $zt="childe^%mgsqln" ; new $ztrap set $ztrap="zgoto "_$zlevel_":childe^%mgsqln"
- i uci'="" d uci^%mgsqls(uci)
- ; Concurrent service (Cache, M21, MSM)
- i conc d
- . i $$isidb^%mgsqls() d
- . . u $ZU(53)
- . . d $zu(132)  ; Set the principal device
- . . ;u 0:(::"+BDWC"::8192:8192)
- . . u 0:(::"+S"::8192:8192)
- . . q
- . i $$ism21^%mgsqls() d
- . . n %MuSdev
- . . s %MuSdev=9050
- . . ; Attach socket
- . . i $s($$Validate^%MuDate($p($p($zv,"(",2),")",1),0)>59470:$zinfo(1,"svector","ostype"),1:1)=1 o %MuSdev:(:::::port)
- . . i $s($$Validate^%MuDate($p($p($zv,"(",2),")",1),0)>59470:$zinfo(1,"svector","ostype"),1:1)=2 o %MuSdev:(:::::::port)
- . . u %MuSdev
- . . ; Set principal device
- . . i $zinfo(7,"pvector","pridev",%MuSdev)
- . . q
- . i $$ismsm^%mgsqls() d
- . . x "v port+46::$j-$v(272,-4,4):2"
- . . n addr s addr=$v(port+16,-3,0)
- . . s %("ADDRESS")=$v(addr+13,-3,$v(addr+12,-3,1),9)
- . . u 56:$zh(+port)
- . . q
+ i 'pport g child2
+ ; +ydb
+ ; u $principal
+ ; -ydb
+ ; +not_ydb
+ i $$isidb^%mgsqls() d
+ . u $ZU(53)
+ . d $zu(132)  ; Set the principal device
+ . ;u 0:(::"+BDWC"::8192:8192)
+ . u 0:(::"+S"::8192:8192)
  . q
- ; Non-Concurrent service (Old MUMPS systems - DSM, ISM etc...)
- i 'conc d
- . s ^%MGWSI("TCP_PORT",pport,port)=$j
- . ; Set TCP server child device
- . i $$isidb^%mgsqls() s dev="|TCP|"_port
- . i $$isdsm^%mgsqls() s dev=port
- . ;
- . ; Open TCP server child device
- . i $$isidb^%mgsqls() o dev:(::"S"):10 i '$t d logerror^%mgsqls("Server Child StartUp timed-out","ODBC Error") g childh
- . i $$isdsm^%mgsqls() o dev:(TCPCHAN:BLOCKSIZE=32768)
- . ;
- . ; Use TCP server child device
- . i $$isidb^%mgsqls() u dev
- . i $$isdsm^%mgsqls() u dev
+ i $$ism21^%mgsqls() d
+ . n %MuSdev
+ . s %MuSdev=9050
+ . ; Attach socket
+ . i $s($$Validate^%MuDate($p($p($zv,"(",2),")",1),0)>59470:$zinfo(1,"svector","ostype"),1:1)=1 o %MuSdev:(:::::port)
+ . i $s($$Validate^%MuDate($p($p($zv,"(",2),")",1),0)>59470:$zinfo(1,"svector","ostype"),1:1)=2 o %MuSdev:(:::::::port)
+ . u %MuSdev
+ . ; Set principal device
+ . i $zinfo(7,"pvector","pridev",%MuSdev)
  . q
+ i $$ismsm^%mgsqls() d
+ . x "v port+46::$j-$v(272,-4,4):2"
+ . n addr s addr=$v(port+16,-3,0)
+ . s %("ADDRESS")=$v(addr+13,-3,$v(addr+12,-3,1),9)
+ . u 56:$zh(+port)
+ . q
+ ; -not_ydb
  ;
  s nato=0
 child2 ; Child request loop
@@ -3543,20 +3605,34 @@ child2 ; Child request loop
 child3 ; Read Request
  i 'nato r *x
  i nato r *x:nato i '$t g childh ; No-activity timeout
+ ; +not_ydb
  i $$ism21^%mgsqls(),$device,$device["EOF" g childh ; Client closed connection
+ ; -not_ydb
+ ; +ydb
+ ; i x=0 d accepth ; client disconnect
+ ; -ydb
  s buf=$c(x) f  r *x q:x=10!(x=0)  s buf=buf_$c(x)
+ ; +ydb
+ ; i x=0 d accepth ; client disconnect
+ ; -ydb
  i buf="xDBC" g main^%mgsqln
  i buf?1U.E1"HTTP/"1N1"."1N1C s buf=buf_$c(10) g main^%mgsqlw
  g childh
  ;
 childe ; Error
  d logerror^%mgsqls($$error^%mgsqls(),"ODBC Error")
+ ; +not_ydb
  i $$error^%mgsqls()["READ" g childh
+ ; -not_ydb
+ ; +ydb
+ ; i $$error^%mgsqls()["%gtm-e-ioeof" g childh
+ ; -ydb
  ;
 childh ; Halt
+ ; +not_ydb
  i $$ism21^%mgsqls() i $zinfo(7,"pvector","pridev",0)
- h
  ; -not_ydb
+ h
  ;
 m ; test
  n a,p,y,t,i,g
@@ -3601,12 +3677,12 @@ m ; test
  ;
 a d vers^%mgsql("%mgsqln1") q
  ;
-tab ; tables
- n a,tname,r,rn,sn,cn,nv,dtyp,i,x,n,desc,cols
+tab(dbid,data,%zi,%zo) ; tables
+ n a,tname,r,rn,sn,cn,nv,dtyp,i,x,n,desc,cols,error
  s $zt="tabe^%mgsqln1" ; new $ztrap set $ztrap="zgoto "_$zlevel_":tabe^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"tab() array","ODBC")
  s error=""
  ; CatalogName=%s\r\nSchemaName=%s\r\nTableName=%s\r\nTableType=%s\r\n\r\n"
@@ -3624,22 +3700,22 @@ tab ; tables
  . s rn=0
  . s rn=rn+1
  . s cn=0
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  . q
  i $g(nv("SchemaName"))["%" d  g tab1
  . s rn=0
  . s dbid="" f  s dbid=$$nxtdbid^%mgsqld(dbid) q:dbid=""  d
  . . s rn=rn+1
  . . s cn=0
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  . . q
  . q
  i $g(nv("TableType"))["SYSTEM TABLE" d  g tab1
@@ -3647,11 +3723,11 @@ tab ; tables
  . s rn=0
  . s rn=rn+1
  . s cn=0
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$g(nv("TableType"))
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$g(nv("TableType"))
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  . q
  i $g(nv("TableType"))["TABLE" d  g tab1
  . s rn=0
@@ -3660,11 +3736,11 @@ tab ; tables
  . . . s r=$$tab^%mgsqld(dbid,tname) i r="" q
  . . . s desc=$p(r,"\",1)
  . . . s rn=rn+1,cn=0
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=tname
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$g(nv("TableType"))
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=desc
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=tname
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$g(nv("TableType"))
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=desc
  . . . q
  . . q
  . q
@@ -3673,27 +3749,27 @@ tab ; tables
  . s rn=0
  . s rn=rn+1
  . s cn=0
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$g(nv("TableType"))
- . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$g(nv("TableType"))
+ . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  . q
 tab1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"t",1) ; send data
- q
+ q 0
 tabe ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:tab: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
-col ; table columns
- n %d,%data,%ind,%ref,a,cols,col,colx,ord,cname,cname1,tname,r,rc,rn,cn,pkey,sn,dtyp,type,i,x,cname,n,kn,knm,sc,ino,desc,pk,nv
+col(dbid,data,%zi,%zo) ; table columns
+ n %d,%data,%ind,%ref,a,cols,col,colx,ord,cname,cname1,tname,r,rc,rn,cn,pkey,sn,dtyp,type,i,x,cname,n,kn,knm,sc,ino,desc,pk,nv,error
  s $zt="cole^%mgsqln1" ; new $ztrap set $ztrap="zgoto "_$zlevel_":cole^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,0,stmt)
+ k ^mgsqls($j,0,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"col() array","ODBC")
  s error=""
  s tname="TABLE_COLUMNS"
@@ -3746,7 +3822,6 @@ col ; table columns
  . s col(ord)=cname1,col(ord,"k")=$s(pkey:1,1:0),col(ord,"d")=desc,col(ord,"t")=type
  . s colx(cname1)=ord
  . q
- ;d logevent^%mgsqls("MGSQL:col:"_fid_":"_cname, "col","ODBC")
  i cname="" d  g col1
  . s rn=0
  . f ord=1:1 q:'$d(col(ord))  d
@@ -3761,43 +3836,43 @@ col ; table columns
  . q
 col1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"t",1) ; send data
- q
+ q 0
 cole ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:col: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
 col2(dbid,tname,cname,rn,ord,cdata)
  n cn,type
  s type=$$ucase^%mgsqls($g(col(ord,"t")))
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=tname
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=cname
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid^%mgsqln2(type)
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=type
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="256"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="256"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid^%mgsqln2(type)
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=ord
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="NO"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=tname
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=cname
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid^%mgsqln2(type)
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=type
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="256"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="256"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid^%mgsqln2(type)
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=ord
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="NO"
  q
  ;
-stt ; table statistics
- n a,n,nv,tname,r,rn,sn,cn,cols,dtyp,i,x,kn,knx,idx,idxn
+stt(dbid,data,%zi,%zo) ; table statistics
+ n a,n,nv,tname,r,rn,sn,cn,cols,dtyp,i,x,kn,knx,idx,idxn,error
  s $zt="stte^%mgsqln1" ; new $ztrap set $ztrap="zgoto "_$zlevel_":stte^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"stt() array","ODBC")
  s error=""
  s tname="TABLE_STATISTICS"
@@ -3817,23 +3892,21 @@ stt ; table statistics
  s cn=cn+1,a(cn)="FILTER_CONDITION" ; 13
  s cols="" f cn=1:1 q:'$d(a(cn))  s cols=cols_cn_"~"_a(cn)_"~"_a(cn)_"~"_tname_$c(13,10)
  s cols=cols_$c(13,10)
- ;
- g stt1
 stt1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"n",1) ; send data
- q
+ q 0
 stte ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:stt: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
-pky ; table primary key
- n %ind,%ref,a,n,tname,r,rc,sn,kn,sc,rn,cn,nv,cols,dtyp,pk,i,ino,x,n,r,cname,kn
+pky(dbid,data,%zi,%zo) ; table primary key
+ n %ind,%ref,a,n,tname,r,rc,sn,kn,sc,rn,cn,nv,cols,dtyp,pk,i,ino,x,n,r,cname,kn,error
  s $zt="pkye^%mgsqln1" ; new $ztrap set $ztrap="zgoto "_$zlevel_":pkye^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"pky() array","ODBC")
  s error=""
  s tname="TABLE_PRIMARY_KEY"
@@ -3859,29 +3932,29 @@ pky ; table primary key
  . . s cname=r,kn=kn+1
  . . s rn=rn+1
  . . s cn=0
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=tname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=cname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=kn
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pk
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=tname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=cname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=kn
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pk
  . . q
  . q
 pky1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"k",1) ; send data
- q
+ q 0
 pkye ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:pky: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
-fky ; table foreign key
- n %ind,%ref,a,n,tname,r,rc,sn,kn,sc,rn,cn,nv,cols,dtyp,pk,i,ino,x,n,r,cname,kn
+fky(dbid,data,%zi,%zo) ; table foreign key
+ n %ind,%ref,a,n,tname,r,rc,sn,kn,sc,rn,cn,nv,cols,dtyp,pk,i,ino,x,n,r,cname,kn,error
  s $zt="fkye^%mgsqln1" ; new $ztrap set $ztrap="zgoto "_$zlevel_":fkye^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"fky() array","ODBC")
  s error=""
  s tname="TABLE_PRIMARY_KEY"
@@ -3915,38 +3988,38 @@ fky ; table foreign key
  . . s cname=r,kn=kn+1
  . . s rn=rn+1
  . . s cn=0
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=tname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=cname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=dbid
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=tname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=cname
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=kn
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="cascade"
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="cascade"
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pk
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pk
- . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=tname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=cname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=dbid
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=tname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=cname
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=kn
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="cascade"
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="cascade"
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pk
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pk
+ . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
  . . q
  . q
 fky1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"m",1) ; send data
- q
+ q 0
 fkye ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:fky: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
-prc ; procedures
+prc(dbid,data,%zi,%zo) ; procedures
  ; PROCDURE_TYPE:  SQL_PT_UNKNOWN=0, SQL_PT_PROCEDURE=1, SQL_PT_FUNCTION=2
- n a,cname,pname,tname,r,rn,cn,sn,cols,nv,dtyp,i,x,n,desc,r
+ n a,cname,pname,tname,r,rn,cn,sn,cols,nv,dtyp,i,x,n,desc,r,error
  s $zt="prce^%mgsqln1" ; new $ztrap set $ztrap="zgoto "_$zlevel_":prce^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"prc() array","ODBC")
  s error=""
  s tname="PROCEDURES"
@@ -3970,14 +4043,14 @@ prc ; procedures
  . . . s desc=$p(r,"\",1)
  . . . s rn=rn+1,cn=0
  . . . s cn=0
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pname
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- . . . s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pname
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ . . . s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
  . . . q
  . . q
  . q
@@ -3985,30 +4058,30 @@ prc ; procedures
  s desc=$p(r,"\",1)
  s rn=1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pname
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pname
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
 prc1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"p",1) ; send data
- q
+ q 0
 prce ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:prc: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
-pcc ; procedure columns
+pcc(dbid,data,%zi,%zo) ; procedure columns
  ; PROCDURE_TYPE:  SQL_PT_UNKNOWN=0, SQL_PT_PROCEDURE=1, SQL_PT_FUNCTION=2
- n %data,a,cname,cname1,pname,tname,r,rn,sc,sn,cn,col,cols,colx,nv,ord,dtyp,type,i,x,n,desc,r
+ n %data,a,cname,cname1,pname,tname,r,rn,sc,sn,cn,col,cols,colx,nv,ord,dtyp,type,i,x,n,desc,r,error
  s $zt="pcce^%mgsqln1" ; new $ztrap set $ztrap="zgoto "_$zlevel_":pcce^%mgsqln1"
  d nv^%mgsqln(data,.nv)
  s dbid=$$schema^%mgsql($g(nv("SchemaName")))
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  ;d logarray^%mgsqls(.nv,"pcc() array","ODBC")
  s error=""
  s tname="PROCEDURE_COLUMNS"
@@ -4060,42 +4133,42 @@ pcc ; procedure columns
  . q
 pcc1 ; send result
  d send^%mgsqln(cols,$l(cols),0,"q",1) ; send data
- q
+ q 0
 pcce ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:pcc: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
 pcc2(dbid,pname,cname,rn,ord,cdata)
  n cn,type
  s type=$$ucase^%mgsqls($g(col(ord,"t")))
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=pname
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=cname
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="12"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="VARCHAR"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="256"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="256"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="12"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="NO"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=pname
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=cname
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="12"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="VARCHAR"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="256"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="256"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="12"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="NO"
  q
  ;
 test ; test harness
  k
  s dbid="mgsql"
- s stmt=0
+ s %zi(0,"stmt")=0
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"TableName="_$c(13,10)_"TableType=TABLE"_$c(13,10,13,10) d tab
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"TableName=admission"_$c(13,10)_"ColumnName="_$c(13,10,13,10) d col
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"TableName=admission"_$c(13,10)_"ColumnName=dadm"_$c(13,10,13,10) d col
@@ -4103,10 +4176,11 @@ test ; test harness
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"TableName=admission"_$c(13,10,13,10) d pky
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"TableName=admission"_$c(13,10,13,10) d fky
  ;s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"ProcName="_$c(13,10,13,10) d prc
- s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"ProcName=patient_getdata"_$c(13,10)_"ColumnName="_$c(13,10,13,10) d pcc
- m z=^mgsqls($j,stmt)
+ s data="CatalogName="_$c(13,10)_"SchemaName=mgsql"_$c(13,10)_"ProcName=patient_getdata"_$c(13,10)_"ColumnName="_$c(13,10,13,10) d pcc(dbid,data,.%zi,.%zo)
+ m z=^mgsqls($j,%zi(0,"stmt"))
  q
- 
+ ;
+
 
 %mgsqln2
 %mgsqln2 ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
@@ -4135,12 +4209,12 @@ test ; test harness
  ;
 a d vers^%mgsql("%mgsqln2") q
  ;
-typ ; data types
- n tname,r,sn,dtyp,i,x
+typ(dbid,data,%zi,%zo) ; data types
+ n tname,r,sn,cn,cols,dtyp,i,x,error
  s $zt="type^%mgsqln2" ; new $ztrap set $ztrap="zgoto "_$zlevel_":type^%mgsqln2"
  d nv^%mgsqln(data,.nv)
  s error=""
- k ^mgsqls($j,stmt)
+ k ^mgsqls($j,%zi(0,"stmt"))
  s tname="DATA_TYPE"
  s cn=0
  s cn=cn+1,a(cn)="TYPE_NAME"            ;  1
@@ -4167,323 +4241,320 @@ typ ; data types
  s cols=cols_$c(13,10)
  ;
  s rn=0
- ;g vchar
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="BIT"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("BIT")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("BIT")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="BIT"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("BIT")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("BIT")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="TINYINT"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("TINYINT")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("TINYINT")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="TINYINT"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("TINYINT")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("TINYINT")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="BIGINT"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("BIGINT")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="19"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("BIGINT")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="BIGINT"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("BIGINT")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="19"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("BIGINT")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="LONGVARBINARY"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("LONGVARBINARY")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="2147483647"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="MAX LENGTH"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("LONGVARBINARY")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="LONGVARBINARY"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("LONGVARBINARY")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="2147483647"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="MAX LENGTH"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("LONGVARBINARY")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="VARBINARY"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("VARBINARY")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="4096"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="MAX LENGTH"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("VARBINARY")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="VARBINARY"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("VARBINARY")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="4096"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="MAX LENGTH"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("VARBINARY")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="LONGVARCHAR"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("LONGVARCHAR")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="2147483647"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="MAX LENGTH"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("LONGVARCHAR")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="LONGVARCHAR"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("LONGVARCHAR")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="2147483647"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="MAX LENGTH"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("LONGVARCHAR")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="NUMERIC"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("NUMERIC")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="15"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="PRECISION,SCALE"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="15"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("NUMERIC")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="NUMERIC"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("NUMERIC")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="15"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="PRECISION,SCALE"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="15"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("NUMERIC")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="INTEGER"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("INTEGER")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="10"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("INTEGER")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="INTEGER"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("INTEGER")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="10"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("INTEGER")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="SMALLINT"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("SMALLINT")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="5"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("SMALLINT")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="SMALLINT"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("SMALLINT")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="5"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("SMALLINT")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="DOUBLE"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("DOUBLE")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="15"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("DOUBLE")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="DOUBLE"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("DOUBLE")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="15"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("DOUBLE")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="DATE"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("DATE")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="10"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("DATE")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="DATE"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("DATE")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="10"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("DATE")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="TIME"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("TIME")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="8"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("TIME")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="TIME"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("TIME")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="8"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("TIME")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
  ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="TIMESTAMP"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("TIMESTAMP")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="23"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("TIMESTAMP")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
-vchar ;
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="TIMESTAMP"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("TIMESTAMP")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="23"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("TIMESTAMP")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ ;
  s rn=rn+1
  s cn=0
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="VARCHAR"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("VARCHAR")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="4096"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="'"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="MAX LENGTH"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="3"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="1"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)="0"
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=$$sqltypeid("VARCHAR")
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- s cn=cn+1,^mgsqls($j,stmt,0,rn,cn)=""
- ;
-type1 d send^%mgsqln(cols,$l(cols),0,"t",1) ; send data
- q
- ;
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="VARCHAR"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("VARCHAR")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="4096"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="'"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="MAX LENGTH"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="3"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="1"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)="0"
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=$$sqltypeid("VARCHAR")
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+ s cn=cn+1,^mgsqls($j,%zi(0,"stmt"),0,rn,cn)=""
+typ1 d send^%mgsqln(cols,$l(cols),0,"t",1) ; send data
+ q 0
 type ; error
  s error=$$error^%mgsqls()
  d logerror^%mgsqls("MGSQL:typ: "_error,"M Exception")
  d send^%mgsqln(error,$l(error),0,"e",0)
- q
+ q 0
  ;
 sqltypeid(type) ; get sql/odbc type ID
  s type=$$ucase^%mgsqls(type)
@@ -5050,7 +5121,7 @@ main1 ; re-entry
  s error=""
  d cmnd(.sql2)
  d rips(.line,.wrk,.error) i $l(error) g exit
- s qnummax=$$cdel(.sql2,.wrk,.error) i $l(error) g exit
+ s qnummax=$$cdel(.sql2,.wrk,.sql,.error) i $l(error) g exit
  d main^%mgsqlp1(qnummax,.sql2,.wrk,.sql,.error) i $l(error) g exit
  i $g(sql(1,2))="from "_%z("dq")_2_%z("dq")_" t0" d cog i ok g main1
 exit k tmp,blk
@@ -5065,7 +5136,7 @@ cmnd(sql2) ; sql2 commands
  f x="update","delete","insert","attributes","into","values","set" s sql2(x)=3
  f x="union","intersect","except" s sql2(x)=4
  f x="transaction","create","drop","by","all" s sql2(x)=5
- f x="commit","current_date","current_time","current_timestamp","start","stop" s sql2(x)=7
+ f x="commit","current_date","current_time","current_timestamp","start","begin","stop" s sql2(x)=7
  f x="cursor","eof","last","notnull","rollback" s sql2(x)=7
  q
  ;
@@ -5104,12 +5175,12 @@ rstring(line) ; put strings back into line
  f  q:line'[%z("ds")  s line=$p(line,%z("ds"),1)_^mgtmp($j,"string",$p(line,%z("ds"),2))_$p(line,%z("ds"),3,9999)
  q line
  ;
-cdel(sql2,wrk,error) ; find and mark main commands
- n ln,lnd,dec,pn,wrd,wrd0,wrd1,pst,pre,txt,txt1,txtn,qnum
+cdel(sql2,wrk,sql,error) ; find and mark main commands
+ n ln,lnd,dec,pn,wrd,wrd0,wrd1,wrd2,pst,pre,txt,txt1,txtn,qnum
  s (qnum,lnd)=0,(dec,txtn)=""
  s ln=""
 cdel1 s ln=$o(wrk(ln)) i ln="" g cdelx
- s txt=wrk(ln) d rems i '$l(txt) k wrk(ln) g cdel1
+ s txt=$$rems(wrk(ln)) i '$l(txt) k wrk(ln) g cdel1
  s txt=$$cdel7(txt)
  s pn=0
 cdel2 s pn=pn+1 i pn>$l(txt," ") g cdel1r
@@ -5120,9 +5191,10 @@ cdel2 s pn=pn+1 i pn>$l(txt," ") g cdel1r
  i wrd="" g cdel2r
  s wrd1=$$lcase^%mgsqls(wrd)
  i $l(wrd1)>128 g cdel2r
+ i $l(wrd1)>2,$e(wrd1,$l(wrd1))=";" s wrd2=$e(wrd1,1,$l(wrd1)-1) i $d(sql2(wrd2)) s wrd1=wrd2
  i '$d(sql2(wrd1)) g cdel2r
  s (wrd0,wrd)=wrd1
- i wrd0="transaction" d cdel5 g cdel2
+ i wrd0="transaction"!(wrd0="start")!(wrd0="begin")!(wrd0="commit")!(wrd0="rollback") s pn=$$cdel5(.sql2,$p(wrd0,";",1),txt,pn,.sql,.error) g cdel2
  i wrd0="select" s qnum=qnum+1,wrd=$s(qnum=1:"(",1:"")_%z("dq")_qnum_%z("dq")_%z("dc")_wrd_%z("dc")
  i wrd0'="select",$d(sql2(wrd)),"034"[sql2(wrd) d cdel3(.wrd,.qnum)
  s ^mgtmp($j,"cmnd",qnum,wrd0)=ln
@@ -5131,7 +5203,7 @@ cdel2r s txtn=txtn_" "_pre_wrd_pst
 cdel1r s txtn=$$trim^%mgsqls(txtn," ") i '$l(txtn) k wrk(ln) g cdel1
  s wrk(ln)=txtn,txtn=""
  g cdel1
-cdelx ;
+cdelx ; exit
  s qnummax=qnum
  i qnummax s ln=$o(wrk(""),-1) i $l(ln) s wrk(ln)=wrk(ln)_")"
  q qnummax
@@ -5142,13 +5214,20 @@ cdel3(wrd,qnum) ; process main-line command
  i wrd["delete"!(wrd["update") s qnum=qnum+1,wrd=$s(qnum=1:"(",1:"")_%z("dq")_qnum_%z("dq")_%z("dc")_"select"_%z("dc")_" "_wrd
  q
  ;
-cdel5 ; transaction processing command
- n cmnd,nam
- s cmnd=$p(txt," ",pn+1),nam=$p(txt," ",pn+2),txt=$p(txt," ",1,pn-1)_" "_$p(txt," ",pn+3,9999),pn=pn-1 d rems
+cdel5(sql2,wrd,txt,pn,sql,error) ; transaction processing command
+ n cmnd,name
+ s cmnd=$p($p(txt," ",pn+1),";",1)
  s cmnd=$$lcase^%mgsqls(cmnd)
- i cmnd'="start",cmnd'="commit",cmnd'="rollback" s error="invalid command '"_cmnd_"' for transaction processing",error(5)="HY000" q
- s sql("txp",0,cmnd)=nam i nam?1":"1a.e s inv($p(nam,":",2,9999))=""
- q
+ i cmnd="transaction"!(wrd="transaction") s pn=pn+1
+ i cmnd=""!(cmnd="transaction") s cmnd=wrd
+ i cmnd="begin" s cmnd="start"
+ s name="" i cmnd="start"!(cmnd="begin") s name=$p(txt," ",pn+1)
+ i name'="",$d(sql2(name)) s name=""
+ i $l(name)>2,$e(name,$l(name))=";",$d(sql2($e(name,1,$l(name)-1))) s name=""
+ i name'="",$d s pn=pn+1
+ i cmnd'="begin",cmnd'="start",cmnd'="commit",cmnd'="rollback" s error="invalid command '"_cmnd_"' for transaction processing",error(5)="HY000" q pn
+ s sql("txp",0,cmnd)=name i name?1":"1a.e s inv($p(name,":",2,9999))=""
+ q pn
  ;
 cdel7(line) ; remove ambiguous syntax
  n dlm,len,pn,pn1,pre,post,post1,obr,cbr,i,c,wrd,wrduc
@@ -5171,17 +5250,17 @@ cdel71 s pre=$p(line,dlm,1,pn-1),post=$p(line,dlm,pn,9999)
  s pn=pn-1 i pn>1 g cdel71
  q line
  ;
-rems ; trim and remove surplus spaces from txt
+rems(txt) ; trim and remove surplus spaces from txt
  n pn,wrd,txt1
  i '$l(txt) q
  s txt=$$trim^%mgsqls(txt," ") i '$l(txt) q
  f pn=1:1:$l(txt," ") s txt1=$p(txt," ",pn+1,9999) i txt1?1" ".e s txt1=$$ltrim^%mgsqls(txt1," "),txt=$p(txt," ",1,pn)_" "_txt1
- q
+ q txt
  ;
-remsc ; remove spaces from comma in context of natural separator
+remsc(txt) ; remove spaces from comma in context of natural separator
  n pn,wrd,txt1
  f pn=1:1 q:txt'[" "!(pn=$l(txt," "))  s wrd=$p(txt," ",pn) q:wrd=""  s txt1=$p(txt," ",pn+1,9999) i $e(wrd,$l(wrd))=","!($e(txt1,1)=",") s txt=$p(txt," ",1,pn)_$p(txt," ",pn+1,9999),pn=pn-1
- q
+ q txt
  ;
 cog ; cognos translations
  s ok=0
@@ -5391,8 +5470,8 @@ grpx3 i 'move g grpx1
  ;
 reds(qnummax,sql2,blk,tmp,error) ; reduce query + logic block
  n blkno,blkno1,ln,qnum,qnum1,txt,txt1,pn,trans
- s blkno="" f  s blkno=$o(blk(blkno)) q:blkno=""  s ln="",blk=0 f  s ln=$o(blk(blkno,ln)) q:ln=""  s txt=blk(blkno,ln) d rems^%mgsqlp k blk(blkno,ln) i $l(txt) s blk=blk+1,blk(blkno,blk)=txt
- s qnum="" f  s qnum=$o(tmp(qnum)) q:qnum=""  s ln="",tmp=0 f  s ln=$o(tmp(qnum,ln)) q:ln=""  s txt=tmp(qnum,ln) d rems^%mgsqlp i $l(txt) s tmp=tmp+1,tmp(qnum,tmp)=txt
+ s blkno="" f  s blkno=$o(blk(blkno)) q:blkno=""  s ln="",blk=0 f  s ln=$o(blk(blkno,ln)) q:ln=""  s txt=$$rems^%mgsqlp(blk(blkno,ln)) k blk(blkno,ln) i $l(txt) s blk=blk+1,blk(blkno,blk)=txt
+ s qnum="" f  s qnum=$o(tmp(qnum)) q:qnum=""  s ln="",tmp=0 f  s ln=$o(tmp(qnum,ln)) q:ln=""  s txt=$$rems^%mgsqlp(tmp(qnum,ln)) i $l(txt) s tmp=tmp+1,tmp(qnum,tmp)=txt
  s blkno=""
 reds1 s blkno=$o(blk(blkno)) i blkno="" g reds4
  s ln=""
@@ -5497,7 +5576,7 @@ updx(qnummax,sql2,blk,tmp,sql,error) ; now remove update command from body of fo
  ;
 puts(qnummax,sql,error) ; tidy up lines of statement text
  n i,lnd,txt,qnum
- f qnum=0:1 q:'$d(sql(qnum))  f i=1:1 q:'$d(sql(qnum,i))  s txt=sql(qnum,i) d rems^%mgsqlp,remsc^%mgsqlp s sql(qnum,i)=txt ;$$rstring^%mgsqlp(txt)
+ f qnum=0:1 q:'$d(sql(qnum))  f i=1:1 q:'$d(sql(qnum,i))  s txt=$$rems^%mgsqlp(sql(qnum,i)),txt=$$remsc^%mgsqlp(txt),sql(qnum,i)=txt ;$$rstring^%mgsqlp(txt)
  q
  ;
 unix(qnummax,sql2,blk,sql,error) ; extract work units for old compiler
@@ -5617,8 +5696,16 @@ zsydb ; yottadb
  ;
 a d vers^%mgsql("%mgsqls") q
  ;
-isydb() ; see if this is yottadb
- i $zv["GT.M" q 1
+isydb() ; see if this is YottaDB
+ n zv
+ s zv=$$getzv()
+ i zv["YottaDB" q 1
+ q 0
+ ;
+isgtm() ; see if this is GT.M
+ n zv
+ s zv=$$getzv()
+ i zv["GT.M" q 1
  q 0
  ;
 isidb() ; see if this is an InterSystems database
@@ -5638,6 +5725,40 @@ isdsm() ; see if this is DSM
 ism21() ; see if this is M21
  i $zv["M21" q 1
  q 0
+ ;
+getzv() ; Get $ZV
+ ; ISC IRIS:  IRIS for Windows (x86-64) 2019.2 (Build 107U) Wed Jun 5 2019 17:05:10 EDT
+ ; ISC Cache: Cache for Windows (x86-64) 2019.1 (Build 192) Sun Nov 18 2018 23:37:14 EST
+ ; GT.M:      GT.M V6.3-004 Linux x86_64
+ ; YottaDB:   YottaDB r1.22 Linux x86_64
+ s $zt="getzve^%mgsqls" ; new $ztrap set $ztrap="zgoto "_$zlevel_":getzve^%mgsqls"
+ ; +not_ydb
+ q $zv
+ ; -not_ydb
+ ; +ydb
+ ; q $zyrelease
+ ; -ydb
+getzve ; Error
+ q $zv
+ ;
+getzvv() ; Get version from $ZV
+ n zv,i,ii,x,version
+ s zv=$$getzv()
+ i $$isidb() d  q version
+ . f i=1:1 s x=$p(zv," ",i) q:x=""  i x["(Build" s version=$p(zv," ",i-1) q
+ . q
+ s x=$$isydb()
+ i x=1 s version=$p($p(zv," V",2)," ",1) q version
+ i x=2 s version=$p($p(zv," r",2)," ",1) q version
+ s version="" f i=1:1 s x=$e(zv,i) q:x=""  i x?1n d  q
+ . f ii=i:1 s x=$e(zv,ii)  q:x=""!('((x?1n)!(x=".")))  s version=version_x
+ . q
+ q version
+ ;
+getsys() ; Get system type
+ n systype
+ s systype=$s($$isidb()>2:"IRIS",$$isidb()=2:"Cache",$$isidb()=1:"ISM",$$ism21():"M21",$$ismsm():"MSM",$$isdsm():"DSM",$$isydb()>1:"YottaDB",$$isgtm()=1:"GTM",1:"")
+ q systype
  ;
 crc(str,mode) ; cyclic redundancy check
  n x,i
@@ -5861,9 +5982,9 @@ logarray(array,title,context) ; log event
  ;
 a d vers^%mgsql("%mgsqlv") q
  ;
-main(dbid,line,error) ; verify query
+main(dbid,line,sql,error) ; verify query
  k ^mgtmp($j)
- k %link,%delrec,union,adhoc,txp,error
+ k %link,%delrec,union,adhoc,error
  s error=""
  s qnummax=$$main^%mgsqlp(.sql,.line,.error) i $l(error) g exit
  i '$d(sql(0,1)),$d(sql("txp",0)) s unique=1 g exit
@@ -7186,9 +7307,10 @@ links ; substitute select column
 a d vers^%mgsql("%mgsqlw") q
  ;
 main ; start
+ n %zi,%zo,dbid,head,ok,cgi,data,nvp,error
  s $zt="loope^%mgsqlw" ; new $ztrap set $ztrap="zgoto "_$zlevel_":loope^%mgsqlw"
  k ^mgtmp($j)
- d init
+ s dbid=$$init(.%zi)
  s head=buf
 loop ; next command
  s $zt="loope^%mgsqlw" ; new $ztrap set $ztrap="zgoto "_$zlevel_":loope^%mgsqlw"
@@ -7198,11 +7320,11 @@ loop ; next command
  i '$d(nvp("UCI")) s nvp("UCI")="USER"
  i $g(nvp("UCI"))'="" s ok=$$cuci^%mgsqls($g(nvp("UCI")))
  i $g(cgi("SCRIPT_NAME"))[".ico" d notfound g loop1
- i $d(nvp("SQL")) d sql($g(nvp("SQL"))) g loop1
- i $d(nvp("sql")) d sql($g(nvp("sql"))) g loop1
- i $d(nvp("QUERY")) d sql($g(nvp("QUERY"))) g loop1
- i $d(nvp("query")) d sql($g(nvp("query"))) g loop1
- i $g(cgi("CONTENT_TYPE"))["/sql" d sql(data) g loop1
+ i $d(nvp("SQL")) d sql(dbid,.%zi,$g(nvp("SQL"))) g loop1
+ i $d(nvp("sql")) d sql(dbid,.%zi,$g(nvp("sql"))) g loop1
+ i $d(nvp("QUERY")) d sql(dbid,.%zi,$g(nvp("QUERY"))) g loop1
+ i $d(nvp("query")) d sql(dbid,.%zi,$g(nvp("query"))) g loop1
+ i $g(cgi("CONTENT_TYPE"))["/sql" d sql(dbid,.%zi,data) g loop1
  d sqlform
 loop1 ; request satisfied
  c $I
@@ -7213,11 +7335,12 @@ loope ; error
  d logerror^%mgsqls($$error^%mgsqls(),"M Exception")
  h
  ;
-init ; essential constants
+init(%zi) ; essential constants
+ n dbid
  s dbid="mgsql"
  s %zi("df")=$c(1)
  s %zi("base")=10
- q
+ q dbid
  ;
 read(head,cgi,data) ; read request
  n x,i,line,len,clen,pathinfo
@@ -7255,8 +7378,8 @@ nvp(qs,nvp) ; get name/value pairs for url-encoded content
 nvpe ; Error
  q 0
  ;
-sql(sql) ; run query
- n cols
+sql(dbid,%zi,sql) ; run query
+ n %zo,cols,stmt,error,line,info,rou,qid,i,r,cname,tname,dtyp,ag,ok,rc
  s dbid=$$schema^%mgsql("")
  s stmt=0
  s sql=$tr(sql,$c(13,10),"")
@@ -7295,10 +7418,12 @@ sql(sql) ; run query
  . q
  i rou'="" s %zo("routine")=rou,@("ok=$$exec^"_rou_"(.%zi,.%zo)")
 sql1 ; output result
- d json
+ d json(.%zi,.%zo,.cols,.error)
  q
  ;
-json ; output results as JSON document
+json(%zi,%zo,cols,error) ; output results as JSON document
+ n %z,head,out,ecom,rn,cn,name,value,com
+ d gvars^%mgsqlx(.%z)
  s head="HTTP/1.1 200 OK"_$c(13,10)
  ;s head=head_"Content-Type: text/plain"_$c(13,10)
  ;s head=head_"Content-Type: text/x-json"_$c(13,10)
@@ -7327,6 +7452,7 @@ json1 ; response complete
  q
  ;
 sqlform ; output a simple form
+ n head,out
  s head="HTTP/1.1 200 OK"_$c(13,10)
  s head=head_"Content-Type: text/html"_$c(13,10)
  s head=head_"Connection: close"_$c(13,10)
@@ -7348,6 +7474,7 @@ sqlform ; output a simple form
  q
  ;
 notfound ; HTTP not found
+ n head
  s head="HTTP/1.1 404 Not Found"_$c(13,10)
  s head=head_"Connection: close"_$c(13,10)
  s head=head_$c(13,10)
@@ -7355,6 +7482,7 @@ notfound ; HTTP not found
  q
  ;
 servererror(error) ; HTTP internal server error
+ n head
  s head="HTTP/1.1 500 Internal Server Error"_$c(13,10)
  s head=head_"Connection: close"_$c(13,10)
  s head=head_$c(13,10)
@@ -7404,7 +7532,9 @@ main(dbid,line,info,error) ; compile query
  s $zt="maine^%mgsqlx" ; new $ztrap set $ztrap="zgoto "_$zlevel_":maine^%mgsqlx"
  s rou="",error=""
  d gvars(.%z)
- s ddl=$$verify(dbid,.line,.error) i ddl=1 g exit
+ s ddl=$$verify(dbid,.line,.sql,.error) i ddl=1 g exit
+ m info("tp")=sql("txp")
+ i $d(info("tp")),'$d(sql(0,1)) g exit
  s qid=$$hash(dbid,.rou,.line)
  d gcvars(dbid,qid,.%zq)
  s info("qid")=qid
@@ -7503,10 +7633,10 @@ prfx() ; assign new prefix
  s qid=$$n36(n10)
  q qid
  ;
-verify(dbid,line,error) ; verify query and execute any DDL commands
+verify(dbid,line,sql,error) ; verify query and execute any DDL commands
  n ddl
  s ddl=0
- d main^%mgsqlv(dbid,.line,.error)
+ d main^%mgsqlv(dbid,.line,.sql,.error)
  i $e(error,1,5)="\ddl\" s ddl=1,error=$e(error,6,999)
  i $e(error,1,4)="\sp\" s ddl=2,error=$e(error,5,999)
  q ddl
@@ -7545,16 +7675,16 @@ gvars(vars) ; initialize global variables
  s vars("dl")="{l}"
  s vars("ds")="{$}"
  s vars("dc")="{z}"
- s vars("vok")=%z("dsv")_"__status"_%z("dsv")
- s vars("vdata")=%z("dsv")_"__data"_%z("dsv")
- s vars("vdatax")=%z("dsv")_"__datax"_%z("dsv")
- s vars("vrc")=%z("dsv")_"__rowcount"_%z("dsv")
- s vars("vn")=%z("dsv")_"__count"_%z("dsv")
- s vars("vnx")=%z("dsv")_"__count_d"_%z("dsv")
- s vars("vdef")=%z("dsv")_"__defined"_%z("dsv")
- s vars("vck")=%z("dsv")_"__compound_key"_%z("dsv")
- s vars("vckcrc")=%z("dsv")_"__compound_key_crc"_%z("dsv")
- s vars("vckcrcdef")=%z("dsv")_"__compound_key_crc_defined"_%z("dsv")
+ s vars("vok")=vars("dsv")_"__status"_vars("dsv")
+ s vars("vdata")=vars("dsv")_"__data"_vars("dsv")
+ s vars("vdatax")=vars("dsv")_"__datax"_vars("dsv")
+ s vars("vrc")=vars("dsv")_"__rowcount"_vars("dsv")
+ s vars("vn")=vars("dsv")_"__count"_vars("dsv")
+ s vars("vnx")=vars("dsv")_"__count_d"_vars("dsv")
+ s vars("vdef")=vars("dsv")_"__defined"_vars("dsv")
+ s vars("vck")=vars("dsv")_"__compound_key"_vars("dsv")
+ s vars("vckcrc")=vars("dsv")_"__compound_key_crc"_vars("dsv")
+ s vars("vckcrcdef")=vars("dsv")_"__compound_key_crc_defined"_vars("dsv")
  s vars("ctg")="^mgtemp"
  s vars("cts")="$j"
  q
@@ -7619,6 +7749,19 @@ sc(%zi,%zo) ; server: close
  i $g(%zi(0,"stmt"))'="" k ^mgsqls($j,%zi(0,"stmt"),1),^mgsqls($j,%zi(0,"stmt"),2),^mgsqls($j,%zi(0,"stmt"),3)
  q 0
  ;
+tpcb(dbid,sql,%zi,%zo,info) ; transaction processing callback
+ n ok,cb
+ s ok=0
+ s cb=$g(%zi(0,"callback")) k %zi(0,"callback")
+ i $d(info("tp",0,"start")),cb="",$$isydb^%mgsqls() s %zo("error")="A callback must be defined for transactions in YottaDB" q -1
+ i $d(info("tp",0,"start")) k info("tp",0,"start") tstart
+ i $g(%zo("routine"))'="" s @("ok=$$exec^"_%zo("routine")_"(.%zi,.%zo)")
+ i $d(info("tp",0,"commit")) k info("tp",0,"commit") i $tlevel>0 tcommit
+ i $d(info("tp",0,"rollback")) k info("tp",0,"rollback") i $tlevel>0 trollback
+ i cb'="" s @("ok=$$"_cb_"(.%zi,.%zo)")
+ q ok
+ ;
+
 
 
 
