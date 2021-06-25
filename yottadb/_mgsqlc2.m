@@ -249,5 +249,3 @@ delrec ; delete selected record
  s line=%tagz_" ;" d addline^%mgsqlc(grp,.line)
  q
  ;
- 
- 

@@ -188,4 +188,3 @@ natv1(dbid,qnum,tname1,tname2,cname,error) ; column in tables test
  s ^mgtmp($j,"from","z",qnum,"join",cname,alias1)="",^mgtmp($j,"from","z",qnum,"join",cname,alias2)=""
  q
  ;
- 

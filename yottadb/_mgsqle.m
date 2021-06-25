@@ -141,5 +141,3 @@ funlin(funlin,error) ; extract function & parameters wrd from funlin
  i 'obr!(obr'=cbr) s error="error in function "_wrd,error(5)="HY000" q wrd
  q wrd
  ;
- 
- 

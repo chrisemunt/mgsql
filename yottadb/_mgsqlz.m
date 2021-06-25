@@ -63,4 +63,3 @@ tpcb(dbid,sql,%zi,%zo,info) ; transaction processing callback
  i cb'="" s @("ok=$$"_cb_"(.%zi,.%zo)")
  q ok
  ;
-

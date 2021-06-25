@@ -390,4 +390,3 @@ sqltypeid(type) ; get sql/odbc type ID
  i type="LONGVARCHAR" q -1
  q 12
  ;
- 

@@ -141,4 +141,3 @@ mtype(dbid,qnum,tnum,item,other) ; determine sort of data
  s mtype="var"
  q mtype
  ;
- 

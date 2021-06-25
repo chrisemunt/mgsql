@@ -44,7 +44,8 @@ v() ; version and date
  ;s v="1.2",r=16,d="13 January 2021"
  ;s v="1.2",r=17,d="14 January 2021"
  ;s v="1.2",r=18,d="22 January 2021"
- s v="1.3",r=19,d="22 February 2021"
+ ;s v="1.3",r=19,d="22 February 2021"
+ s v="1.3",r=20,d="25 June 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -65,6 +66,7 @@ exec(dbid,sql,%zi,%zo)
  ;s ok=$$upgrade(0)
  s error="",ok=0
  i $g(%zi("stmt"))'="" s %zi(0,"stmt")=$g(%zi("stmt")) ; for backwards compatibility
+ i $g(%zi(0,"recompile"))'="" s info(0,"recompile")=$g(%zi(0,"recompile"))
  s dbid=$$schema(dbid)
  s line(1)=sql
  s rou=$$main^%mgsqlx(dbid,.line,.info,.error)
@@ -397,5 +399,3 @@ proc ; create stored procedures
  s ok=$$exec^%mgsql("","CREATE PROCEDURE SelectAllPatients AS SELECT * FROM patient GO;",.%zi,.%zo)
  q
  ;
- 
-

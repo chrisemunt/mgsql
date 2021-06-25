@@ -120,6 +120,3 @@ klind(grp,qnum) ; kill off index to be created
  s ino=idx s %ref=$$ref^%mgsqld(dbid,tname,ino) s line=" k "_%ref_line d addline^%mgsqlc(grp,.line)
  q
  ;
- 
- 
- 

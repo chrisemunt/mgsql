@@ -167,4 +167,3 @@ comp1 ; disallow all indices except chosen one
  s ^mgtmp($j,"from",qnum,ordn)=tname_"~"_alias,(^mgtmp($j,"from","x",qnum,tname),^mgtmp($j,"from","x",qnum,alias))=ordn,^mgtmp($j,"from","i",0,alias)=ino
  q
  ;
- 

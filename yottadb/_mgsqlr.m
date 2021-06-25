@@ -69,4 +69,3 @@ zsydb ; yottadb
  zlink dev
  q 1
  ;
-  

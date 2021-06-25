@@ -140,4 +140,3 @@ init(grp,qnum) ; initialise select statement for unique queries
  i $l(line) s line=" s ("_line_")=""""" d addline^%mgsqlc(grp,.line)
  q
  ;
- 

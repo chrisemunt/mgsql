@@ -527,4 +527,3 @@ test ; test harness
  m z=^mgsqls($j,%zi(0,"stmt"))
  q
  ;
-

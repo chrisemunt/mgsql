@@ -1,4 +1,3 @@
- 
 %mqsqlv ;(CM) sql - validate query ; 14 aug 2002  6:23 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -162,5 +161,3 @@ trx(wrd) ; data translation
  s ^mgtmp($j,"trx",sqv,1)=arg
  q %z("dsv")_sqv_%z("dsv")
  ;
- 
- 

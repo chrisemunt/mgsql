@@ -258,4 +258,3 @@ cno() ; next column name number
  l -^mgsqld(0)
  q x
  ;
- 

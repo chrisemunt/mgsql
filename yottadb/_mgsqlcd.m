@@ -63,4 +63,3 @@ hilev1 ; kill off single index
  s line=line_" "_"k"_" "_xfid(ino)_key d addline^%mgsqlc(grp,.line)
  q
  ;
- 

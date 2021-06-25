@@ -215,4 +215,3 @@ test ; test harness
  d sql(sql)
  q
  ;
- 

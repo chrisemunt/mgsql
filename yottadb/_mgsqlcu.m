@@ -70,4 +70,3 @@ setto1 ; add to line
  d addline^%mgsqlc(grp,.line)
  q
  ;
- 

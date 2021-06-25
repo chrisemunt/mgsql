@@ -252,4 +252,3 @@ sqlfun(sqlfun) ; translate SQL function name to M equivalent
  i sqlfun="ltrim" s mfun="$$ltrim^%mgsqls"
  q mfun
  ;
- 

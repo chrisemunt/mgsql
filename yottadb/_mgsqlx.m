@@ -25,7 +25,6 @@
 a d vers^%mgsql("%mgsqlx") q
  ;
 main(dbid,line,info,error) ; compile query
- ;n ddl,rou,qid,sql
  n (%z,dbid,line,info,error)
  new $ztrap set $ztrap="zgoto "_$zlevel_":maine^%mgsqlx"
  s rou="",error=""
@@ -37,8 +36,8 @@ main(dbid,line,info,error) ; compile query
  d gcvars(dbid,qid,.%zq)
  s info("qid")=qid
  i ddl=2 s info("sp")=rou g main1
- ; Force recompilation
- k ^mgsqlx(1,dbid,qid,"m")
+ ; Force recompilation if instructed to
+ i $g(info(0,"recompile"))=1 k ^mgsqlx(1,dbid,qid,"m")
  ; Don't recompile if already compiled
  i $d(^mgsqlx(1,dbid,qid,"m")) g exit
  d comp(dbid,qid,rou,.sql,.line,.error)
@@ -46,13 +45,8 @@ main1 d save
  g exit
 maine ; error
  s error="System Exception: "_$$error^%mgsqls(),error(5)="HY000"
-exit ;k ^mgtmp($j)
+exit ; exit
  q rou
- ;
-et2 ; test
- w !,"in et2^%mgsqlx"
- s x=ttt
- q
  ;
 n36(n10) ; generate 3 character base-36 node number 000 -> zzz
  n alpha,char,n36,rem

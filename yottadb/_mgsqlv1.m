@@ -121,4 +121,3 @@ corelate(sql,qnum,item,error) ; determine if sql variable comes from different s
  s ^mgtmp($j,"corel",i,qnum,alias,x)=""
  q
  ;
- 

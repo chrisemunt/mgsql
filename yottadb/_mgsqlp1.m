@@ -272,4 +272,3 @@ unix2 s ln=ln+1 i '$d(sql(qnum,ln)) g unix1
  i $l(error) q
  g unix2
  ;
- 

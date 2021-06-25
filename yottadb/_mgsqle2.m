@@ -169,4 +169,3 @@ mpm1 s pchr=chr,cn=cn+1 i cn>$l(wrd) g mpmx
 mpmx i chr'?1a.u,chr'["""" s error="invalid pattern match "_wrd,error(5)="HY000"
  q ""
  ;
- 

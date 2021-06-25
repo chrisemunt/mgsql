@@ -280,5 +280,3 @@ sort ; sort stand-alone sql code into contiguous routine
  s @(%zq("ccode")_")")=l-1
  q
  ;
- 
- 

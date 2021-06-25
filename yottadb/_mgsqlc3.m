@@ -164,5 +164,3 @@ top(grp,qnum,sort) ; sql top
  i 'sort s line=" i "_%z("vrc")_"'<"_top_" g "_%zq("tagx") d addline^%mgsqlc(grp,.line)
  q
  ;
- 
- 
