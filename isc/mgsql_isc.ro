@@ -1,6 +1,6 @@
 Cache for Windows^INT^mgsql^~Format=Cache.S~^RAW
-%RO on 23 Feb 2021 01:00 AM
-%mgsql^INT^1^65798,42178.0^0
+%RO on 25 Jun 2021 01:00 AM
+%mgsql^INT^1^65920,54846.0^0
 %mgsql ;(CM) MGSQL Front end
  ;
  ;  ----------------------------------------------------------------------------
@@ -47,7 +47,8 @@ v() ; version and date
  ;s v="1.2",r=16,d="13 January 2021"
  ;s v="1.2",r=17,d="14 January 2021"
  ;s v="1.2",r=18,d="22 January 2021"
- s v="1.3",r=19,d="22 February 2021"
+ ;s v="1.3",r=19,d="22 February 2021"
+ s v="1.3",r=20,d="25 June 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -68,6 +69,7 @@ exec(dbid,sql,%zi,%zo)
  ;s ok=$$upgrade(0)
  s error="",ok=0
  i $g(%zi("stmt"))'="" s %zi(0,"stmt")=$g(%zi("stmt")) ; for backwards compatibility
+ i $g(%zi(0,"recompile"))'="" s info(0,"recompile")=$g(%zi(0,"recompile"))
  s dbid=$$schema(dbid)
  s line(1)=sql
  s rou=$$main^%mgsqlx(dbid,.line,.info,.error)
@@ -408,10 +410,8 @@ proc ; create stored procedures
  s ok=$$exec^%mgsql("","CREATE PROCEDURE SelectAllPatients AS SELECT * FROM patient GO;",.%zi,.%zo)
  q
  ;
- 
 
-
-%mgsqlc^INT^1^65798,42178.0^0
+%mgsqlc^INT^1^65920,54846.0^0
 %mgsqlc ;(CM) sql compiler - main driver ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -694,10 +694,8 @@ sort ; sort stand-alone sql code into contiguous routine
  s @(%zq("ccode")_")")=l-1
  q
  ;
- 
- 
 
-%mgsqlc1^INT^1^65798,42178.0^0
+%mgsqlc1^INT^1^65920,54846.0^0
 %mgsqlc1 ; was 2 (CM) sql compiler - parse files ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -938,7 +936,7 @@ temps ; determine subscripts for order/group sort file
  q
  ;
 
-%mgsqlc2^INT^1^65798,42178.0^0
+%mgsqlc2^INT^1^65920,54846.0^0
 %mgsqlc2 ; was 3 (CM) sql compiler - sub driver ; 27 apr 2003  12:44 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1190,10 +1188,8 @@ delrec ; delete selected record
  s line=%tagz_" ;" d addline^%mgsqlc(grp,.line)
  q
  ;
- 
- 
 
-%mgsqlc3^INT^1^65798,42178.0^0
+%mgsqlc3^INT^1^65920,54846.0^0
 %mgsqlc3 ;(CM) sql compiler ; 27 apr 2003  12:14 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1360,10 +1356,8 @@ top(grp,qnum,sort) ; sql top
  i 'sort s line=" i "_%z("vrc")_"'<"_top_" g "_%zq("tagx") d addline^%mgsqlc(grp,.line)
  q
  ;
- 
- 
 
-%mgsqlc4^INT^1^65798,42178.0^0
+%mgsqlc4^INT^1^65920,54846.0^0
 %mgsqlc4 ;(CM) sql compiler - restrictions ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1507,9 +1501,8 @@ mtype(dbid,qnum,tnum,item,other) ; determine sort of data
  s mtype="var"
  q mtype
  ;
- 
 
-%mgsqlc5^INT^1^65798,42178.0^0
+%mgsqlc5^INT^1^65920,54846.0^0
 %mgsqlc5 ;(CM) sql compiler - get data ; 19 jan 2003  4:34 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1632,11 +1625,8 @@ klind(grp,qnum) ; kill off index to be created
  s ino=idx s %ref=$$ref^%mgsqld(dbid,tname,ino) s line=" k "_%ref_line d addline^%mgsqlc(grp,.line)
  q
  ;
- 
- 
- 
 
-%mgsqlc6^INT^1^65798,42178.0^0
+%mgsqlc6^INT^1^65920,54846.0^0
 %mgsqlc6 ;(CM) sql compiler - aggregates ; 19 jan 2003  4:34 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1779,9 +1769,8 @@ init(grp,qnum) ; initialise select statement for unique queries
  i $l(line) s line=" s ("_line_")=""""" d addline^%mgsqlc(grp,.line)
  q
  ;
- 
 
-%mgsqlcd^INT^1^65798,42178.0^0
+%mgsqlcd^INT^1^65920,54846.0^0
 %mgsqlcd ;(CM) sql compiler - delete ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -1847,9 +1836,8 @@ hilev1 ; kill off single index
  s line=line_" "_"k"_" "_xfid(ino)_key d addline^%mgsqlc(grp,.line)
  q
  ;
- 
 
-%mgsqlci^INT^1^65798,42178.0^0
+%mgsqlci^INT^1^65920,54846.0^0
 %mgsqlci ;(CM) sql compiler - insert ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2111,9 +2099,8 @@ dbg ; set up referential actions audit trail
  f i=1:1:args s line=line_",%k("_i_")="_args(i)
  q
  ;
- 
 
-%mgsqlct^INT^1^65798,42178.0^0
+%mgsqlct^INT^1^65920,54846.0^0
 %mgsqlct ;(CM) sql compiler - get table details ; 19 jan 2003  7:12 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2216,7 +2203,7 @@ dtyp ; get attribute details
  q
  ;
 
-%mgsqlcu^INT^1^65798,42178.0^0
+%mgsqlcu^INT^1^65920,54846.0^0
 %mgsqlcu ;(CM) sql compiler update ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2289,9 +2276,8 @@ setto1 ; add to line
  d addline^%mgsqlc(grp,.line)
  q
  ;
- 
 
-%mgsqld^INT^1^65798,42178.0^0
+%mgsqld^INT^1^65920,54846.0^0
 %mgsqld ;(CM) data model access points ; 14 aug 2002  4:08 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2552,9 +2538,8 @@ cno() ; next column name number
  l -^mgsqld(0)
  q x
  ;
- 
 
-%mgsqle^INT^1^65798,42178.0^0
+%mgsqle^INT^1^65920,54846.0^0
 %mgsqle ;(CM) SQL : Embedded expressions ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2698,10 +2683,8 @@ funlin(funlin,error) ; extract function & parameters wrd from funlin
  i 'obr!(obr'=cbr) s error="error in function "_wrd,error(5)="HY000" q wrd
  q wrd
  ;
- 
- 
 
-%mgsqle1^INT^1^65798,42178.0^0
+%mgsqle1^INT^1^65920,54846.0^0
 %mgsqle1 ;(CM) SQL : Bracket expression in word array ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -2965,7 +2948,7 @@ tmpxk(tmp,sn,wrd,wn) ; remove node from snx array
  q
  ;
 
-%mgsqle2^INT^1^65798,42178.0^0
+%mgsqle2^INT^1^65920,54846.0^0
 %mgsqle2 ;(CM) SQL : Compile code for an expression ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -3137,9 +3120,8 @@ mpm1 s pchr=chr,cn=cn+1 i cn>$l(wrd) g mpmx
 mpmx i chr'?1a.u,chr'["""" s error="invalid pattern match "_wrd,error(5)="HY000"
  q ""
  ;
- 
 
-%mgsqln^INT^1^65798,42178.0^0
+%mgsqln^INT^1^65920,54846.0^0
 %mgsqln ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -3650,7 +3632,7 @@ m ; test
  q
  ;
 
-%mgsqln1^INT^1^65798,42178.0^0
+%mgsqln1^INT^1^65920,54846.0^0
 %mgsqln1 ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4181,8 +4163,7 @@ test ; test harness
  q
  ;
 
-
-%mgsqln2^INT^1^65798,42178.0^0
+%mgsqln2^INT^1^65920,54846.0^0
 %mgsqln2 ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4575,9 +4556,8 @@ sqltypeid(type) ; get sql/odbc type ID
  i type="LONGVARCHAR" q -1
  q 12
  ;
- 
 
-%mgsqlo^INT^1^65798,42178.0^0
+%mgsqlo^INT^1^65920,54846.0^0
 %mgsqlo ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4662,10 +4642,8 @@ rec2 ; record work involved at each level
  s ndst=$s(nds2=1:ndst+1,nds2>1:ndst*nds2,1:ndst),cum=$s(nds2=1:cum+1,nds2>1:cum*nds2,1:cum),key=key_com_x_"#"_cum_"#"_ndst_"#"_nds,com=","
  q
  ;
- 
- 
 
-%mgsqlo1^INT^1^65798,42178.0^0
+%mgsqlo1^INT^1^65920,54846.0^0
 %mgsqlo1 ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -4909,9 +4887,8 @@ vrfy4 i 'notnl s duse(alias,ino)="" g vrfy2
 vrfyx ;
  q
  ;
- 
 
-%mgsqlo2^INT^1^65798,42178.0^0
+%mgsqlo2^INT^1^65920,54846.0^0
 %mgsqlo2 ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5081,9 +5058,8 @@ comp1 ; disallow all indices except chosen one
  s ^mgtmp($j,"from",qnum,ordn)=tname_"~"_alias,(^mgtmp($j,"from","x",qnum,tname),^mgtmp($j,"from","x",qnum,alias))=ordn,^mgtmp($j,"from","i",0,alias)=ino
  q
  ;
- 
 
-%mgsqlp^INT^1^65798,42178.0^0
+%mgsqlp^INT^1^65920,54846.0^0
 %mgsqlp ;(CM) sql language processor ; 14 aug 2002  6:16 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5316,9 +5292,8 @@ test2 ;
  k %z
  q
  ;
- 
 
-%mgsqlp1^INT^1^65798,42178.0^0
+%mgsqlp1^INT^1^65920,54846.0^0
 %mgsqlp1 ;(CM) sql language processor ; 14 aug 2002  6:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5593,9 +5568,8 @@ unix2 s ln=ln+1 i '$d(sql(qnum,ln)) g unix1
  i $l(error) q
  g unix2
  ;
- 
 
-%mgsqlr^INT^1^65798,42178.0^0
+%mgsqlr^INT^1^65920,54846.0^0
 %mqsqlr ;(CM) MGSQL routine management ; 11 feb 2002  2:40 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5667,9 +5641,8 @@ zsydb ; yottadb
  zlink dev
  q 1
  ;
-  
 
-%mgsqls^INT^1^65798,42178.0^0
+%mgsqls^INT^1^65920,54846.0^0
 %mgsqls ;(CM) general utilities ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -5954,8 +5927,7 @@ logarray(array,title,context) ; log event
  q
  ;
 
-%mgsqlv^INT^1^65798,42178.0^0
- 
+%mgsqlv^INT^1^65920,54846.0^0
 %mqsqlv ;(CM) sql - validate query ; 14 aug 2002  6:23 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6119,10 +6091,8 @@ trx(wrd) ; data translation
  s ^mgtmp($j,"trx",sqv,1)=arg
  q %z("dsv")_sqv_%z("dsv")
  ;
- 
- 
 
-%mgsqlv1^INT^1^65798,42178.0^0
+%mgsqlv1^INT^1^65920,54846.0^0
 %mgsqlv1 ;(CM) sql - validate query part 2 ; 14 aug 2002  6:24 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6246,9 +6216,8 @@ corelate(sql,qnum,item,error) ; determine if sql variable comes from different s
  s ^mgtmp($j,"corel",i,qnum,alias,x)=""
  q
  ;
- 
 
-%mgsqlv2^INT^1^65798,42178.0^0
+%mgsqlv2^INT^1^65920,54846.0^0
 %mgsqlv2 ;(CM) sql - validate query part 3 ; 14 aug 2002  6:24 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6503,9 +6472,8 @@ sqlfun(sqlfun) ; translate SQL function name to M equivalent
  i sqlfun="ltrim" s mfun="$$ltrim^%mgsqls"
  q mfun
  ;
- 
 
-%mgsqlv3^INT^1^65798,42178.0^0
+%mgsqlv3^INT^1^65920,54846.0^0
 %mgsqlv3 ;(CM) sql - validate query part 4 ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6735,7 +6703,7 @@ asn21 s eq1(wrd)=set,eq1(wrd,"c")=setc,eq1(wrd,"f")=alias,eq1=eq1+1
  q
  ;
 
-%mgsqlv4^INT^1^65798,42179.0^0
+%mgsqlv4^INT^1^65920,54846.0^0
 %mgsqlv4 ;(CM) sql - validate query part 5 ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -6964,7 +6932,7 @@ inssa ; select all items from table
  q
  ;
 
-%mgsqlv5^INT^1^65798,42179.0^0
+%mgsqlv5^INT^1^65920,54846.0^0
 %mgsqlv5 ;(CM) sql - validate query - part 6 ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7155,9 +7123,8 @@ natv1(dbid,qnum,tname1,tname2,cname,error) ; column in tables test
  s ^mgtmp($j,"from","z",qnum,"join",cname,alias1)="",^mgtmp($j,"from","z",qnum,"join",cname,alias2)=""
  q
  ;
- 
 
-%mgsqlv6^INT^1^65798,42179.0^0
+%mgsqlv6^INT^1^65920,54846.0^0
 %mgsqlv6 ;(CM) sql - set expansion ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7279,7 +7246,7 @@ links ; substitute select column
  q
  ;
 
-%mgsqlw^INT^1^65798,42179.0^0
+%mgsqlw^INT^1^65920,54846.0^0
 %mgsqlw ;(CM) MGSQL HTTP ; 17 dec 2003  3:15 pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7497,9 +7464,8 @@ test ; test harness
  d sql(sql)
  q
  ;
- 
 
-%mgsqlx^INT^1^65798,42179.0^0
+%mgsqlx^INT^1^65920,54846.0^0
 %mgsqlx ;(CM) sql - MGSQL as a server ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7527,7 +7493,6 @@ test ; test harness
 a d vers^%mgsql("%mgsqlx") q
  ;
 main(dbid,line,info,error) ; compile query
- ;n ddl,rou,qid,sql
  n (%z,dbid,line,info,error)
  s $zt="maine^%mgsqlx" ; new $ztrap set $ztrap="zgoto "_$zlevel_":maine^%mgsqlx"
  s rou="",error=""
@@ -7539,8 +7504,8 @@ main(dbid,line,info,error) ; compile query
  d gcvars(dbid,qid,.%zq)
  s info("qid")=qid
  i ddl=2 s info("sp")=rou g main1
- ; Force recompilation
- k ^mgsqlx(1,dbid,qid,"m")
+ ; Force recompilation if instructed to
+ i $g(info(0,"recompile"))=1 k ^mgsqlx(1,dbid,qid,"m")
  ; Don't recompile if already compiled
  i $d(^mgsqlx(1,dbid,qid,"m")) g exit
  d comp(dbid,qid,rou,.sql,.line,.error)
@@ -7548,13 +7513,8 @@ main1 d save
  g exit
 maine ; error
  s error="System Exception: "_$$error^%mgsqls(),error(5)="HY000"
-exit ;k ^mgtmp($j)
+exit ; exit
  q rou
- ;
-et2 ; test
- w !,"in et2^%mgsqlx"
- s x=ttt
- q
  ;
 n36(n10) ; generate 3 character base-36 node number 000 -> zzz
  n alpha,char,n36,rem
@@ -7695,7 +7655,7 @@ gcvars(dbid,qid,vars) ; initialize global variables
  q
  ;
 
-%mgsqlz^INT^1^65798,42179.0^0
+%mgsqlz^INT^1^65920,54846.0^0
 %mgsqlz ;(CM) MGSQL : client-server computing ; 12 feb 2002  02:10pm
  ;
  ;  ----------------------------------------------------------------------------
@@ -7761,7 +7721,6 @@ tpcb(dbid,sql,%zi,%zo,info) ; transaction processing callback
  i cb'="" s @("ok=$$"_cb_"(.%zi,.%zo)")
  q ok
  ;
-
 
 
 
