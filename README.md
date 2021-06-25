@@ -3,9 +3,9 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-22 February 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+25 June 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.3; Revision 19
+* Current Release: Version: 1.3; Revision 20
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
 Contents
@@ -68,7 +68,7 @@ Link all the **mgsql** routines and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.3; Revision 19 (22 February 2021) %mgsql
+       Version: 1.3; Revision 20 (25 June 2021) %mgsql
 
 Note that the version of **mgsql** is successfully displayed.
 
@@ -83,7 +83,7 @@ Change to your development Namespace and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.3; Revision 19 (22 February 2021) %mgsql
+       Version: 1.3; Revision 20 (25 June 2021) %mgsql
 
 ### Other M systems
 
@@ -92,7 +92,7 @@ All routines are held in **/m/mgsql.ro**, use an appropriate utility to install 
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.3; Revision 19 (22 February 2021) %mgsql
+       Version: 1.3; Revision 20 (25 June 2021) %mgsql
 
 
 ## <a name="ExecuteM"></a> Embedding SQL statements in M code
@@ -487,3 +487,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 * Introduce a native concurrent TCP server for YottaDB.
 	* The Superserver can be started from the M command prompt using **d start^%mgsql(<tcp port>)**.
 	* Invocation of Superserver child processes from the **xinetd** daemon is still supported. 
+
+### v1.3.20 (25 June 2021)
+
+* Correct a fault that led to queries being recompiled on every call instead of reusing the code previously generated.
+	* To force the recompilation of a particular query, set the **recompile** property - for example:
+	* set %zi(0,"recompile")=1,status=$$exec^%mgsql("",[query],.%zi,.%zo)
+
