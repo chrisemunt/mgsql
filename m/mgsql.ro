@@ -1,5 +1,5 @@
 Cache for Windows^INT^mgsql
-%RO on 25 Jun 2021 01:00 AM
+%RO on 30 Sep 2021 01:00 AM
 %mgsql
 %mgsql ;(CM) MGSQL Front end
  ;
@@ -48,7 +48,8 @@ v() ; version and date
  ;s v="1.2",r=17,d="14 January 2021"
  ;s v="1.2",r=18,d="22 January 2021"
  ;s v="1.3",r=19,d="22 February 2021"
- s v="1.3",r=20,d="25 June 2021"
+ ;s v="1.3",r=20,d="25 June 2021"
+ s v="1.3",r=21,d="30 September 2021"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -66,7 +67,7 @@ upgrade(mode) ; upgrade this installation
 exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
  s $zt="exece^%mgsql" ; new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
- ;s ok=$$upgrade(0)
+ ;;s ok=$$upgrade(0)
  s error="",ok=0
  i $g(%zi("stmt"))'="" s %zi(0,"stmt")=$g(%zi("stmt")) ; for backwards compatibility
  i $g(%zi(0,"recompile"))'="" s info(0,"recompile")=$g(%zi(0,"recompile"))
@@ -2568,22 +2569,24 @@ a d vers^%mgsql("%mgsqle") q
  ;
 ex(outv,ex,word,code,sqlfn,error) ; 'ex' expression
  n i,en,fn,fun,ops
+ i $g(ex)'="",'$d(ex(1)) s ex(1)=ex
  s en=0,fn=0,error=""
  s ops=$$ops(.ops)
- d word^%mgsqle1(en,.ex,.word,.sqlex,.ops,.error) i $l(error) g exe
+ d word^%mgsqle1(en,.ex,.word,.ops,.error) i $l(error) g exe
  d vrfy^%mgsqle1(en,.word,.ops,.error) i $l(error) g exe
  d brac^%mgsqle1(en,.word,.ops,.error) i $l(error) g exe
  f i=1:1 q:'$d(word(en,i))  s fun=word(en,i) i fun[%z("df") s fun=$p(fun,%z("df"),2),fn=$$fun(fun,.sqlfn,.ops,.error) s word(en,i)=%z("df")_fn_%z("df") i $l(error) q
  i $l(error) g exe
- d comp^%mgsqle2(en,outv,.word,.sqlfn,.sqlex,.code,.error)
+ d comp^%mgsqle2(en,outv,.word,.sqlfn,.code,.error)
 exe ; exit
  q
  ;
 where(ex,word,error) ; validate sql 'where' predicate
  n en,ops
+ i $g(ex)'="",'$d(ex(1)) s ex(1)=ex
  s en=0,error=""
  s ops=$$ops(.ops)
- d word^%mgsqle1(en,.ex,.word,.sqlex,.ops,.error) i $l(error) g wheree
+ d word^%mgsqle1(en,.ex,.word,.ops,.error) i $l(error) g wheree
  d vrfy^%mgsqle1(en,.word,.ops,.error) i $l(error) g wheree
  d brac^%mgsqle1(en,.word,.ops,.error) i $l(error) g wheree
 wheree ; exit
@@ -2669,7 +2672,7 @@ pars2(par,parn,sqlfn,fn,ops,error) ; validate/bracket expression for parameter
  i par="" q  ; niladic
  s en="f"
  i par?1u1":"1a.e s word(en,1)=par,entpar(par)="" g pars3
- s ex(1)=par d word^%mgsqle1(en,.ex,.word,.sqlex,.ops,.error) i $l(error) q
+ s ex(1)=par d word^%mgsqle1(en,.ex,.word,.ops,.error) i $l(error) q
  d vrfy^%mgsqle1(en,.word,.ops,.error) i $l(error) q
  d brac^%mgsqle1(en,.word,.ops,.error) i $l(error) q
 pars3 f i=1:1 q:'$d(word(en,i))  s sqlfn(fn,"p",parn,i)=word(en,i)
@@ -2711,10 +2714,11 @@ funlin(funlin,error) ; extract function & parameters wrd from funlin
  ;
 a d vers^%mgsql("%mgsqle1") q
  ;
-sqlex(ctx,sqlex,var) ; sql variables in expression
- i $d(sqlex(ctx,"x",var)) q
- s sqlex=$i(sqlex(ctx,"e"))
- s sqlex(ctx,"e",sqlex)=var,sqlex(ctx,"x",var)=sqlex
+sqlvar(ctx,word,var) ; sql variables in expression
+ n no
+ i $d(word("sqv",ctx,"x",var)) q
+ s no=$i(word("sqv",ctx,"e"))
+ s word("sqv",ctx,"e",no)=var,word("sqv",ctx,"x",var)=no
  q
  ;
 exbr(tmp,ops,error) ; extract individual bracketed sub-statements and set in temporary array
@@ -2794,14 +2798,14 @@ brac(en,word,ops,error) ; bracket expression in word array
 brace ; exit
  q
  ;
-word(en,ex,word,sqlex,ops,error) ; generate word array from expression lines en(1->n)
+word(en,ex,word,ops,error) ; generate word array from expression lines en(1->n)
  n lin,ln
  s lin="" f ln=1:1 q:'$d(ex(ln))  s lin=lin_ex(ln)
- d word1(lin,.word,.fun,.sqlex,.ops,.error)
- d type(en,.word,.sqlex)
+ d word1(lin,.word,.fun,.ops,.error)
+ d type(en,.word)
  q
  ;
-word1(lin,word,fun,sqlex,ops,error) ; decompose line lin
+word1(lin,word,fun,ops,error) ; decompose line lin
  n pn,wn,i,wrd,wrd1,wrdlc,nwrd,obr,cbr,like,mpm,in,between,extvar,ok,in,like,mpm,between,wk,c,ca,cz,sa,sz
  f  q:$e(lin)'=" "  s lin=$e(lin,2,999)
  s wk=lin,lin="" f i=1:1:$l(wk) d
@@ -2834,10 +2838,10 @@ word2 s pn=pn+1 i pn>$l(lin," ") q
  i wrdlc?1"{d".e1"}" s wrd="$$edate^%mgsqls("_$e(wrd,3,$l(wrd)-1)_","""")"
  i wrd?1"$"1a.e1"("1e.e s wrd=$$func(lin,.pn,wrd,.error) i $l(error) q
  i wrd?1"$$"1a.e1"("1e.e s wrd=$$func(lin,.pn,wrd,.error) i $l(error) q
- i wrd?1a.a1"("1e.e1")".e s wrd1=$p(wrd,")",1)_")" d sqlex(0,.sqlex,wrd1) s wrd=%z("dsv")_wrd1_%z("dsv")_$p(wrd,")",2,999)
+ i wrd?1a.a1"("1e.e1")".e s wrd1=$p(wrd,")",1)_")" d sqlvar(0,.word,wrd1) s wrd=%z("dsv")_wrd1_%z("dsv")_$p(wrd,")",2,999)
  s cbr=0 f i=$l(wrd)-1:1 q:$e(wrd,$l(wrd))'=")"  s wrd=$e(wrd,1,$l(wrd)-1),cbr=cbr+1 i $d(in) q
  i wrd=""!(wrd[%z("df"))!(wrd[%z("dev"))!(wrd[%z("dsv"))!(wrd[%z("dq")) g word3
- i wrd?1"{"1a.e,wrd=lin d sqlex(1,.sqlex,wrd) s wrd=%z("dev")_wrd_%z("dev") g word3
+ i wrd?1"{"1a.e,wrd=lin d sqlvar(1,.word,wrd) s wrd=%z("dev")_wrd_%z("dev") g word3
  ; translate logical operators into physical equivalents
  i wrdlc="is" s nwrd=$$ucase^%mgsqls($p(lin," ",pn+1)) i nwrd="not" s wrd=wrd_" "_nwrd,wrdlc=wrdlc_" "_nwrd,pn=pn+1
  i wrdlc="not" s nwrd=$$ucase^%mgsqls($p(lin," ",pn+1)) i nwrd="like"!(nwrd="in")!(nwrd="exists")!(nwrd="after")!(nwrd="before")!(nwrd="null") s wrd=wrd_" "_nwrd,wrdlc=wrdlc_" "_nwrd,pn=pn+1
@@ -2860,9 +2864,9 @@ word2 s pn=pn+1 i pn>$l(lin," ") q
  i wrd?.1"-".n.1"."1n.n g word3
  i $e(wrd)="[" s wrd=$e(wrd,2,999)
  i $e(wrd,$l(wrd))="]" s wrd=$e(wrd,1,$l(wrd)-1)
- i wrd?1a.e1"."1a.e!(wrd?.1"."1a.e) s extvar=0,ok=$$word4(wrd) i ok d sqlex(0,.sqlex,wrd) s wrd=%z("dsv")_wrd_%z("dsv") g word3
- i wrd?1a.e1"."1"{".e1"}"1"."1a.e d sqlex(0,.sqlex,wrd) s wrd=%z("dsv")_wrd_%z("dsv") g word3
- i wrd?1":"1a.e s wrd=$p(wrd,":",2,999),extvar=1,ok=$$word4(wrd) i ok d sqlex(1,.sqlex,wrd) s wrd=%z("dev")_wrd_%z("dev") g word3
+ i wrd?1a.e1"."1a.e!(wrd?.1"."1a.e) s extvar=0,ok=$$word4(wrd) i ok d sqlvar(0,.word,wrd) s wrd=%z("dsv")_wrd_%z("dsv") g word3
+ i wrd?1a.e1"."1"{".e1"}"1"."1a.e d sqlvar(0,.word,wrd) s wrd=%z("dsv")_wrd_%z("dsv") g word3
+ i wrd?1":"1a.e s wrd=$p(wrd,":",2,999),extvar=1,ok=$$word4(wrd) i ok d sqlvar(1,.word,wrd) s wrd=%z("dev")_wrd_%z("dev") g word3
  s error="invalid item "_wrd,error(5)="HY000" q
 word3 ; valid word found
  f i=1:1:obr s wn=wn+1,word(en,wn)="("
@@ -2916,9 +2920,9 @@ error(en,word,wn,error) ; form helpful error message
  s error=error_":"_x
  q error
  ;
-type(en,word,sqlex) ; work out pointer to data type
+type(en,word) ; work out pointer to data type
  n var,wrd
- s var="" f  s var=$o(sqlex(1,"x",var)) q:var=""  i '$d(sqlex(1,"type",var)) d type1(var)
+ s var="" f  s var=$o(word("sqv",1,"x",var)) q:var=""  i '$d(word("sqv",1,"type",var)) d type1(en,.word,var)
  q
  ;
 type1(en,word,var) ; find variable in expression
@@ -2933,7 +2937,7 @@ type1(en,word,var) ; find variable in expression
 type2 ; file type
  s alias=$p(wrd,".",1),cname=$p(wrd,".",2)
  s ok=0 f qnum=1:1 q:'$d(^mgtmp($j,"from","x",qnum))  i $d(^mgtmp($j,"from","x",qnum,alias)) s tname=$p(^mgtmp($j,"from",qnum,^mgtmp($j,"from","x",qnum,alias)),"~",1),ok=1 q
- i ok s sqlex(1,"type",var)=tname_"."_cname
+ i ok s word("sqv",1,"type",var)=tname_"."_cname
  q
  ;
 tmpxs(tmp,sn,wrd,wn,ops) ; set node in snx array
@@ -2975,10 +2979,10 @@ tmpxk(tmp,sn,wrd,wn) ; remove node from snx array
  ;
 a d vers^%mgsql("%mgsqle2") q
  ;
-comp(en,outv,word,sqlfn,sqlex,code,error) ; compile expression
+comp(en,outv,word,sqlfn,code,error) ; compile expression
  n wrdl
  d lines(en,.word,.wrdl)
- d code(en,.wrdl,.sqlfn,.sqlex,outv,.code)
+ d code(en,.wrdl,.sqlfn,.word,outv,.code)
 compe ; exit
  q
  ;
@@ -2999,11 +3003,11 @@ lines1 s (wno,obr)=0,cbr=""
  i obr=0 q
  g lines1
  ;
-code(en,wrdl,sqlfn,sqlex,outv,code) ; generatate code for each line
+code(en,wrdl,sqlfn,word,outv,code) ; generatate code for each line
  n ln,exp,expx,offs,tmp,line
  s ln=0,expx="",offs=$l(outv)+9
 code1 s ln=ln+1 i '$d(wrdl(ln)) g code3
- s exp=$$line(ln,.wrdl,.sqlfn,.sqlex,.code,.error) i $l(error) q
+ s exp=$$line(ln,.wrdl,.sqlfn,.word,.code,.error) i $l(error) q
  f  q:exp'[%z("de")  d code2(en,.exp,.tmp,offs)
  s tmp(ln)=exp
  g code1
@@ -3021,14 +3025,14 @@ code2(en,exp,tmp,offs) ; try to insert sub-lines into current line
  s tmp(ln)=" "_"s"_" "_%z("pv")_"("_ln_")="_tmp(ln)
  q
  ;
-line(ln,wrdl,sqlfn,sqlex,code,error) ; process individual line
+line(ln,wrdl,sqlfn,word,code,error) ; process individual line
  n wno,wrd,exp
  s wno=0,exp=""
 line1 s wno=wno+1 i '$d(wrdl(ln,wno)) q exp
  s wrd=wrdl(ln,wno)
  f  q:wrd'[%z("df")  s wrd=$$fun(wrd,.sqlfn) q:$l(error)
  i error'="" q exp
- i wrd?1a.u1"."1a.e!(wrd?1a.u1"("1a.e1")") d sqlex^%mgsqle1(0,.sqlex,wrd) s wrd=%z("dsv")_wrd_%z("dsv")
+ i wrd?1a.u1"."1a.e!(wrd?1a.u1"("1a.e1")") d sqlvar^%mgsqle1(0,.word,wrd) s wrd=%z("dsv")_wrd_%z("dsv")
  s exp=exp_wrd
  g line1
  ;
@@ -6126,7 +6130,7 @@ addwhr(qnum,item) ; add item to where statement
  q wnum
  ;
 where(dbid,sql,qnum,arg,error) ; validate 'where' statement
- n ln,wn,wnum,pred,wrd,word,ex,sqlex
+ n ln,wn,wnum,pred,wrd,word,ex
  s pred="" i $d(^mgtmp($j,"pred",qnum)) s pred=^(qnum)
  i $l(pred) s:$l(arg) arg=" and "_arg s arg="("_pred_")"_arg
  i $l(arg) s ex(1)=arg d where^%mgsqle(.ex,.word,.error) i $l(error) g wherex
@@ -6342,7 +6346,7 @@ order1(dbid,qnum,itemno,item,error) ; validate order by item
  i item?1n.n,'$d(^mgtmp($j,"sel",1,item)) s error="invalid 'order by' item no. '"_item_"'",error(5)="HY000" q
  i item?1n.n s num=item,sel=^mgtmp($j,"sel",1,num) g order2
  s sqag="" i item["(",item[")" s sqag=$p(item,"(",1),item=$p($p(item,"(",2,999),")",1)
- d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) b  q
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) q
  s item=alias_"."_cname i sqag'="" s item=sqag_"("_item_")"
  s sel="",len=$l(item,".") f num=1:1 q:'$d(^mgtmp($j,"sel",1,num))  s x=$p(^(num),%z("dsv"),2) i $p(x,".",1,len)=item s sel=%z("dsv")_item_%z("dsv") q
  i '$l(sel) s error="'order by' item '"_item_"' is not in the 'select' statement",error(5)="HY000" q
@@ -6564,7 +6568,7 @@ set ; validate 'set' statement
  q
  ;
 set1 ; validate individual 'set' in 'set' statement
- n i,outv,zcode,sqlex
+ n i,outv,zcode,word
  s to=$p(x," ",3,999),outv=$p(x," ",1)
  s cname=outv i outv?1a.e1"."1a.e s cname=$p(outv,".",2) i $p(outv,".",1)'=alias s error="'set' statement: incorrect alias in '"_outv_"'",error(5)="HY000" q
  i $p(x," ",2)'="="!(cname="")!(to="") s error="invalid assignment: '"_x_"'",error(5)="HY000" q
@@ -6578,13 +6582,13 @@ set1 ; validate individual 'set' in 'set' statement
 set11 d set2 i $l(error) q
  s ^mgtmp($j,"upd","set",cname)=to
  f i=1:1 q:'$d(zcode(i))  s ^mgtmp($j,"upd","set",cname,"zcode",i)=zcode(i)
- s x="" f i=0:0 s x=$o(sqlex("x",x)) q:x=""  s ^mgtmp($j,"upd","set",cname,"i",x)=""
+ s x="" f i=0:0 s x=$o(word("sqv","x",x)) q:x=""  s ^mgtmp($j,"upd","set",cname,"i",x)=""
  q
  ;
 set2 ; compile set assignment
  ; cm: add %z
- n (%z,dbid,qid,error,to,outv,inv,entpar,del,zcode,sqlex)
- k zcode,sqlex
+ n (%z,dbid,qid,error,to,outv,inv,entpar,del,zcode,word)
+ k zcode,word
  s outv=outv_"**set**"
  s l=1,ex(1)=to d ex^%mgsqle(outv,.ex,.word,.zcode,.fun,.error)
  q
@@ -7084,7 +7088,7 @@ fromv(dbid,tname,error) ; validate table
  q 1
  ;
 nat(dbid,qnum,tnum,tname,nat,exp,error) ; extract join parameters
- n i,ii,x,cname,alias,on
+ n i,ii,x,cname,alias,on,onexp
  i nat q  ; data dictionary
  s on=""
  f i=pn+1:1 q:'$d(exp(i))  s x=exp(i) i x="using"!(x="on") s on=x q
@@ -7101,8 +7105,12 @@ nat(dbid,qnum,tnum,tname,nat,exp,error) ; extract join parameters
 naton ; 'on' statement
  s x=exp(i+1)
  i x?1"("1e.e1")" s x=$p($p(x,"(",2),")",1)
+ ; cmtxxx
+ d where^%mgsqle(x,.onexp,.error) i error'="" q
  s ^mgtmp($j,"from","on",qnum,$i(^mgtmp($j,"from","on",qnum)))=x
- f ii=1:1:$l(x," ") s cname=$$trim^%mgsqls($p(x," ",ii)," "),alias=$p(cname,".",1),cname=$p(cname,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
+ ; cmtxxx
+ ;f ii=1:1:$l(x," ") s cname=$$trim^%mgsqls($p(x," ",ii)," "),alias=$p(cname,".",1),cname=$p(cname,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
+ s ii="" f  s ii=$o(onexp("sqv",0,"x",ii)) q:ii=""  s alias=$p(ii,".",1),cname=$p(ii,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
  k exp(i),exp(i+1) f i=i+2:1 q:'$d(exp(i))  s exp(i-2)=exp(i) k exp(i)
  q
  ;
