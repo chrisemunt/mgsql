@@ -31,7 +31,7 @@ addwhr(qnum,item) ; add item to where statement
  q wnum
  ;
 where(dbid,sql,qnum,arg,error) ; validate 'where' statement
- n ln,wn,wnum,pred,wrd,word,ex,sqlex
+ n ln,wn,wnum,pred,wrd,word,ex
  s pred="" i $d(^mgtmp($j,"pred",qnum)) s pred=^(qnum)
  i $l(pred) s:$l(arg) arg=" and "_arg s arg="("_pred_")"_arg
  i $l(arg) s ex(1)=arg d where^%mgsqle(.ex,.word,.error) i $l(error) g wherex

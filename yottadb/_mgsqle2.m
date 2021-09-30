@@ -24,10 +24,10 @@
  ;
 a d vers^%mgsql("%mgsqle2") q
  ;
-comp(en,outv,word,sqlfn,sqlex,code,error) ; compile expression
+comp(en,outv,word,sqlfn,code,error) ; compile expression
  n wrdl
  d lines(en,.word,.wrdl)
- d code(en,.wrdl,.sqlfn,.sqlex,outv,.code)
+ d code(en,.wrdl,.sqlfn,.word,outv,.code)
 compe ; exit
  q
  ;
@@ -48,11 +48,11 @@ lines1 s (wno,obr)=0,cbr=""
  i obr=0 q
  g lines1
  ;
-code(en,wrdl,sqlfn,sqlex,outv,code) ; generatate code for each line
+code(en,wrdl,sqlfn,word,outv,code) ; generatate code for each line
  n ln,exp,expx,offs,tmp,line
  s ln=0,expx="",offs=$l(outv)+9
 code1 s ln=ln+1 i '$d(wrdl(ln)) g code3
- s exp=$$line(ln,.wrdl,.sqlfn,.sqlex,.code,.error) i $l(error) q
+ s exp=$$line(ln,.wrdl,.sqlfn,.word,.code,.error) i $l(error) q
  f  q:exp'[%z("de")  d code2(en,.exp,.tmp,offs)
  s tmp(ln)=exp
  g code1
@@ -70,14 +70,14 @@ code2(en,exp,tmp,offs) ; try to insert sub-lines into current line
  s tmp(ln)=" "_"s"_" "_%z("pv")_"("_ln_")="_tmp(ln)
  q
  ;
-line(ln,wrdl,sqlfn,sqlex,code,error) ; process individual line
+line(ln,wrdl,sqlfn,word,code,error) ; process individual line
  n wno,wrd,exp
  s wno=0,exp=""
 line1 s wno=wno+1 i '$d(wrdl(ln,wno)) q exp
  s wrd=wrdl(ln,wno)
  f  q:wrd'[%z("df")  s wrd=$$fun(wrd,.sqlfn) q:$l(error)
  i error'="" q exp
- i wrd?1a.u1"."1a.e!(wrd?1a.u1"("1a.e1")") d sqlex^%mgsqle1(0,.sqlex,wrd) s wrd=%z("dsv")_wrd_%z("dsv")
+ i wrd?1a.u1"."1a.e!(wrd?1a.u1"("1a.e1")") d sqlvar^%mgsqle1(0,.word,wrd) s wrd=%z("dsv")_wrd_%z("dsv")
  s exp=exp_wrd
  g line1
  ;

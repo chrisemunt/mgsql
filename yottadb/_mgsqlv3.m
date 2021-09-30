@@ -88,7 +88,7 @@ set ; validate 'set' statement
  q
  ;
 set1 ; validate individual 'set' in 'set' statement
- n i,outv,zcode,sqlex
+ n i,outv,zcode,word
  s to=$p(x," ",3,999),outv=$p(x," ",1)
  s cname=outv i outv?1a.e1"."1a.e s cname=$p(outv,".",2) i $p(outv,".",1)'=alias s error="'set' statement: incorrect alias in '"_outv_"'",error(5)="HY000" q
  i $p(x," ",2)'="="!(cname="")!(to="") s error="invalid assignment: '"_x_"'",error(5)="HY000" q
@@ -102,13 +102,13 @@ set1 ; validate individual 'set' in 'set' statement
 set11 d set2 i $l(error) q
  s ^mgtmp($j,"upd","set",cname)=to
  f i=1:1 q:'$d(zcode(i))  s ^mgtmp($j,"upd","set",cname,"zcode",i)=zcode(i)
- s x="" f i=0:0 s x=$o(sqlex("x",x)) q:x=""  s ^mgtmp($j,"upd","set",cname,"i",x)=""
+ s x="" f i=0:0 s x=$o(word("sqv","x",x)) q:x=""  s ^mgtmp($j,"upd","set",cname,"i",x)=""
  q
  ;
 set2 ; compile set assignment
  ; cm: add %z
- n (%z,dbid,qid,error,to,outv,inv,entpar,del,zcode,sqlex)
- k zcode,sqlex
+ n (%z,dbid,qid,error,to,outv,inv,entpar,del,zcode,word)
+ k zcode,word
  s outv=outv_"**set**"
  s l=1,ex(1)=to d ex^%mgsqle(outv,.ex,.word,.zcode,.fun,.error)
  q

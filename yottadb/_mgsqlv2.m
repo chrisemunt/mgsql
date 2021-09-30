@@ -122,7 +122,7 @@ order1(dbid,qnum,itemno,item,error) ; validate order by item
  i item?1n.n,'$d(^mgtmp($j,"sel",1,item)) s error="invalid 'order by' item no. '"_item_"'",error(5)="HY000" q
  i item?1n.n s num=item,sel=^mgtmp($j,"sel",1,num) g order2
  s sqag="" i item["(",item[")" s sqag=$p(item,"(",1),item=$p($p(item,"(",2,999),")",1)
- d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) b  q
+ d table(dbid,qnum,item,.alias,.tname,.cname,0,.error) i $l(error) q
  s item=alias_"."_cname i sqag'="" s item=sqag_"("_item_")"
  s sel="",len=$l(item,".") f num=1:1 q:'$d(^mgtmp($j,"sel",1,num))  s x=$p(^(num),%z("dsv"),2) i $p(x,".",1,len)=item s sel=%z("dsv")_item_%z("dsv") q
  i '$l(sel) s error="'order by' item '"_item_"' is not in the 'select' statement",error(5)="HY000" q

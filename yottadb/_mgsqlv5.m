@@ -149,7 +149,7 @@ fromv(dbid,tname,error) ; validate table
  q 1
  ;
 nat(dbid,qnum,tnum,tname,nat,exp,error) ; extract join parameters
- n i,ii,x,cname,alias,on
+ n i,ii,x,cname,alias,on,onexp
  i nat q  ; data dictionary
  s on=""
  f i=pn+1:1 q:'$d(exp(i))  s x=exp(i) i x="using"!(x="on") s on=x q
@@ -166,8 +166,12 @@ nat(dbid,qnum,tnum,tname,nat,exp,error) ; extract join parameters
 naton ; 'on' statement
  s x=exp(i+1)
  i x?1"("1e.e1")" s x=$p($p(x,"(",2),")",1)
+ ; cmtxxx
+ d where^%mgsqle(x,.onexp,.error) i error'="" q
  s ^mgtmp($j,"from","on",qnum,$i(^mgtmp($j,"from","on",qnum)))=x
- f ii=1:1:$l(x," ") s cname=$$trim^%mgsqls($p(x," ",ii)," "),alias=$p(cname,".",1),cname=$p(cname,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
+ ; cmtxxx
+ ;f ii=1:1:$l(x," ") s cname=$$trim^%mgsqls($p(x," ",ii)," "),alias=$p(cname,".",1),cname=$p(cname,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
+ s ii="" f  s ii=$o(onexp("sqv",0,"x",ii)) q:ii=""  s alias=$p(ii,".",1),cname=$p(ii,".",2) i cname'="",alias'="" s ^mgtmp($j,"from","z",qnum,"join",cname,alias)=""
  k exp(i),exp(i+1) f i=i+2:1 q:'$d(exp(i))  s exp(i-2)=exp(i) k exp(i)
  q
  ;

@@ -24,10 +24,11 @@
  ;
 a d vers^%mgsql("%mgsqle1") q
  ;
-sqlex(ctx,sqlex,var) ; sql variables in expression
- i $d(sqlex(ctx,"x",var)) q
- s sqlex=$i(sqlex(ctx,"e"))
- s sqlex(ctx,"e",sqlex)=var,sqlex(ctx,"x",var)=sqlex
+sqlvar(ctx,word,var) ; sql variables in expression
+ n no
+ i $d(word("sqv",ctx,"x",var)) q
+ s no=$i(word("sqv",ctx,"e"))
+ s word("sqv",ctx,"e",no)=var,word("sqv",ctx,"x",var)=no
  q
  ;
 exbr(tmp,ops,error) ; extract individual bracketed sub-statements and set in temporary array
@@ -107,14 +108,14 @@ brac(en,word,ops,error) ; bracket expression in word array
 brace ; exit
  q
  ;
-word(en,ex,word,sqlex,ops,error) ; generate word array from expression lines en(1->n)
+word(en,ex,word,ops,error) ; generate word array from expression lines en(1->n)
  n lin,ln
  s lin="" f ln=1:1 q:'$d(ex(ln))  s lin=lin_ex(ln)
- d word1(lin,.word,.fun,.sqlex,.ops,.error)
- d type(en,.word,.sqlex)
+ d word1(lin,.word,.fun,.ops,.error)
+ d type(en,.word)
  q
  ;
-word1(lin,word,fun,sqlex,ops,error) ; decompose line lin
+word1(lin,word,fun,ops,error) ; decompose line lin
  n pn,wn,i,wrd,wrd1,wrdlc,nwrd,obr,cbr,like,mpm,in,between,extvar,ok,in,like,mpm,between,wk,c,ca,cz,sa,sz
  f  q:$e(lin)'=" "  s lin=$e(lin,2,999)
  s wk=lin,lin="" f i=1:1:$l(wk) d
@@ -147,10 +148,10 @@ word2 s pn=pn+1 i pn>$l(lin," ") q
  i wrdlc?1"{d".e1"}" s wrd="$$edate^%mgsqls("_$e(wrd,3,$l(wrd)-1)_","""")"
  i wrd?1"$"1a.e1"("1e.e s wrd=$$func(lin,.pn,wrd,.error) i $l(error) q
  i wrd?1"$$"1a.e1"("1e.e s wrd=$$func(lin,.pn,wrd,.error) i $l(error) q
- i wrd?1a.a1"("1e.e1")".e s wrd1=$p(wrd,")",1)_")" d sqlex(0,.sqlex,wrd1) s wrd=%z("dsv")_wrd1_%z("dsv")_$p(wrd,")",2,999)
+ i wrd?1a.a1"("1e.e1")".e s wrd1=$p(wrd,")",1)_")" d sqlvar(0,.word,wrd1) s wrd=%z("dsv")_wrd1_%z("dsv")_$p(wrd,")",2,999)
  s cbr=0 f i=$l(wrd)-1:1 q:$e(wrd,$l(wrd))'=")"  s wrd=$e(wrd,1,$l(wrd)-1),cbr=cbr+1 i $d(in) q
  i wrd=""!(wrd[%z("df"))!(wrd[%z("dev"))!(wrd[%z("dsv"))!(wrd[%z("dq")) g word3
- i wrd?1"{"1a.e,wrd=lin d sqlex(1,.sqlex,wrd) s wrd=%z("dev")_wrd_%z("dev") g word3
+ i wrd?1"{"1a.e,wrd=lin d sqlvar(1,.word,wrd) s wrd=%z("dev")_wrd_%z("dev") g word3
  ; translate logical operators into physical equivalents
  i wrdlc="is" s nwrd=$$ucase^%mgsqls($p(lin," ",pn+1)) i nwrd="not" s wrd=wrd_" "_nwrd,wrdlc=wrdlc_" "_nwrd,pn=pn+1
  i wrdlc="not" s nwrd=$$ucase^%mgsqls($p(lin," ",pn+1)) i nwrd="like"!(nwrd="in")!(nwrd="exists")!(nwrd="after")!(nwrd="before")!(nwrd="null") s wrd=wrd_" "_nwrd,wrdlc=wrdlc_" "_nwrd,pn=pn+1
@@ -173,9 +174,9 @@ word2 s pn=pn+1 i pn>$l(lin," ") q
  i wrd?.1"-".n.1"."1n.n g word3
  i $e(wrd)="[" s wrd=$e(wrd,2,999)
  i $e(wrd,$l(wrd))="]" s wrd=$e(wrd,1,$l(wrd)-1)
- i wrd?1a.e1"."1a.e!(wrd?.1"."1a.e) s extvar=0,ok=$$word4(wrd) i ok d sqlex(0,.sqlex,wrd) s wrd=%z("dsv")_wrd_%z("dsv") g word3
- i wrd?1a.e1"."1"{".e1"}"1"."1a.e d sqlex(0,.sqlex,wrd) s wrd=%z("dsv")_wrd_%z("dsv") g word3
- i wrd?1":"1a.e s wrd=$p(wrd,":",2,999),extvar=1,ok=$$word4(wrd) i ok d sqlex(1,.sqlex,wrd) s wrd=%z("dev")_wrd_%z("dev") g word3
+ i wrd?1a.e1"."1a.e!(wrd?.1"."1a.e) s extvar=0,ok=$$word4(wrd) i ok d sqlvar(0,.word,wrd) s wrd=%z("dsv")_wrd_%z("dsv") g word3
+ i wrd?1a.e1"."1"{".e1"}"1"."1a.e d sqlvar(0,.word,wrd) s wrd=%z("dsv")_wrd_%z("dsv") g word3
+ i wrd?1":"1a.e s wrd=$p(wrd,":",2,999),extvar=1,ok=$$word4(wrd) i ok d sqlvar(1,.word,wrd) s wrd=%z("dev")_wrd_%z("dev") g word3
  s error="invalid item "_wrd,error(5)="HY000" q
 word3 ; valid word found
  f i=1:1:obr s wn=wn+1,word(en,wn)="("
@@ -229,9 +230,9 @@ error(en,word,wn,error) ; form helpful error message
  s error=error_":"_x
  q error
  ;
-type(en,word,sqlex) ; work out pointer to data type
+type(en,word) ; work out pointer to data type
  n var,wrd
- s var="" f  s var=$o(sqlex(1,"x",var)) q:var=""  i '$d(sqlex(1,"type",var)) d type1(var)
+ s var="" f  s var=$o(word("sqv",1,"x",var)) q:var=""  i '$d(word("sqv",1,"type",var)) d type1(en,.word,var)
  q
  ;
 type1(en,word,var) ; find variable in expression
@@ -246,7 +247,7 @@ type1(en,word,var) ; find variable in expression
 type2 ; file type
  s alias=$p(wrd,".",1),cname=$p(wrd,".",2)
  s ok=0 f qnum=1:1 q:'$d(^mgtmp($j,"from","x",qnum))  i $d(^mgtmp($j,"from","x",qnum,alias)) s tname=$p(^mgtmp($j,"from",qnum,^mgtmp($j,"from","x",qnum,alias)),"~",1),ok=1 q
- i ok s sqlex(1,"type",var)=tname_"."_cname
+ i ok s word("sqv",1,"type",var)=tname_"."_cname
  q
  ;
 tmpxs(tmp,sn,wrd,wn,ops) ; set node in snx array

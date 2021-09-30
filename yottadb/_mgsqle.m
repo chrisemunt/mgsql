@@ -26,22 +26,24 @@ a d vers^%mgsql("%mgsqle") q
  ;
 ex(outv,ex,word,code,sqlfn,error) ; 'ex' expression
  n i,en,fn,fun,ops
+ i $g(ex)'="",'$d(ex(1)) s ex(1)=ex
  s en=0,fn=0,error=""
  s ops=$$ops(.ops)
- d word^%mgsqle1(en,.ex,.word,.sqlex,.ops,.error) i $l(error) g exe
+ d word^%mgsqle1(en,.ex,.word,.ops,.error) i $l(error) g exe
  d vrfy^%mgsqle1(en,.word,.ops,.error) i $l(error) g exe
  d brac^%mgsqle1(en,.word,.ops,.error) i $l(error) g exe
  f i=1:1 q:'$d(word(en,i))  s fun=word(en,i) i fun[%z("df") s fun=$p(fun,%z("df"),2),fn=$$fun(fun,.sqlfn,.ops,.error) s word(en,i)=%z("df")_fn_%z("df") i $l(error) q
  i $l(error) g exe
- d comp^%mgsqle2(en,outv,.word,.sqlfn,.sqlex,.code,.error)
+ d comp^%mgsqle2(en,outv,.word,.sqlfn,.code,.error)
 exe ; exit
  q
  ;
 where(ex,word,error) ; validate sql 'where' predicate
  n en,ops
+ i $g(ex)'="",'$d(ex(1)) s ex(1)=ex
  s en=0,error=""
  s ops=$$ops(.ops)
- d word^%mgsqle1(en,.ex,.word,.sqlex,.ops,.error) i $l(error) g wheree
+ d word^%mgsqle1(en,.ex,.word,.ops,.error) i $l(error) g wheree
  d vrfy^%mgsqle1(en,.word,.ops,.error) i $l(error) g wheree
  d brac^%mgsqle1(en,.word,.ops,.error) i $l(error) g wheree
 wheree ; exit
@@ -127,7 +129,7 @@ pars2(par,parn,sqlfn,fn,ops,error) ; validate/bracket expression for parameter
  i par="" q  ; niladic
  s en="f"
  i par?1u1":"1a.e s word(en,1)=par,entpar(par)="" g pars3
- s ex(1)=par d word^%mgsqle1(en,.ex,.word,.sqlex,.ops,.error) i $l(error) q
+ s ex(1)=par d word^%mgsqle1(en,.ex,.word,.ops,.error) i $l(error) q
  d vrfy^%mgsqle1(en,.word,.ops,.error) i $l(error) q
  d brac^%mgsqle1(en,.word,.ops,.error) i $l(error) q
 pars3 f i=1:1 q:'$d(word(en,i))  s sqlfn(fn,"p",parn,i)=word(en,i)
