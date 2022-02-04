@@ -3,9 +3,9 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-30 September 2021, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+3 February 2022, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.3; Revision 21
+* Current Release: Version: 1.4; Revision 22
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
 Contents
@@ -18,6 +18,7 @@ Contents
 * [Access to mgsql using REST](#REST)
 * [Access to mgsql using ODBC](#ODBC)
 * [Transaction Processing](#TProcessing)
+* [SQL Query Optimisation](#Optimisation)
 * [Resources used by mgsql](#Resources)
 * [License](#License)
 
@@ -68,7 +69,7 @@ Link all the **mgsql** routines and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.3; Revision 21 (30 September 2021) %mgsql
+       Version: 1.4; Revision 22 (3 February 2022) %mgsql
 
 Note that the version of **mgsql** is successfully displayed.
 
@@ -83,7 +84,7 @@ Change to your development Namespace and check the installation:
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.3; Revision 21 (30 September 2021) %mgsql
+       Version: 1.4; Revision 22 (3 February 2022) %mgsql
 
 ### Other M systems
 
@@ -92,7 +93,7 @@ All routines are held in **/m/mgsql.ro**, use an appropriate utility to install 
        do ^%mgsql
 
        MGSQL by M/Gateway Developments Ltd.
-       Version: 1.3; Revision 21 (30 September 2021) %mgsql
+       Version: 1.4; Revision 22 (3 February 2022) %mgsql
 
 
 ## <a name="ExecuteM"></a> Embedding SQL statements in M code
@@ -377,6 +378,29 @@ For example:
             quit status
 
 
+## <a name="Optimisation"></a> SQL Query Optimisation
+
+**mgsql** will attempt to find the most optimal route through the set of tables queried in accordance with the information that the optimiser can extract from the **WHERE** predicate together with any **JOIN** constraints specified.
+
+In cases where **mgsql** does not come up with an optimal route through the tables it is possible to provide hints in the form of explicitly defining the indices to use.  If an index is defined in the **FROM** statement, **mgsql** will attempt to process the tables in the order specified in the **FROM** statement.
+
+The general form for explicitly optimising queries is as follows:
+
+       select [columns] from table1:index1, table2 where [predicate]
+
+Or if aliases are used:
+
+       select [columns] from table1 a:index1, table2 b where [predicate]
+
+In the above example, **mgsql** will attempt to parse **table1** first using **index1**, followed by **table2**.
+
+As a convenience, the primary key may be defined as index ‘0’:
+
+       select [columns] from table1 a:0, table2 b:idx2 where [predicate]
+
+In the above example, **mgsql** will attempt to parse **table1** first using the **primary key**, followed by **table2** using index **idx2**.
+
+
 ## <a name="Resources"></a> Resources used by mgsql
 
 **mgsql** will write to the following globals
@@ -393,7 +417,7 @@ For example:
 
 ## <a name="License"></a> License
 
-Copyright (c) 2018-2021 M/Gateway Developments Ltd,
+Copyright (c) 2018-2022 M/Gateway Developments Ltd,
 Surrey UK.                                                      
 All rights reserved.
  
@@ -497,3 +521,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 ### v1.3.21 (30 September 2021)
 
 * Correct a fault that led to some queries containing an OUTER JOIN crashing with an 'undefined variable' error.  Particularly affected were OUTER JOINs qualified with an ON condition.
+
+### v1.4.22 (3 February 2022)
+
+* Correct a fault that led to **CREATE TABLE** statements crashing if a SQL reserved word was used as a column name.
+* Correct a regression in the processing of the following operators in **WHERE** statements: OR, >, <.
+* Improved query optimisation together with a means through which queries can be explicitly optimised by specifying hints in the query text.
+	* See the section on **SQL Query Optimisation**.
+	* Run the upgrade procedure to force the recompilation (and re-optimisation) of all queries: **set status=$$upgrade^%mgsql(0)**
