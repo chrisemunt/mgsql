@@ -1,12 +1,12 @@
 Cache for Windows^INT^mgsql^~Format=Cache.S~^RAW
-%RO on 30 Sep 2021 01:00 AM
-%mgsql^INT^1^66017,64688.0^0
-%mgsql ;(CM) MGSQL Front end
+%RO on 04 Feb 2022 01:00 AM
+%mgsql^INT^1^66144,44772.0^0
+%mgsql ;(CM) MGSQL Front end ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -49,7 +49,8 @@ v() ; version and date
  ;s v="1.2",r=18,d="22 January 2021"
  ;s v="1.3",r=19,d="22 February 2021"
  ;s v="1.3",r=20,d="25 June 2021"
- s v="1.3",r=21,d="30 September 2021"
+ ;s v="1.3",r=21,d="30 September 2021"
+ s v="1.4",r=22,d="3 February 2022"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -67,7 +68,7 @@ upgrade(mode) ; upgrade this installation
 exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
  s $zt="exece^%mgsql" ; new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
- ;;s ok=$$upgrade(0)
+ ; s ok=$$upgrade(0)
  s error="",ok=0
  i $g(%zi("stmt"))'="" s %zi(0,"stmt")=$g(%zi("stmt")) ; for backwards compatibility
  i $g(%zi(0,"recompile"))'="" s info(0,"recompile")=$g(%zi(0,"recompile"))
@@ -187,59 +188,76 @@ ylink ; link all routines
  ;
 drop ; drop tables
  k %zi,%zo
- s ok=$$exec^%mgsql("","drop table patient",.%zi,.%zo)
- s ok=$$exec^%mgsql("","drop table admission",.%zi,.%zo)
- s ok=$$exec^%mgsql("","drop table labtest",.%zi,.%zo)
+ s sql="drop table patient"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s sql="drop table admission"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s sql="drop table labtest"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 create ; create tables
  k %zi,%zo
- s sql="create table patient ("
- s sql=sql_" num int not null,"
- s sql=sql_" name varchar(255),"
- s sql=sql_" address varchar(255) separate ('address'),"
- s sql=sql_" dob date,"
- s sql=sql_" age int derived age^%mgsqls(dob),"
- s sql=sql_" constraint pk_patient primary key (num))"
+ s sql="create table patient ("_$c(13,10)
+ s sql=sql_" num int not null,"_$c(13,10)
+ s sql=sql_" name varchar(255),"_$c(13,10)
+ s sql=sql_" address varchar(255) separate ('address'),"_$c(13,10)
+ s sql=sql_" dob date,"_$c(13,10)
+ s sql=sql_" age int derived age^%mgsqls(dob),"_$c(13,10)
+ s sql=sql_" constraint pk_patient primary key (num))"_$c(13,10)
  s sql=sql_" /*! global=mgpat, delimiter=# */"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  ;
- s sql="create table admission ("
- s sql=sql_" num int not null,"
- s sql=sql_" dadm date not null,"
- s sql=sql_" ward varchar(32),"
- s sql=sql_" con varchar(32),"
- s sql=sql_" constraint pk_admission primary key ('p', num, dadm))"
+ s sql="create table admission ("_$c(13,10)
+ s sql=sql_" num int not null,"_$c(13,10)
+ s sql=sql_" dadm date not null,"_$c(13,10)
+ s sql=sql_" ward varchar(32),"_$c(13,10)
+ s sql=sql_" con varchar(32),"_$c(13,10)
+ s sql=sql_" constraint pk_admission primary key ('p', num, dadm))"_$c(13,10)
  s sql=sql_" /*! global=mgadm, delimiter=# */"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  ;
- s sql="create table labtest ("
- s sql=sql_" num int not null,"
- s sql=sql_" dtest date not null,"
- s sql=sql_" test varchar(32),"
- s sql=sql_" result int,"
- s sql=sql_" constraint pk_labtest primary key ('p', num, dtest, test))"
+ s sql="create table labtest ("_$c(13,10)
+ s sql=sql_" num int not null,"_$c(13,10)
+ s sql=sql_" dtest date not null,"_$c(13,10)
+ s sql=sql_" test varchar(32),"_$c(13,10)
+ s sql=sql_" result int,"_$c(13,10)
+ s sql=sql_" constraint pk_labtest primary key ('p', num, dtest, test))"_$c(13,10)
  s sql=sql_" /*! global=mgtst, delimiter=# */"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 index ; create index
  k %zi,%zo
- s sql="create index index1 on admission ('index1', dadm, num)"
+ s sql="create index index1 on admission ('index1', dadm, num)"_$c(13,10)
  s sql=sql_" /*! global=mgadm */"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 delete ; delete records
  k %zi,%zo
+ s sql="delete from patient"
+ w !,sql,!
  s ok=$$exec^%mgsql("","delete from patient",.%zi,.%zo)
+ s sql="delete from admission"
+ w !,sql,!
  s ok=$$exec^%mgsql("","delete from admission",.%zi,.%zo)
+ s sql="delete from labtest"
+ w !,sql,!
  s ok=$$exec^%mgsql("","delete from labtest",.%zi,.%zo)
  q
  ;
 insert ; insert records
  k %zi,%zo
  s sql="insert into patient (num, name, address, dob) values (:num, :name, :address, {d:dob})"
+ w !,sql,!
  s %zi("num")=1,%zi("name")="Peter Davis",%zi("address")="Banstead",%zi("dob")="1974-08-12",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=2,%zi("name")="Sarah Jones",%zi("address")="Redhill",%zi("dob")="1967-07-13",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=3,%zi("name")="John Smith",%zi("address")="London",%zi("dob")="2002-04-21",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
@@ -247,6 +265,7 @@ insert ; insert records
  ;
  k %zi,%zo
  s sql="insert into admission (num, dadm, ward, con) values (:num, {d:dadm}, :ward, :con)"
+ w !,sql,!
  s %zi("num")=1,%zi("dadm")="2012-02-20",%zi("ward")="B1",%zi("con")="IES",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=1,%zi("dadm")="2012-03-21",%zi("ward")="B3",%zi("con")="JM",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=1,%zi("dadm")="2015-01-17",%zi("ward")="B1",%zi("con")="TJP",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
@@ -257,6 +276,7 @@ insert ; insert records
  ;
  k %zi,%zo
  s sql="insert into labtest (num, dtest, test, result) values (:num, {d:dtest}, :test, :result)"
+ w !,sql,!
  s %zi("num")=1,%zi("dtest")="2012-02-20",%zi("test")="HGB",%zi("result")="14.2",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=1,%zi("dtest")="2012-03-21",%zi("test")="HGB",%zi("result")="15.1",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=1,%zi("dtest")="2015-01-17",%zi("test")="HGB",%zi("result")="15.7",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
@@ -268,88 +288,115 @@ insert ; insert records
  ;
 update ; update a record
  k %zi,%zo
- s ok=$$exec^%mgsql("","update patient a set a.address = 'Cambridge' where a.num = 4",.%zi,.%zo)
+ s sql="update patient a set a.address = 'Cambridge' where a.num = 4"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel1 ; select all patient records
  k %zi,%zo
- s ok=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+ s sql="select * from patient"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel2 ; select all admitted patients and their admission records (joining the tables using a 'where' statement)
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,a.name,b.dadm,b.ward,b.con from patient a, admission b where a.num = b.num",.%zi,.%zo)
+ s sql="select a.num,a.name,b.dadm,b.ward,b.con from patient a, admission b where a.num = b.num"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel3 ; select all admitted patients and their admission records (using an 'inner join' construct)
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,a.name,b.dadm,b.ward,b.con from patient a inner join admission b using (num)",.%zi,.%zo)
+ s sql="select a.num,a.name,b.dadm,b.ward,b.con from patient a inner join admission b using (num)"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel4 ; select all patients and any associated admission records (using an 'outer join' construct)
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,a.name,b.dadm,b.ward,b.con from patient a left join admission b using (num)",.%zi,.%zo)
+ s sql="select a.num,a.name,b.dadm,b.ward,b.con from patient a left join admission b using (num)"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel5 ; select all patients who have been admitted more than 3 times
  k %zi,%zo
- s sql="select a.num,a.name,b.dadm,b.ward,b.con from patient a, admission b"
+ s sql="select a.num,a.name,b.dadm,b.ward,b.con from patient a, admission b"_$c(13,10)
  s sql=sql_" where a.num = b.num and 3 < select count(c.dadm) from admission c where c.num = a.num"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel6 ; count the number of times admitted patients have been admitted
  k %zi,%zo
- s sql="select a.num,a.name,count(b.dadm) from patient a, admission b"
- s sql=sql_" where a.num = b.num"
+ s sql="select a.num,a.name,count(b.dadm) from patient a, admission b"_$c(13,10)
+ s sql=sql_" where a.num = b.num"_$c(13,10)
  s sql=sql_" group by a.num"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel7 ; select all patients who have been admitted more that 3 times
  k %zi,%zo
- s sql="select a.num,a.name,count(*) from patient a, admission b"
- s sql=sql_" where a.num = b.num"
- s sql=sql_" group by a.num,a.name"
+ s sql="select a.num,a.name,count(*) from patient a, admission b"_$c(13,10)
+ s sql=sql_" where a.num = b.num"_$c(13,10)
+ s sql=sql_" group by a.num,a.name"_$c(13,10)
  s sql=sql_" having count(*) > 3"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel8 ; select all patient records but just show each patient's surname
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,$p(a.name,"" "",2) from patient a",.%zi,.%zo)
+ s sql="select a.num,$p(a.name,"" "",2) from patient a"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel9 ; select all patients and any associated admission records, but only those for ward 'B3'
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,a.name,b.num,b.dadm,b.ward from patient a left join admission b on a.num = b.num and b.ward = 'B3'")
+ s sql="select a.num,a.name,b.num,b.dadm,b.ward from patient a left join admission b on a.num = b.num and b.ward = 'B3'"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel10 ; select all patients older than 40.  Convert names to upper case
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,upper(a.name),a.dob,a.age from patient a where a.age > 40")
+ s sql="select a.num,upper(a.name),a.dob,a.age from patient a where a.age > 40"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel11 ; select distinct patient names
  k %zi,%zo
- s ok=$$exec^%mgsql("","select distinct name from patient",.%zi,.%zo)
+ s sql="select distinct name from patient"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel12 ; select distinct patient names
  k %zi,%zo
- s ok=$$exec^%mgsql("","select distinct a.name from patient a where upper(a.address) like '%BANSTEAD%'",.%zi,.%zo)
+ s sql="select distinct a.name from patient a where upper(a.address) like '%BANSTEAD%'"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel13 ; providing variable inputs to a query
  k %zi,%zo
+ s sql="select * from patient where num = :number"
+ w !,sql,!
  s %zi("number")=1
- s ok=$$exec^%mgsql("","select * from patient where num = :number",.%zi,.%zo)
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel14 ; directing query output to a spool file
  k %zi,%zo,x1,x2,len1
  s %zi(0,"stmt")="MyQuery"
- s ok=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+ s sql="select * from patient"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  w !,"Query output will be in spool file: ^mgsqls($job,"""_%zi(0,"stmt")_""") ..."
  s x1="^mgsqls("_$j_","""_%zi(0,"stmt")_""""
  s len1=$l(x1)
@@ -359,7 +406,9 @@ sel14 ; directing query output to a spool file
 sel15 ; directing query output to a callback function
  k %zi,%zo,x1,x2,len1
  s %zi(0,"callback")="sel15cb^%mgsql"
- s ok=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+ s sql="select * from patient"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel15cb(%zi,%zo,rn) ; callback for query sel15
@@ -374,51 +423,70 @@ sel15cb(%zi,%zo,rn) ; callback for query sel15
  ;
 sel16 ; using 'or' in the where predicate
  k %zi,%zo
- s ok=$$exec^%mgsql("","select * from patient where num = 1 or num = 2 or num = 9 or num = 3",.%zi,.%zo)
+ s sql="select * from patient where num = 1 or num = 2 or num = 9 or num = 3"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel17 ; using 'in' in the where predicate
  k %zi,%zo
- s ok=$$exec^%mgsql("","select * from patient where num in (1,2,9,3)",.%zi,.%zo)
+ s sql="select * from patient where num in (1,2,9,3)"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 tp1 ; using transactions in line
  k %zi,%zo
- s ok=$$exec^%mgsql("","start transaction;",.%zi,.%zo) i ok<0 q
+ s sql="start transaction;"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo) i ok<0 q
  s sql="insert into patient (num, name, address, dob) values (:num, :name, :address, {d:dob})"
+ w !,sql,!
  s %zi("num")=11,%zi("name")="Trans Action-InLine1",%zi("address")="New York",%zi("dob")="1971-07-09",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=12,%zi("name")="Trans Action-InLine2",%zi("address")="London",%zi("dob")="1980-01-12",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
- s ok=$$exec^%mgsql("","commit;",.%zi,.%zo)
- ; s ok=$$exec^%mgsql("","rollback;",.%zi,.%zo)
+ s sql="commit;"
+ ; s sql="rollback;"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 tp2 ; using transactions in line
  k %zi,%zo
  s %zi(0,"callback")="tp2cb^%mgsql"
- s ok=$$exec^%mgsql("","start transaction;",.%zi,.%zo)
+ s sql="start transaction;"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 tp2cb(%zi,%zo) ; using transactions in a callback (mandatory for YottaDB)
  s sql="insert into patient (num, name, address, dob) values (:num, :name, :address, {d:dob})"
+ w !,sql,!
  s %zi("num")=11,%zi("name")="Trans Action-CallBack1",%zi("address")="New York",%zi("dob")="1971-07-09",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=12,%zi("name")="Trans Action-CallBack2",%zi("address")="London",%zi("dob")="1980-01-12",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
- s ok=$$exec^%mgsql("","commit;",.%zi,.%zo)
- ; s ok=$$exec^%mgsql("","rollback;",.%zi,.%zo)
+ s sql="commit;"
+ ; s sql="rollback;"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q ok
  ;
 proc ; create stored procedures
- s ok=$$exec^%mgsql("","CREATE PROCEDURE patient_getdata (num int, name varchar(255), address varchar(255))",.%zi,.%zo)
- s ok=$$exec^%mgsql("","CREATE PROCEDURE SelectAllPatients AS SELECT * FROM patient GO;",.%zi,.%zo)
+ s sql="CREATE PROCEDURE patient_getdata (num int, name varchar(255), address varchar(255))"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s sql="CREATE PROCEDURE SelectAllPatients AS SELECT * FROM patient GO;"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 
-%mgsqlc^INT^1^66017,64688.0^0
-%mgsqlc ;(CM) sql compiler - main driver ; 12 feb 2002  02:10pm
+
+%mgsqlc^INT^1^66144,44772.0^0
+%mgsqlc ;(CM) sql compiler - main driver ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -568,7 +636,7 @@ query ; insert query (text) and variable substitution into routine
  s line=line_" s "_%z("vok")_"=$$sc^%mgsqlz(.%zi,.%zo)" d addline(grp,.line)
  s line=line_" q "_%z("vok") d addline(grp,.line)
 query1 s line=" ;" d addline(grp,.line) s line="query ;" d addline(grp,.line)
- f i=1:1 q:'$d(^mgsqlx(1,dbid,qid,"sql",i))  s line=" ; "_^(i) d addline(grp,.line)
+ f i=1:1 q:'$d(^mgsqlx(1,dbid,qid,"sql",i))  s line=" ; "_$tr(^(i),$c(13,10),"  ") d addline(grp,.line)
  s line="var ;" d addline(grp,.line)
  s x="" f  s x=$o(^mgtmp($j,"vsub",x)) q:x=""  s v(^mgtmp($j,"vsub",x))=x
  f i=1:1 q:'$d(v(i))  s line=" ;    "_%z("pv")_i_" = "_v(i) d addline(grp,.line)
@@ -696,13 +764,13 @@ sort ; sort stand-alone sql code into contiguous routine
  q
  ;
 
-%mgsqlc1^INT^1^66017,64688.0^0
-%mgsqlc1 ; was 2 (CM) sql compiler - parse files ; 12 feb 2002  02:10pm
+%mgsqlc1^INT^1^66144,44772.0^0
+%mgsqlc1 ; was 2 (CM) sql compiler - parse files ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -813,7 +881,7 @@ or(grp,qnum,tnum,zkey,kno,got,data,cond,key,tagn) ; generate code to handle 'or'
  s var=$p(zkey,",",kno)
  s tag=%z("dl")_%z("pt")_qnum_tnum
  s lcase="abcdefghijklmnopqrstuvwxyz"
- s orn=0,tagv=%z("pv")_"("_tnum_","_i_")",tagvp=%z("pv")_"("_tnum_","_kno_",""p"")",datag=%z("dl")_%z("pt")_qnum_tnum_tagn_"x"_%z("dl")
+ s orn=0,tagv=%z("pv")_"("_tnum_","_kno_")",tagvp=%z("pv")_"("_tnum_","_kno_",""p"")",datag=%z("dl")_%z("pt")_qnum_tnum_tagn_"x"_%z("dl")
 or1 s orn=orn+1 i '$d(cond(var,"pre",orn)) g orx
  s pretag=%z("dl")_%z("pt")_qnum_tnum_tagn_"or"_orn_%z("dl"),pastag=%z("dl")_%z("pt")_qnum_tnum_tagn_"or"_$e(lcase,orn)_%z("dl")
  s nxtag=$s($d(cond(var,"pre",orn+1)):tag_tagn_"or"_(orn+1)_%z("dl"),1:%zq("tagp"))
@@ -937,13 +1005,13 @@ temps ; determine subscripts for order/group sort file
  q
  ;
 
-%mgsqlc2^INT^1^66017,64688.0^0
-%mgsqlc2 ; was 3 (CM) sql compiler - sub driver ; 27 apr 2003  12:44 pm
+%mgsqlc2^INT^1^66144,44772.0^0
+%mgsqlc2 ; was 3 (CM) sql compiler - sub driver ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1190,13 +1258,13 @@ delrec ; delete selected record
  q
  ;
 
-%mgsqlc3^INT^1^66017,64688.0^0
-%mgsqlc3 ;(CM) sql compiler ; 27 apr 2003  12:14 pm
+%mgsqlc3^INT^1^66144,44772.0^0
+%mgsqlc3 ;(CM) sql compiler ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1358,13 +1426,13 @@ top(grp,qnum,sort) ; sql top
  q
  ;
 
-%mgsqlc4^INT^1^66017,64688.0^0
-%mgsqlc4 ;(CM) sql compiler - restrictions ; 12 feb 2002  02:10pm
+%mgsqlc4^INT^1^66144,44772.0^0
+%mgsqlc4 ;(CM) sql compiler - restrictions ; 28 Jan 2022  9:58 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1503,13 +1571,13 @@ mtype(dbid,qnum,tnum,item,other) ; determine sort of data
  q mtype
  ;
 
-%mgsqlc5^INT^1^66017,64688.0^0
-%mgsqlc5 ;(CM) sql compiler - get data ; 19 jan 2003  4:34 pm
+%mgsqlc5^INT^1^66144,44772.0^0
+%mgsqlc5 ;(CM) sql compiler - get data ; 28 Jan 2022  9:58 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1627,13 +1695,13 @@ klind(grp,qnum) ; kill off index to be created
  q
  ;
 
-%mgsqlc6^INT^1^66017,64688.0^0
-%mgsqlc6 ;(CM) sql compiler - aggregates ; 19 jan 2003  4:34 pm
+%mgsqlc6^INT^1^66144,44772.0^0
+%mgsqlc6 ;(CM) sql compiler - aggregates ; 28 Jan 2022  9:58 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1771,13 +1839,13 @@ init(grp,qnum) ; initialise select statement for unique queries
  q
  ;
 
-%mgsqlcd^INT^1^66017,64688.0^0
-%mgsqlcd ;(CM) sql compiler - delete ; 12 feb 2002  02:10pm
+%mgsqlcd^INT^1^66144,44772.0^0
+%mgsqlcd ;(CM) sql compiler - delete ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1838,13 +1906,13 @@ hilev1 ; kill off single index
  q
  ;
 
-%mgsqlci^INT^1^66017,64688.0^0
-%mgsqlci ;(CM) sql compiler - insert ; 12 feb 2002  02:10pm
+%mgsqlci^INT^1^66144,44772.0^0
+%mgsqlci ;(CM) sql compiler - insert ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -2101,13 +2169,13 @@ dbg ; set up referential actions audit trail
  q
  ;
 
-%mgsqlct^INT^1^66017,64688.0^0
-%mgsqlct ;(CM) sql compiler - get table details ; 19 jan 2003  7:12 pm
+%mgsqlct^INT^1^66144,44772.0^0
+%mgsqlct ;(CM) sql compiler - get table details ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -2204,13 +2272,13 @@ dtyp ; get attribute details
  q
  ;
 
-%mgsqlcu^INT^1^66017,64688.0^0
-%mgsqlcu ;(CM) sql compiler update ; 12 feb 2002  02:10pm
+%mgsqlcu^INT^1^66144,44772.0^0
+%mgsqlcu ;(CM) sql compiler update ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -2278,13 +2346,13 @@ setto1 ; add to line
  q
  ;
 
-%mgsqld^INT^1^66017,64688.0^0
-%mgsqld ;(CM) data model access points ; 14 aug 2002  4:08 pm
+%mgsqld^INT^1^66144,44772.0^0
+%mgsqld ;(CM) data model access points ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -2540,13 +2608,14 @@ cno() ; next column name number
  q x
  ;
 
-%mgsqle^INT^1^66017,64688.0^0
-%mgsqle ;(CM) SQL : Embedded expressions ; 12 feb 2002  02:10pm
+
+%mgsqle^INT^1^66144,44772.0^0
+%mgsqle ;(CM) SQL : Embedded expressions ; 28 Jan 2022  10:00 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -2607,7 +2676,7 @@ argx s args=an
  ;
 ops(ops) ; operator list
  n i,op
- s ops=":*:/:\:#:-:+:=:i=:<>:!=:'=:?:>:<:>:<:>=:'<:<=:'>:[:[:]:]:in:not in:like:not like:exists:not exists:between:not between:and:&:or:!:"
+ s ops=":*:/:\:#:-:+:=:i=:<>:!=:'=:?:>:<:>=:'<:<=:'>:[:[:]:]:in:not in:like:not like:exists:not exists:between:not between:and:&:or:!:"
  f i=2:1:$l(ops,":") s op=$p(ops,":",i) i op'="" s ops(op)=i
  q ops
  ;
@@ -2687,13 +2756,13 @@ funlin(funlin,error) ; extract function & parameters wrd from funlin
  q wrd
  ;
 
-%mgsqle1^INT^1^66017,64688.0^0
-%mgsqle1 ;(CM) SQL : Bracket expression in word array ; 12 feb 2002  02:10pm
+%mgsqle1^INT^1^66144,44772.0^0
+%mgsqle1 ;(CM) SQL : Bracket expression in word array ; 28 Jan 2022  10:00 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -2952,13 +3021,13 @@ tmpxk(tmp,sn,wrd,wn) ; remove node from snx array
  q
  ;
 
-%mgsqle2^INT^1^66017,64688.0^0
-%mgsqle2 ;(CM) SQL : Compile code for an expression ; 12 feb 2002  02:10pm
+%mgsqle2^INT^1^66144,44772.0^0
+%mgsqle2 ;(CM) SQL : Compile code for an expression ; 28 Jan 2022  10:00 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -3125,13 +3194,13 @@ mpmx i chr'?1a.u,chr'["""" s error="invalid pattern match "_wrd,error(5)="HY000"
  q ""
  ;
 
-%mgsqln^INT^1^66017,64688.0^0
-%mgsqln ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
+%mgsqln^INT^1^66144,44773.0^0
+%mgsqln ;(CM) MGSQL odbc ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -3636,13 +3705,13 @@ m ; test
  q
  ;
 
-%mgsqln1^INT^1^66017,64688.0^0
-%mgsqln1 ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
+%mgsqln1^INT^1^66144,44773.0^0
+%mgsqln1 ;(CM) MGSQL odbc ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -4167,13 +4236,13 @@ test ; test harness
  q
  ;
 
-%mgsqln2^INT^1^66017,64688.0^0
-%mgsqln2 ;(CM) MGSQL odbc ; 17 dec 2003  3:15 pm
+%mgsqln2^INT^1^66144,44773.0^0
+%mgsqln2 ;(CM) MGSQL odbc ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -4561,13 +4630,13 @@ sqltypeid(type) ; get sql/odbc type ID
  q 12
  ;
 
-%mgsqlo^INT^1^66017,64688.0^0
-%mgsqlo ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
+%mgsqlo^INT^1^66144,44773.0^0
+%mgsqlo ;(CM) query optimisation procedure ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -4588,72 +4657,75 @@ sqltypeid(type) ; get sql/odbc type ID
  ;
 a d vers^%mgsql("%mgsqlo") q
  ;
-main ; optimiser
- n qnum,ord,l,sys,eq,rstr,ord,null,rf,file,tname1,r,f,join,joins,lead,trail,rec,wher
+main(dbid,qid,sql,error) ; optimiser
+ n qnum,word,table,rec
  s qnum=0
-opt1 s qnum=qnum+1 i '$d(^mgtmp($j,"from",qnum)) d rec g exit
- s wo="",spc="",index=^mgtmp($j,"from","i","x",qnum)
- f i=1:1 q:'$d(^mgtmp($j,"where",qnum,i))  s wrd=^mgtmp($j,"where",qnum,i) s:wrd[%z("dsv") wrd=$p(wrd,%z("dsv"),2) s wo=wo_spc_wrd,spc=" "
- d word
- d ent
- s sqlman=0
- d opt^%mgsqlo1
- k jn,rstr,rstrcv,join,file
+opt1 s qnum=qnum+1 i '$d(^mgtmp($j,"from",qnum)) g exit
+ d word(dbid,qnum,.word)
+ d table(dbid,qnum,.table)
+ d opt^%mgsqlo1(dbid,qnum,.word,.table,.rec)
+ k word,table
  g opt1
 exit ; exit
+ d rec(dbid,qid,.rec)
  q
  ;
-word ; generate word array for sub-query
+word(dbid,qnum,word) ; generate word array for sub-query
+ n i,wrd
  f i=1:1 q:'$d(^mgtmp($j,"where",qnum,i))  s wrd=^mgtmp($j,"where",qnum,i),word(i)=wrd
- k wrd
  q
  ;
-ent ; generate ent array for sub-query
- n alias,slot,done
- k ent,entord
+table(dbid,qnum,table) ; generate ent array for sub-query
+ n i,x,alias,slot,done
+ s slot=0
  f i=1:1 q:'$d(^mgtmp($j,"from",qnum,i))  s x=$p(^mgtmp($j,"from",qnum,i),"~",2) i '$d(^mgtmp($j,"from","i",0,x)) s ^mgtmp($j,"from","i",0,x)=0
- f i=1:1 q:'$d(^mgtmp($j,"from",qnum,i))  s alias=$p(^mgtmp($j,"from",qnum,i),"~",2),alias(alias)=i,ent(i)=^mgtmp($j,"from",qnum,i)_"~"_^mgtmp($j,"from","i",0,$p(^mgtmp($j,"from",qnum,i),"~",2))
- s slot=0,alias="" f i=0:0 s alias=$o(%link("ord",qnum,alias)) q:alias=""  s slot=slot+1
- i slot s alias="" f i=0:0 s alias=$o(%link("ord",qnum,alias)) q:alias=""  f i=1:1:slot s entord(i,alias(alias))=""
- f i=1:1 q:'$d(^mgtmp($j,"from","z",qnum,"ord",i))  s alias=^mgtmp($j,"from","z",qnum,"ord",i) i '$d(done(alias)) s slot=slot+1,entord(slot,alias(alias))="",done(alias)=""
+ f i=1:1 q:'$d(^mgtmp($j,"from",qnum,i))  d
+ . s alias=$p(^mgtmp($j,"from",qnum,i),"~",2),alias(alias)=i
+ . s table(0,i)=^mgtmp($j,"from",qnum,i)_"~"_^mgtmp($j,"from","i",0,$p(^mgtmp($j,"from",qnum,i),"~",2))
+ f i=1:1 q:'$d(^mgtmp($j,"from","z",qnum,"ord",i))  d
+ . s alias=^mgtmp($j,"from","z",qnum,"ord",i) i $d(done(alias)) q
+ . s slot=slot+1,table("ord",slot,alias(alias))="",done(alias)=""
  q
  ;
-rec ; record optimisation details for user
- n qnum,fct,key,ino,tname,alias,i,ii
+rec(dbid,qid,rec) ; record optimisation details for user
+ n ref,qnum
  s ref="^mgsqlx(1,dbid,qid,""opt"""
  k @(ref_")")
- f qnum=1:1 q:'$d(^mgtmp($j,"from",qnum))  d rec11
+ f qnum=1:1 q:'$d(^mgtmp($j,"from",qnum))  d rec1(dbid,qid,qnum,ref,.rec)
  q
  ;
-rec11 ; process sub-query
- s cum=1 f tnum=1:1 q:'$d(^mgtmp($j,"from",qnum,tnum))  s r=^mgtmp($j,"from",qnum,tnum) d rec1
+rec1(dbid,qid,qnum,ref,rec) ; process sub-query
+ n cum,tnum,cum
+ s cum=1 f tnum=1:1 q:'$d(^mgtmp($j,"from",qnum,tnum))  d rec2(dbid,qid,qnum,tnum,ref,.rec,.cum)
  q
  ;
-rec1 ; return full optimisation details for alias
- n kno,x,y,z,i,nds,nds1,nds2,ndst,pnds,com
+rec2(dbid,qid,qnum,tnum,ref,rec,cum) ; return full optimisation details for alias
+ n %ind,r,tname,alias,ino,kno,key,com,sc,i,x
+ s r=^mgtmp($j,"from",qnum,tnum)
  s tname=$p(r,"~",1),alias=$p(r,"~",2),ino=^mgtmp($j,"from","i",0,alias) i ino="" s ino=$$pkey^%mgsqld(dbid,tname)
- s alias(alias)=""
- s kno=0,key="",com="",ndst=1 s sc=$$key^%mgsqld(dbid,tname,ino,.%ind) f i=1:1 q:'$d(%ind(ino,i))  s x=%ind(ino,i) k %ind(ino,i) i x?1a.e s kno=kno+1 d rec2
+ s kno=0,key="",com="",cum("ndst")=1,sc=$$key^%mgsqld(dbid,tname,ino,.%ind)
+ f i=1:1 q:'$d(%ind(ino,i))  s x=%ind(ino,i) k %ind(ino,i) i x?1a.e s kno=kno+1 d rec3(dbid,tname,alias,x,ino,kno,.rec,.cum)
  s @(ref_",qnum,tnum)")=tname_"#"_alias_"#"_ino_"#"_key
  q
  ;
-rec2 ; record work involved at each level
- s y=%z("dsv")_alias_"."_x_%z("dsv")
- s (nds,nds1,nds2)=$s($d(^mgsqldbs("e",dbid,tname,ino,kno)):$p(^(kno),"~",1),1:0) i kno>1 s nds1=nds,(nds,nds2)=$s(nds>0:$j(nds/pnds,0,0),1:nds)
- s pnds=nds1,nds="~"_nds
+rec3(dbid,tname,alias,cname,ino,kno,rec,cum) ; record work involved at each level
+ n y,nds,nds1,nds2
+ s y=%z("dsv")_alias_"."_cname_%z("dsv")
+ s (nds,nds1,nds2)=$s($d(^mgsqldbs("e",dbid,tname,ino,kno)):$p(^(kno),"~",1),1:0) i kno>1 s nds1=nds,(nds,nds2)=$s(nds>0:$j(nds/cum("pnds"),0,0),1:nds)
+ s cum("pnds")=nds1,nds="~"_nds
  i $d(rec(y)) s:rec(y)="=" nds="[1]",nds2=1 s:rec(y)'="=" nds="[>"_nds_"<]",nds2=nds2
  i $e(nds)="~" s nds="["_nds_"]"
- s ndst=$s(nds2=1:ndst+1,nds2>1:ndst*nds2,1:ndst),cum=$s(nds2=1:cum+1,nds2>1:cum*nds2,1:cum),key=key_com_x_"#"_cum_"#"_ndst_"#"_nds,com=","
+ s cum("ndst")=$s(nds2=1:cum("ndst")+1,nds2>1:cum("ndst")*nds2,1:cum("ndst")),cum=$s(nds2=1:cum+1,nds2>1:cum*nds2,1:cum),key=key_com_cname_"#"_cum_"#"_cum("ndst")_"#"_nds,com=","
  q
  ;
 
-%mgsqlo1^INT^1^66017,64688.0^0
-%mgsqlo1 ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
+%mgsqlo1^INT^1^66144,44773.0^0
+%mgsqlo1 ;(CM) query optimisation procedure ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -4674,18 +4746,18 @@ rec2 ; record work involved at each level
  ;
 a d vers^%mgsql("%mgsqlo1") q
  ;
-opt ; optimise sub query
- s bdel="{b}"
+opt(dbid,qnum,word,table,rec) ; optimise sub query
+ n ops,props,neops,whr,rstr,notnull,join,indxa
  s ops=$$oper^%mgsqle(.ops,.props,.neops)
- d blks i $l(error) q
- d rstr
- d join
- d indx
- d vrfy
- d optim^%mgsqlo2
+ d blks(.word,.whr) i $l(error) q
+ d rstr(.whr,.ops,neops,props,.rstr,.notnull)
+ d join(qnum,.join)
+ d indx(dbid,.table,.indxa)
+ d vrfy(.join,.indxa,.notnull)
+ d optimise^%mgsqlo2(dbid,qnum,.table,.rstr,.join,.indxa,.rec)
  q
  ;
-blks ; break where statement into blocks by combinational operators
+blks(word,whr) ; break where statement into blocks by combinational operators
  n i,no,no1,ln,ln1,wrd,wrd1,op,obr,cbr,ok
  k whr
  s no1=0 f i=1:1 q:'$d(word(i))  s whr(no1,i)=word(i)
@@ -4695,13 +4767,13 @@ blks1 s no=$o(whr(no)) i no="" g blks3
 blks2 s ln=$o(whr(no,ln)) i ln="" g blks1
  s wrd=whr(no,ln) i wrd'="&",wrd'="!" g blks2
  s ln1=$o(whr(no,ln),-1) i '$l(ln1) s error="error in structure of the 'where' statement",error(5)="HY000" q
- s wrd1=whr(no,ln1) i wrd1[bdel g blks21
- s no1=no1+1,whr(no,ln1)=bdel_no1_bdel
+ s wrd1=whr(no,ln1) i wrd1[%z("db") g blks21
+ s no1=no1+1,whr(no,ln1)=%z("db")_no1_%z("db")
  i wrd1'=")" s whr(no1,ln1)=wrd1 g blks21
  s obr=0,cbr=1 f  s ln1=$o(whr(no,ln1),-1) q:ln1=""  s wrd1=whr(no,ln1) s:wrd1="(" obr=obr+1 s:wrd1=")" cbr=cbr+1 k whr(no,ln1) q:obr=cbr  s whr(no1,ln1)=wrd1
 blks21 s ln1=$o(whr(no,ln)) i '$l(ln1) s error="error in structure of the 'where' statement",error(5)="HY000" q
- s wrd1=whr(no,ln1) i wrd1[bdel g blks2
- s no1=no1+1,whr(no,ln1)=bdel_no1_bdel
+ s wrd1=whr(no,ln1) i wrd1[%z("db") g blks2
+ s no1=no1+1,whr(no,ln1)=%z("db")_no1_%z("db")
  i wrd1'="(" s whr(no1,ln1)=wrd1 g blks2
  s obr=1,cbr=0 f  s ln1=$o(whr(no,ln1)) q:ln1=""  s wrd1=whr(no,ln1) s:wrd1="(" obr=obr+1 s:wrd1=")" cbr=cbr+1 k whr(no,ln1) q:obr=cbr  s whr(no1,ln1)=wrd1
  g blks2
@@ -4710,60 +4782,63 @@ blks3 ; recombine parts to eliminate branches caused by useless brackets
 blks4 s no=$o(whr(no)) i no="" g blksx
  s ln=""
 blks5 s ln=$o(whr(no,ln)) i ln="" g blks4
- s wrd=whr(no,ln) i wrd'[bdel g blks5
- s no1=$p(wrd,bdel,2)
+ s wrd=whr(no,ln) i wrd'[%z("db") g blks5
+ s no1=$p(wrd,%z("db"),2)
  s op="",ln1=$o(whr(no,ln),-1) i $l(ln1) s op=whr(no,ln1)
  i op'="&",op'="!" s ln1=$o(whr(no,ln)) i $l(ln1) s op=whr(no,ln1)
  i op'="&",op'="!" g blks5
- s ok=1,ln1="" f  s ln1=$o(whr(no1,ln1)) q:ln1=""  s wrd1=whr(no1,ln1) i wrd1'[bdel,wrd1'=op s ok=0 q
+ s ok=1,ln1="" f  s ln1=$o(whr(no1,ln1)) q:ln1=""  s wrd1=whr(no1,ln1) i wrd1'[%z("db"),wrd1'=op s ok=0 q
  i 'ok g blks5
  k whr(no,ln)
  s ln1="" f  s ln1=$o(whr(no1,ln1)) q:ln1=""  s whr(no,ln1)=whr(no1,ln1)
  k whr(no1)
  s ln=""
  g blks5
-blksx ;
+blksx ; exit
  q
  ;
 recomb(whr,stat)
  n n,bn,pre,pst
- f  q:stat'[bdel  d
- . s bn=$p(stat,bdel,2)
- . s pre=$p(stat,bdel,1)
- . s pst=$p(stat,bdel,3,999)
+ f  q:stat'[%z("db")  d
+ . s bn=$p(stat,%z("db"),2)
+ . s pre=$p(stat,%z("db"),1)
+ . s pst=$p(stat,%z("db"),3,999)
  . s n="" f  s n=$o(whr(bn,n)) q:n=""  s pre=pre_whr(bn,n)
  . s stat=pre_pst
  . q
  q stat
  ;
-rstr ; find useful restrictions
- n orbrn,orn
- s orbrn=0
+rstr(whr,ops,neops,props,rstr,notnull) ; find useful restrictions
+ n orbrn,orn,root,no,op,opn
+ s orbrn=0,orn=0
  s root=$o(whr("")) i '$l(root) q
- s no=root d op i '$l(op) q
- i op="&" s orn=1 d and q
- i op="!" d or q
- s orn=1 d rstr1 q
+ s no=root,op=$$op(.whr,no,neops,props,.opn) i '$l(op) q
+ i op="&" s orn=1 d and(.whr,no,.ops,neops,props,.opn) q
+ i op="!" d or(.whr,no,.orbrn,.orn,.rstr,.notnull,.ops,neops,props,.opn) q
+ s orn=1 d rstr1(.whr,no,.orbrn,.orn,.rstr,.notnull,.ops,neops,props) q
  q
  ;
-rstr1 ; process individual restriction
- n tmp
- d op i '$l(op) q
+rstr1(whr,no,orbrn,orn,rstr,notnull,ops,neops,props) ; process individual restriction
+ n tmp,op,obr,cbr,x,wrd,n,vn,cn,opc,opn
+ s op=$$op(.whr,no,neops,props,.opn) i '$l(op) q
  i op="&"!(op="!") q
  s (obr,cbr)=0,x=opn f  s x=$o(whr(no,x),-1) q:x=""  s wrd=whr(no,x) s:wrd="(" obr=obr+1 s:wrd=")" cbr=cbr+1 q:obr>cbr  s tmp(0,x)=wrd i obr=cbr q
  s n=0,x="" f  s x=$o(tmp(0,x)) q:x=""  s wrd=tmp(0,x) k tmp(0,x) s n=n+1 s tmp(0,n)=wrd
  s (obr,cbr)=0,n=0,x=opn f  s x=$o(whr(no,x)) q:x=""  s wrd=whr(no,x) s:wrd="(" obr=obr+1 s:wrd=")" cbr=cbr+1 q:cbr>obr  s n=n+1,tmp(1,n)=wrd i obr=cbr q
- s vn=0,cn=1,opc=op d rstr2
- i $d(ops(op)) s vn=1,cn=0,opc=ops(op) d rstr2
+ s vn=0,cn=1,opc=op d rstr2(.whr,.tmp,cn,vn,opc,.orbrn,.orn,.rstr,.notnull,neops)
+ i $d(ops(op)) s vn=1,cn=0,opc=ops(op) d rstr2(.whr,.tmp,cn,vn,opc,.orbrn,.orn,.rstr,.notnull,neops)
  q
  ;
-rstr2 ; resolve expression into functional restriction wrt 1 variable
+rstr2(whr,tmp,cn,vn,opc,orbrn,orn,rstr,notnull,neops) ; resolve expression into functional restriction wrt 1 variable
+ n i
  k tmp(5) f i=1:1 q:'$d(tmp(cn,i))  s tmp(5,i)=tmp(cn,i)
- i neops[(":"_op_":") d rstr4 q
- i $d(tmp(vn,1)),'$d(tmp(vn,2)) s sqvar=tmp(vn,1) i sqvar[%z("dsv") d rstr3 q
+ i neops[(":"_op_":") d rstr4(.tmp,vn,op,.orbrn,.notnull) q
+ i $d(tmp(vn,1)),'$d(tmp(vn,2)) d rstr3(.whr,.tmp,vn,opc,.orbrn,.orn,.rstr) q
  q
  ;
-rstr3 ; find dependancies in constant
+rstr3(whr,tmp,vn,opc,orbrn,orn,rstr) ; find dependancies in constant
+ n sqvar,andn,n,cnst,wrd,wrd1,var,alias,tname,tno
+ s sqvar=tmp(vn,1) i sqvar'[%z("dsv") q
  s sqvar=$p(sqvar,%z("dsv"),2) i sqvar'?1a.e1"."1a.e q
  f andn=1:1 q:'$d(rstr(orbrn,sqvar,orn,andn))
  s n="",cnst=""
@@ -4782,7 +4857,8 @@ rstr32 ; file restriction
  s ^mgtmp($j,"in",$p(cnst,%z("dev"),2))="~"_tname_"~"_cname
  q
  ;
-rstr4 ; evaluate possible not-null restriction
+rstr4(tmp,vn,op,orbrn,notnull) ; evaluate possible not-null restriction
+ n sqvar,cnst
  i orbrn'=0 q
  i '$d(tmp(vn,1))!'$d(tmp(5,1)) q
  i $d(tmp(vn,2))!$d(tmp(5,2)) q
@@ -4793,74 +4869,80 @@ rstr4 ; evaluate possible not-null restriction
  i op="[",cnst?1""""1e.e1"""" s notnull(sqvar)=""
  q
  ;
-and ; process and conditions
+and(whr,no,ops,neops,props,opn) ; process and conditions
+ n x,wrd,no1
  s x=""
 and1 s x=$o(whr(no,x)) i x="" q
- s wrd=whr(no,x) i wrd'[bdel g and1
- s no1=$p(wrd,bdel,2)
- d and2
+ s wrd=whr(no,x) i wrd'[%z("db") g and1
+ s no1=$p(wrd,%z("db"),2)
+ d and2(.whr,no1,.orbrn,.orn,.rstr,.notnull,.ops,neops,props,.opn)
  g and1
  ;
-and2 ; branch beneath and combination
- n no,x
- s no=no1 d op
+and2(whr,no,orbrn,orn,rstr,notnull,ops,neops,props,opn) ; branch beneath and combination
+ n op
+ s op=$$op(.whr,no,neops,props,.opn)
  i op="&" q
- i op="!" d or
- d rstr1
+ i op="!" d or(.whr,no,.orbrn,.orn,.rstr,.notnull,.ops,neops,props,.opn)
+ d rstr1(.whr,no,.orbrn,.orn,.rstr,.notnull,.ops,neops,props)
  q
  ;
-or ; process or conditions
+or(whr,no,orbrn,orn,rstr,notnull,ops,neops,props,opn) ; process or conditions
+ n x,wrd
  s orbrn=orbrn+1,orn=0,x=""
 or1 s x=$o(whr(no,x)) i x="" q
- s wrd=whr(no,x) i wrd'[bdel g or1
- s no1=$p(wrd,bdel,2)
- d or2
+ s wrd=whr(no,x) i wrd'[%z("db") g or1
+ s no1=$p(wrd,%z("db"),2)
+ d or2(.whr,no1,.orbrn,.orn,.rstr,.notnull,.ops,neops,props,.opn)
  g or1
  ;
-or2 ; branch beneath or combination
- n no,x
+or2(whr,no,orbrn,orn,rstr,notnull,ops,neops,props,opn) ; branch beneath or combination
+ n op
  s orn=orn+1
- s no=no1 d op
- i op="&" d and
+ s op=$$op(.whr,no,neops,props,.opn)
+ i op="&" d and(.whr,no,.ops,neops,props,.opn)
  i op="!" q
- d rstr1
+ d rstr1(.whr,no,.orbrn,.orn,.rstr,.notnull,.ops,neops,props)
  q
  ;
-op ; extract combinational or comparison operator for group
+op(whr,no,neops,props,opn) ; extract combinational or comparison operator for group
  n x,wrd,wrd1
  s (op,opn)=""
  s x="" f  s x=$o(whr(no,x)) q:x=""  s wrd=whr(no,x),wrd1=":"_wrd_":" i wrd="!"!(wrd="&")!(neops[wrd1)!(props[wrd1) s op=wrd,opn=x q
- q
+ q op
  ;
-join ; make comprehensive join index
+join(qnum,join) ; make comprehensive join index
  n jn,cname,alias,sqvar
  s jn=0
  s cname="" f  s cname=$o(^mgtmp($j,"from","z",qnum,"join",cname)) q:cname=""  d
  . s jn=jn+1
  . s alias="" f  s alias=$o(^mgtmp($j,"from","z",qnum,"join",cname,alias)) q:alias=""  d
  . . s sqvar=alias_"."_cname
- . . s jnx(jn,sqvar)=""
+ . . s join(jn,sqvar)=""
  . . q
  . q
  q
  ;
-indx ; get all index information
- f i=1:1 q:'$d(ent(i))  s tname=ent(i),alias=$p(tname,"~",2),tname=$p(tname,"~",1) d indx1
- s nofid=i-1
+indx(dbid,table,indxa) ; get all index information
+ n i
+ f i=1:1 q:'$d(table(0,i))  d indx1(dbid,.table,i,.indxa)
+ ;s nofid=i-1
  q
  ;
-indx1 ; retrieve index data for file tname
- n i,pkey
+indx1(dbid,table,no,indxa) ; retrieve index data for file tname
+ n %ind,%d,tname,cname,alias,rc,ino,kno,ano,pnds,sqvar,pkey,keyat,notnl,nds,nnds
+ s tname=table(0,no),alias=$p(tname,"~",2),tname=$p(tname,"~",1)
  s rc=$$ind^%mgsqld(dbid,tname,.%ind)
+ ; get primary key
+ s ino=$$pkey^%mgsqld(dbid,tname),rc=$$key^%mgsqld(dbid,tname,ino,.%ind)
+ f kno=1:1 q:'$d(%ind(ino,kno))  s cname=%ind(ino,kno) i cname?1a.e s pkey(cname)=""
  s ino=""
 indx2 s ino=$o(%ind(ino)) i ino="" g indxx
  i $d(^mgtmp($j,"create","index")),ino=$p(^mgtmp($j,"create","index"),"~",2) g indx2
- s sc=$$key^%mgsqld(dbid,tname,ino,.%ind)
+ s rc=$$key^%mgsqld(dbid,tname,ino,.%ind)
  s kno=0,ano=0,pnds=0
 indx3 s kno=kno+1 i '$d(%ind(ino,kno)) g indx2
  s cname=%ind(ino,kno) i cname'?1a.e g indx3
  s ano=ano+1,sqvar=alias_"."_cname
- i ino=$$pkey^%mgsqld(dbid,tname) s pkey(cname)=""
  s keyat=$d(pkey(cname))
  s notnl=0,%d=$$item^%mgsqld(dbid,tname,cname) i %d'="",$p(%d,"\",4) s notnl=1
  i keyat s notnl=1
@@ -4868,37 +4950,38 @@ indx3 s kno=kno+1 i '$d(%ind(ino,kno)) g indx2
  s (nds,nnds)=0 i $d(^mgsqldbs("e",dbid,tname,ino,ano)) s (nds,nnds)=$p(^(ano),"~",1) s:pnds>0 nnds=$j(nds/pnds,0,0) s pnds=nds
  s indxa("e",alias,ino)=ano,indxa("e",alias,ino,ano)=cname_"~"_keyat_"~"_notnl_"~"_""_"~"_nds_"~"_nnds
  g indx3
-indxx k %ind,ino,ano,kno,cname,keyat,notnl,nds,nnds,pnnds
+indxx ; exit
  q
  ;
-vrfy ; verify indices for usage
- n alias,cname,sqvar,sqvar1,notnul,ino,kno,jn
+vrfy(join,indxa,notnull) ; verify indices for usage
+ n alias,cname,sqvar,sqvar1,notnl,ino,kno,ano,r,jn
  s alias=""
 vrfy1 s alias=$o(indxa("e",alias)) i alias="" g vrfyx
  s ino=""
 vrfy2 s ino=$o(indxa("e",alias,ino)) i ino="" g vrfy1
- i $d(cuse(alias,ino)) g vrfy2 ; index disqualified already
+ i $d(indxa("cuse",alias,ino)) g vrfy2 ; index disqualified already
  s ano=0
 vrfy3 s ano=ano+1 i '$d(indxa("e",alias,ino,ano)) g vrfy2
  s r=indxa("e",alias,ino,ano)
  s cname=$p(r,"~",1),notnl=$p(r,"~",3),sqvar=alias_"."_cname
  i notnl g vrfy4
  i $d(notnull(sqvar)) s notnl=1 g vrfy4
- s jn="" f  s jn=$o(jnx(jn)) q:jn=""!notnl  i $d(jnx(jn,sqvar)) s sqvar1=""  f  s sqvar1=$o(jnx(jn,sqvar1)) q:sqvar1=""  i sqvar1'=sqvar,$d(notnull(sqvar1)) s notnl=1 q
-vrfy4 i 'notnl s duse(alias,ino)="" g vrfy2
+ s jn="" f  s jn=$o(join(jn)) q:jn=""!notnl  i $d(join(jn,sqvar)) s sqvar1=""  f  s sqvar1=$o(join(jn,sqvar1)) q:sqvar1=""  i sqvar1'=sqvar,$d(notnull(sqvar1)) s notnl=1 q
+vrfy4 i 'notnl s indxa("duse",alias,ino)="" g vrfy2
  s $p(indxa("e",alias,ino,ano),"~",3)=notnl,notnull(sqvar)=""
  g vrfy3
-vrfyx ;
+vrfyx ; exit
  q
  ;
 
-%mgsqlo2^INT^1^66017,64688.0^0
-%mgsqlo2 ;(CM) query optimisation procedure ; 12 feb 2002  02:10pm
+
+%mgsqlo2^INT^1^66144,44773.0^0
+%mgsqlo2 ;(CM) query optimisation procedure ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -4917,35 +5000,48 @@ vrfyx ;
  ;  | limitations under the License.                                           |
  ;  ----------------------------------------------------------------------------
  ;
+ s ordn=0,ordm=3 f iii=1:1:20000 s ordn=$$ord(ordm,ordn,.ord) q:ord=""  w !,ordn," ",ord
+ q
 a d vers^%mgsql("%mgsqlo2") q
  ;
-optim ; optimise sub query
- d comb
- d comp
+optimise(dbid,qnum,table,rstr,join,indxa,rec) ; optimise sub query
+ n ord
+ s ord=$$comb(dbid,qnum,.table,.rstr,.join,.indxa)
+ d compapi(dbid,qnum,.table,.rstr,.join,.indxa,.rec,ord)
  q
  ;
-comb ; look at combinations
+comb(dbid,qnum,table,rstr,join,indxa) ; look at combinations
+ n optim,wkfct2,nofid,ordn,ordm,ord,ok,nrun,rec,comb,r,i,wkfct,wkfct2,wkfctb,nodes,nds,ino,inos,tname
  s optim=1,wkfct2=0
+ s nofid=$o(table(0,""),-1)
  s ordn=0,ordm=nofid
-comb1 d ord i ord="" g combx
- s ok=1 f ordn=1:1:nofid i $d(entord(ordn)) s nrun=$p(ord,"#",ordn) i '$d(entord(ordn,nrun)) s ok=0 q
+comb1 s ordn=$$ord(ordm,ordn,.ord) i ord="" g combx
+ s ok=1 f ordn=1:1:nofid i $d(table("ord",ordn)) s nrun=$p(ord,"#",ordn) i '$d(table("ord",ordn,nrun)) s ok=0 q
  i 'ok g comb1
- d comb2
+ d comb2(dbid,qnum,ord,nofid,.table,.rstr,.join,.indxa,.comb,.rec,optim)
  g comb1
-combx s ord="" f  s ord=$o(comb(ord)) q:ord=""  s r=comb(ord),wkfct=$p(r,"~",1),wkfctb=$p(r,"~",2),nodes=$p(r,"~",3) i wkfct=wkfct2 s nds(nodes,wkfctb,ord)=""
+combx ; exit
+ s wkfct2=$g(comb("wkfct2"))+0
+ s ord="" f  s ord=$o(comb(0,ord)) q:ord=""  s r=comb(0,ord),wkfct=$p(r,"~",1),wkfctb=$p(r,"~",2),nodes=$p(r,"~",3) i wkfct=wkfct2 s nds(nodes,wkfctb,ord)=""
  s nodes=$o(nds("")) i $l(nodes) s wkfctb=$o(nds(nodes,""),-1) i $l(wkfctb) s ord=$o(nds(nodes,wkfctb,""))
- i $l(ord),$d(comb(ord)) s inos=$p(comb(ord),"~",4)
- i '$l(ord) s ordn=0 d ord
- i '$l(inos) s dlm="" f i=1:1:ordm s ord=ord_dlm_"0",dlm="#"
- q
+ s inos=""
+ i ord'="",$d(comb(0,ord)) s inos=$p(comb(0,ord),"~",4)
+ i ord="" s ordn=$$ord(ordm,0,.ord)
+ f ordn=1:1:ordm s nrun=$p(ord,"#",ordn) d
+ . s tname=$p(table(0,nrun),"~",1)
+ . s ino=$p(inos,"#",ordn)
+ . i ino="" s ino=$$pkey^%mgsqld(dbid,tname)
+ . s $p(table(0,nrun),"~",3)=ino
+ . q
+ q ord
  ;
-comb2 ; evaluate combination
- n nord,nrun,tname,alias,got
+comb2(dbid,qnum,ord,nofid,table,rstr,join,indxa,comb,rec,optim) ; evaluate combination
+ n inos,wkfcts,nodess,dlms,nord,nodes,nodes1,wkfct,wkfct1,wkfct2,wkfcts,wkfctb1,wkfctb2,wkfctbn1,nord,nrun,tname,alias,ino,inos,got
  s (inos,wkfcts,nodess,dlms)=""
  s nord=0,nodes1=0,wkfct1=0,wkfct2=0,wkfctb1=0,wkfctbn1=0
 comb21 s nord=nord+1,nrun=$p(ord,"#",nord)
- s alias=ent(nrun),tname=$p(alias,"~",1),alias=$p(alias,"~",2)
- d idx s got("f",alias)=""
+ s alias=table(0,nrun),tname=$p(alias,"~",1),alias=$p(alias,"~",2)
+ s ino=$$idx(dbid,qnum,tname,alias,.rstr,.join,.indxa,.got,.nodes,.wkfct,.rec,optim),got("f",alias)=""
  s nodes1=nodes1+nodes,wkfct1=wkfct1+(wkfct/nofid)
  s wkfctb1=wkfctb1+(wkfct/nord),wkfctbn1=wkfctbn1+(1/nord)
  s inos=inos_dlms_ino,wkfcts=wkfcts_dlms_wkfct,nodess=nodess_dlms_nodes,dlms="#"
@@ -4953,21 +5049,22 @@ comb21 s nord=nord+1,nrun=$p(ord,"#",nord)
 comb22 s wkfctb2=$j(wkfctb1/wkfctbn1,"",12)+0
  s wkfct1=$j(wkfct1,"",12)+0
  i wkfct1>wkfct2 s wkfct2=wkfct1
- s comb(ord)=wkfct1_"~"_wkfctb2_"~"_nodes1_"~"_inos_"~"_wkfcts_"~"_nodess
+ s comb(0,ord)=wkfct1_"~"_wkfctb2_"~"_nodes1_"~"_inos_"~"_wkfcts_"~"_nodess
+ s comb("wkfct2")=wkfct2
  q
  ;
-idx ; select best index (output: ino, dep, sat, nodes, wkfct)
- n use,idx,nds,inop
- s ino="",maxdep=0,maxsat=0
+idx(dbid,qnum,tname,alias,rstr,join,indxa,got,nodes,wkfct,rec,optim) ; select best index (output: ino, dep, sat, nodes, wkfct)
+ n ino,inop,maxdep,maxsat,maxscr,ano,nnodes,rstrto,rstrn,dep,sat,scr,r,cname,nnodes,sqvar,orn,andn,use,idx,nds
+ s ino="",maxdep=0,maxsat=0,maxscr=0
 idx1 s ino=$o(indxa("e",alias,ino)) i ino="" g idxx
- i $d(cuse(alias,ino)) g idx1
- i optim,$d(duse(alias,ino)) g idx1
+ i $d(indxa("cuse",alias,ino)) g idx1
+ i optim,$d(indxa("duse",alias,ino)) g idx1
  k got("a",alias)
  s ano=0,nodes=0,rstrto=-1,rstrn=0
 idx2 s ano=ano+1 i '$d(indxa("e",alias,ino,ano)) g idx2x
  s r=indxa("e",alias,ino,ano)
  s cname=$p(r,"~",1),nnodes=$p(r,"~",6),sqvar=alias_"."_cname
- d idx3
+ d idx3(sqvar,ino,.rstr,.join,.use,.got)
  s got("a",alias,cname)=""
  i '$d(use(ino,sqvar)) s:rstrto=-1 rstrto=ano-1 s nodes=nodes+nnodes
  i $d(use(ino,sqvar)) s rstrn=rstrn+1
@@ -4977,12 +5074,18 @@ idx2x ; index processed
  s dep=rstrto/ano,sat=rstrn/ano
  i dep>maxdep s maxdep=dep
  i sat>maxsat s maxsat=sat
- s idx(ino)=dep_"~"_sat_"~"_(nodes+0)
+ s idx(ino)=dep_"~"_sat_"~"_(nodes+0)_"~"_(dep+sat)
  g idx1
-idxx s ino="" f  s ino=$o(idx(ino)) q:ino=""  s r=idx(ino),dep=$p(r,"~",1),sat=$p(r,"~",2) i dep<maxdep,sat<maxsat k idx(ino)
+idxx ; choose best index
+ ; eliminate useless indices
+ s ino="" f  s ino=$o(idx(ino)) q:ino=""  s r=idx(ino),dep=$p(r,"~",1),sat=$p(r,"~",2) i dep<maxdep,sat<maxsat k idx(ino)
+ ; eliminate indices with sub-optimal scores
+ s ino="" f  s ino=$o(idx(ino)) q:ino=""  s r=idx(ino),scr=$p(r,"~",4) i scr>maxscr s maxscr=scr
+ s ino="" f  s ino=$o(idx(ino)) q:ino=""  s r=idx(ino),scr=$p(r,"~",4) i scr<maxscr k idx(ino)
  s ino="" f  s ino=$o(idx(ino)) q:ino=""  s nodes=$p(idx(ino),"~",3),nds(nodes,ino)=""
  s inop=$$pkey^%mgsqld(dbid,tname)
- s nodes=$o(nds("")) i $l(nodes) d
+ ; look at node counts, if available
+ s nodes=$o(nds("")) i nodes'="" d
  . i $d(nds(nodes,inop)) s ino=inop q
  . s ino=$o(nds(nodes,""))
  . q
@@ -4991,13 +5094,19 @@ idxx s ino="" f  s ino=$o(idx(ino)) q:ino=""  s r=idx(ino),dep=$p(r,"~",1),sat=$
  s (dep,sat)=0
  i $d(idx(ino)) s r=idx(ino),dep=$p(r,"~",1),sat=$p(r,"~",2)
  s wkfct=(dep+sat)/2
- i optim q
- s sqvar="" f  s sqvar=$o(use(ino,sqvar)) q:sqvar=""  s orn="" f  s orn=$o(use(ino,sqvar,orn)) q:orn=""  s andn="" f  s andn=$o(use(ino,sqvar,orn,andn)) q:andn=""  d idx4
- q
+ i optim q ino
+ s sqvar="" f  s sqvar=$o(use(ino,sqvar)) q:sqvar=""  d
+ . s orn="" f  s orn=$o(use(ino,sqvar,orn)) q:orn=""  d
+ . . s andn="" f  s andn=$o(use(ino,sqvar,orn,andn)) q:andn=""  d idx4(qnum,sqvar,ino,orn,andn,.use,.rec)
+ . . q
+ . q
+ q ino
  ;
-idx3 ; find/join to a restriction
- n jn
- s jn="",ok=0 f  s jn=$o(jnx(jn)) q:jn=""!ok  i $d(jnx(jn,sqvar)) s sqvar1="" f  s sqvar1=$o(jnx(jn,sqvar1)) q:sqvar1=""  i sqvar1'=sqvar d gotat i ok q
+idx3(sqvar,ino,rstr,join,use,got) ; find/join to a restriction
+ n jn,ok,sqvar1,orbrn,orn,andn
+ s jn="",ok=0 f  s jn=$o(join(jn)) q:jn=""  i $d(join(jn,sqvar)) d  i ok q
+ . s sqvar1="" f  s sqvar1=$o(join(jn,sqvar1)) q:sqvar1=""  i sqvar1'=sqvar s ok=$$gotat(sqvar1,.got) i ok q
+ . q
  i ok s use(ino,sqvar,1,1,"op")="=",use(ino,sqvar,1,1,"cnst")=%z("dsv")_sqvar1_%z("dsv") g idx3x
  s orbrn=""
 idx31 i $d(use(sqvar)) g idx3x
@@ -5006,70 +5115,87 @@ idx31 i $d(use(sqvar)) g idx3x
 idx32 s orn=$o(rstr(orbrn,sqvar,orn)) i orn="" g idx31
  s andn=""
 idx33 s andn=$o(rstr(orbrn,sqvar,orn,andn)) i andn="" g idx32
- s ok=1,sqvar1="" f  s sqvar1=$o(rstr(orbrn,sqvar,orn,andn,"dep",sqvar1)) q:sqvar1=""  d gotat i 'ok q
+ s ok=1,sqvar1="" f  s sqvar1=$o(rstr(orbrn,sqvar,orn,andn,"dep",sqvar1)) q:sqvar1=""  s ok=$$gotat(sqvar1,.got) i 'ok q
  i 'ok,orbrn'=0 k use(sqvar) g idx31
  i 'ok g idx33
  s use(ino,sqvar,orn,andn,"op")=rstr(orbrn,sqvar,orn,andn,"op")
  s use(ino,sqvar,orn,andn,"cnst")=rstr(orbrn,sqvar,orn,andn,"cnst")
  g idx33
-idx3x ;
+idx3x ; exit
  q
  ;
-idx4 ; file restriction for compiler to use
+idx4(qnum,sqvar,ino,orn,andn,use,rec) ; file restriction for compiler to use
  s (^mgtmp($j,"pre",qnum,%z("dsv")_sqvar_%z("dsv"),orn,andn,"op"),rec(%z("dsv")_sqvar_%z("dsv")))=use(ino,sqvar,orn,andn,"op")
  s ^mgtmp($j,"pre",qnum,%z("dsv")_sqvar_%z("dsv"),orn,andn,"cnst")=use(ino,sqvar,orn,andn,"cnst")
  q
  ;
-gotat ; determine whether sqvar1 is available at this point
- n alias,cname
- s ok=0,alias=$p(sqvar1,".",1),cname=$p(sqvar1,".",2)
- i '$l(alias),'$l(cname) q
- s ok=0 i $d(got("a",alias,cname)) s ok=1 q
- q
+gotat(sqvar,got) ; determine whether sqvar1 is available at this point
+ n alias,cname,ok
+ s ok=0,alias=$p(sqvar,".",1),cname=$p(sqvar,".",2)
+ i alias=""!(cname="") q ok
+ s ok=0 i $d(got("a",alias,cname)) s ok=1 q ok
+ q ok
  ;
-ord ; get next running order
+ord(ordm,ordn,ord) ; get next running order
  n i,j,x,y,ok
  s ordn=ordn+1 i ordn=1 g ord1
- s ok=0 f i=ordm:-1:1 d ord2 i ok s $p(ord,"#",i)=x q
- i 'ok s ord="" q
+ s ok=0 f i=ordm:-1:1 s x=$$ord2(i,.ord) i x'="" s $p(ord,"#",i)=x q
+ i x="" s ord="" q ordn
  f j=1:1:i s y($p(ord,"#",j))=""
  f i=i+1:1:ordm f j=1:1 i '$d(y(j)) s $p(ord,"#",i)=j,y(j)="" q
- q
+ q ordn
 ord1 ; first pass
  f i=1:1:ordm s $p(ord,"#",i)=i
- q
+ q ordn
  ;
-ord2 ; get next allowed number in series
- n j,y
- f j=1:1:i-1 s y($p(ord,"#",j))=""
- s x=$p(ord,"#",i),ok=0 f j=x+1:1 s:'$d(y(j)) x=j,ok=1 i ok q
+ord2(no,ord) ; get next allowed number in series
+ n j,y,x,ok
+ f j=1:1:no-1 s y($p(ord,"#",j))=""
+ s x=$p(ord,"#",no),ok=0 f j=x+1:1 s:'$d(y(j)) x=j,ok=1 i ok q
  i x>ordm s ok=0
- q
+ i 'ok s x=""
+ q x
  ;
-comp ; interface to compiler
+compapi(dbid,qnum,table,rstr,join,indxa,rec,ord) ; interface to compiler
+ n optim,nofid,ordn,comb,nord,nino,i,tname,alias
  s optim=0
+ s nofid=$o(table(0,""),-1)
+ s table("ordx")=ord
+ ; process opimisation hints
+ i $d(^mgtmp($j,"from","i","f")) d
+ . s nord=""
+ . i '$d(table("ord")) f i=1:1:nofid s nord=nord_$s(i>1:"#",1:"")_i
+ . f i=1:1:nofid d
+ . . s tname=$p(table(0,i),"~",1),alias=$p(table(0,i),"~",2),nino=""
+ . . i alias'="" s nino=$g(^mgtmp($j,"from","i","f",alias))
+ . . i nino="" s nino=$g(^mgtmp($j,"from","i","f",tname))
+ . . i nino'="" s $p(table(0,i),"~",3)=nino
+ . . q
+ . s ord=nord,table("ordx")=ord
+ . q
+ ; optimisation complete and hints acknowledged
  k ^mgtmp($j,"from",qnum),^mgtmp($j,"from","x",qnum)
- f ordn=1:1:nofid d comp1
- d comb2
+ f ordn=1:1:nofid d compapi1(dbid,qnum,.table,.rstr,.join,.indxa,ord,ordn)
+ d comb2(dbid,qnum,ord,nofid,.table,.rstr,.join,.indxa,.comb,.rec,optim)
  q
  ;
-comp1 ; disallow all indices except chosen one
- n i,r,ino,ino1,alias,tname,nrun,agg,cname
- s nrun=$p(ord,"#",ordn),ino=$p(inos,"#",ordn)
- s alias=ent(nrun),tname=$p(alias,"~",1),alias=$p(alias,"~",2)
- k cuse(alias,ino)
- s ino1="" f  s ino1=$o(indxa("e",alias,ino1)) q:ino1=""  i ino1'=ino s cuse(alias,ino1)=""
+compapi1(dbid,qnum,table,rstr,join,indxa,ord,ordn) ; disallow all indices except chosen one
+ n nrun,alias,tname,ino,ino1
+ s nrun=$p(ord,"#",ordn)
+ s alias=table(0,nrun),tname=$p(alias,"~",1),ino=$p(alias,"~",3),alias=$p(alias,"~",2)
+ k indxa("cuse",alias,ino)
+ s ino1="" f  s ino1=$o(indxa("e",alias,ino1)) q:ino1=""  i ino1'=ino s indxa("cuse",alias,ino1)=""
  s ^mgtmp($j,"from",qnum,ordn)=tname_"~"_alias,(^mgtmp($j,"from","x",qnum,tname),^mgtmp($j,"from","x",qnum,alias))=ordn,^mgtmp($j,"from","i",0,alias)=ino
  q
  ;
 
-%mgsqlp^INT^1^66017,64688.0^0
-%mgsqlp ;(CM) sql language processor ; 14 aug 2002  6:16 pm
+%mgsqlp^INT^1^66144,44773.0^0
+%mgsqlp ;(CM) sql language processor ; 28 Jan 2022  10:02 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -5101,6 +5227,7 @@ main1 ; re-entry
  s error=""
  d cmnd(.sql2)
  d rips(.line,.wrk,.error) i $l(error) g exit
+ d crlf(.wrk)
  s qnummax=$$cdel(.sql2,.wrk,.sql,.error) i $l(error) g exit
  d main^%mgsqlp1(qnummax,.sql2,.wrk,.sql,.error) i $l(error) g exit
  i $g(sql(1,2))="from "_%z("dq")_2_%z("dq")_" t0" d cog i ok g main1
@@ -5149,6 +5276,11 @@ rips3 i instring,'(qno#2) s ^mgtmp($j,"string",sno)=string,instring=0,string=""
  s wrk(ln2)=$e(wrk(ln2),cn2+1,9999)
  g rips0
 ripsx ; exit
+ q
+ ;
+crlf(wrk) ; rip out CRLF sequences
+ n ln
+ s ln="" f  s ln=$o(wrk(ln)) q:ln=""  s wrk(ln)=$tr(wrk(ln),$c(13,10),"  ")
  q
  ;
 rstring(line) ; put strings back into line
@@ -5297,13 +5429,13 @@ test2 ;
  q
  ;
 
-%mgsqlp1^INT^1^66017,64688.0^0
-%mgsqlp1 ;(CM) sql language processor ; 14 aug 2002  6:15 pm
+%mgsqlp1^INT^1^66144,44773.0^0
+%mgsqlp1 ;(CM) sql language processor ; 28 Jan 2022  10:02 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -5573,13 +5705,13 @@ unix2 s ln=ln+1 i '$d(sql(qnum,ln)) g unix1
  g unix2
  ;
 
-%mgsqlr^INT^1^66017,64688.0^0
-%mqsqlr ;(CM) MGSQL routine management ; 11 feb 2002  2:40 pm
+%mgsqlr^INT^1^66144,44773.0^0
+%mqsqlr ;(CM) MGSQL routine management ; 28 Jan 2022  10:02 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -5646,13 +5778,13 @@ zsydb ; yottadb
  q 1
  ;
 
-%mgsqls^INT^1^66017,64688.0^0
-%mgsqls ;(CM) general utilities ; 12 feb 2002  02:10pm
+%mgsqls^INT^1^66144,44773.0^0
+%mgsqls ;(CM) general utilities ; 28 Jan 2022  10:02 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -5931,13 +6063,13 @@ logarray(array,title,context) ; log event
  q
  ;
 
-%mgsqlv^INT^1^66017,64688.0^0
-%mqsqlv ;(CM) sql - validate query ; 14 aug 2002  6:23 pm
+%mgsqlv^INT^1^66144,44773.0^0
+%mqsqlv ;(CM) sql - validate query ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -6096,13 +6228,13 @@ trx(wrd) ; data translation
  q %z("dsv")_sqv_%z("dsv")
  ;
 
-%mgsqlv1^INT^1^66017,64688.0^0
-%mgsqlv1 ;(CM) sql - validate query part 2 ; 14 aug 2002  6:24 pm
+%mgsqlv1^INT^1^66144,44773.0^0
+%mgsqlv1 ;(CM) sql - validate query part 2 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -6134,7 +6266,7 @@ where(dbid,sql,qnum,arg,error) ; validate 'where' statement
  s pred="" i $d(^mgtmp($j,"pred",qnum)) s pred=^(qnum)
  i $l(pred) s:$l(arg) arg=" and "_arg s arg="("_pred_")"_arg
  i $l(arg) s ex(1)=arg d where^%mgsqle(.ex,.word,.error) i $l(error) g wherex
- d link^%mgsqlv6
+ d link^%mgsqlv6(dbid,.sql,qnum,arg,.error)
  s wn=0
 where1 s wn=wn+1 i '$d(word(0,wn)) g wherex
  s wrd=word(0,wn)
@@ -6221,13 +6353,13 @@ corelate(sql,qnum,item,error) ; determine if sql variable comes from different s
  q
  ;
 
-%mgsqlv2^INT^1^66017,64688.0^0
-%mgsqlv2 ;(CM) sql - validate query part 3 ; 14 aug 2002  6:24 pm
+%mgsqlv2^INT^1^66144,44773.0^0
+%mgsqlv2 ;(CM) sql - validate query part 3 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -6477,13 +6609,13 @@ sqlfun(sqlfun) ; translate SQL function name to M equivalent
  q mfun
  ;
 
-%mgsqlv3^INT^1^66017,64688.0^0
-%mgsqlv3 ;(CM) sql - validate query part 4 ; 12 feb 2002  02:10pm
+%mgsqlv3^INT^1^66144,44773.0^0
+%mgsqlv3 ;(CM) sql - validate query part 4 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -6707,13 +6839,13 @@ asn21 s eq1(wrd)=set,eq1(wrd,"c")=setc,eq1(wrd,"f")=alias,eq1=eq1+1
  q
  ;
 
-%mgsqlv4^INT^1^66017,64688.0^0
-%mgsqlv4 ;(CM) sql - validate query part 5 ; 12 feb 2002  02:10pm
+%mgsqlv4^INT^1^66144,44773.0^0
+%mgsqlv4 ;(CM) sql - validate query part 5 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -6793,6 +6925,7 @@ table(dbid,sql,error) ; create a new table
  . s value=$$trim^%mgsqls($p(item,"=",2)," ")
  . i name'="" s tname($$lcase^%mgsqls(name))=value
  . q
+ i '$d(cols(1)) s error="No columns specified" q
  s rc=$$ctable^%mgsqld(dbid,.tname,.cols)
  q
  ;
@@ -6936,13 +7069,13 @@ inssa ; select all items from table
  q
  ;
 
-%mgsqlv5^INT^1^66017,64688.0^0
-%mgsqlv5 ;(CM) sql - validate query - part 6 ; 12 feb 2002  02:10pm
+%mgsqlv5^INT^1^66144,44773.0^0
+%mgsqlv5 ;(CM) sql - validate query - part 6 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -6985,7 +7118,7 @@ fromxx ; compile 'on' predicates
  q
  ;
 from1(dbid,qnum,tnum,tname) ; validate each table selected from
- n %ref,i,ii,j,x,y,z,z1,zz,ino,inof,exp,pn,nat,jtyp,ok,com
+ n %ref,i,ii,j,x,y,z,z1,zz,ino,inof,inop,exp,pn,nat,jtyp,ok,com
  f x="inner","left","right","full" s jtyp(x)=""
  s (exp,pn,obr,cbr)=0,y="",com="" f i=1:1:$l(tname," ") s x=$$trim^%mgsqls($p(tname," ",i)," ") i $l(x) d
  . i x["(" s obr=obr+1
@@ -7054,17 +7187,21 @@ from15 ; outer join
  s ^mgtmp($j,"from","z",qnum,"o",0,tnum+1)=y
  d nat(dbid,qnum,tnum,tname,nat,.exp,.error)
 from16 ; process table/alias
+ s inof=""
  i tname[" " s alias=$p(tname," ",2) s:'$l(alias) error="invalid component '"_tname_"' in 'from' statement",error(5)="HY000" q:$l(error)  s tname=$p(tname," ",1)
  i tname["." s dbid=$p(tname,".",1),tname=$p(tname,".",2)
+ i tname[":" s inof=$p(tname,":",2),tname=$p(tname,":",1)
  i '$l(dbid) s error="invalid 'from' statement",error(5)="HY000" q
  i '$l(tname) s error="invalid 'from' statement",error(5)="HY000" q
- s ino=$$pkey^%mgsqld(dbid,tname),inof="" i alias[":" s inof=$$from3(qnum,.alias) i inof'="" s ino=inof
+ s (ino,inop)=$$pkey^%mgsqld(dbid,tname)
+ i alias[":" s inof=$$from3(qnum,.alias)
+ i inof'="" s:inof="0" inof=inop s ino=inof
  s ok=$$fromv(dbid,tname,.error) i $l(error) q
  f ii=1:1 q:'$d(^mgtmp($j,"from","x",ii))  i $d(^mgtmp($j,"from","x",ii,alias)) s error="query contains duplication of table/alias '"_alias_"'",error(5)="HY000" q
  i $l(error) q
- s %ref=$$ref^%mgsqld(dbid,tname,ino) i %ref="" s error="invalid index number '"_ino_"' for table '"_tname_"'",error(5)="HY000" q
+ s %ref=$$ref^%mgsqld(dbid,tname,ino) i %ref="" s error="invalid index name '"_ino_"' for table '"_tname_"'",error(5)="HY000" q
  s tnum=tnum+1,^mgtmp($j,"from",qnum,tnum)=tname_"~"_alias,^mgtmp($j,"from","x",qnum,tname)=tnum,^mgtmp($j,"from","x",qnum,alias)=tnum
- s ^mgtmp($j,"from","i",0,alias)=ino i $l(inof) s ^mgtmp($j,"from","i","f",alias)=inof
+ s ^mgtmp($j,"from","i",0,alias)=ino i inof'="" s ^mgtmp($j,"from","i","f",$s(alias'="":alias,1:tname))=inof
  g from11
  ;
 from3(qnum,alias) ; index specification
@@ -7132,13 +7269,13 @@ natv1(dbid,qnum,tname1,tname2,cname,error) ; column in tables test
  q
  ;
 
-%mgsqlv6^INT^1^66017,64688.0^0
-%mgsqlv6 ;(CM) sql - set expansion ; 12 feb 2002  02:10pm
+%mgsqlv6^INT^1^66144,44773.0^0
+%mgsqlv6 ;(CM) sql - set expansion ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -7159,108 +7296,17 @@ natv1(dbid,qnum,tname1,tname2,cname,error) ; column in tables test
  ;
 a d vers^%mgsql("%mgsqlv6") q
  ;
-link ; expand where statement for set expansion link
- n at,man,alias
- i '$d(%link(qnum)) q
- s cname="" f i=0:0 s cname=$o(%link(qnum,cname)) q:cname=""  s alias="" f i=0:0 s alias=$o(%link(qnum,cname,alias)) q:alias=""  i $d(%link(qnum,cname,alias,"man")) s man(cname)=""
- s cname="" f i=0:0 s cname=$o(man(cname)) q:cname=""  s alias="" f i=0:0 s alias=$o(%link(qnum,cname,alias)) q:alias=""  s %link(qnum,cname,alias,"man")=""
- s cname="" f i=0:0 s cname=$o(%link(qnum,cname)) q:cname=""  s alias="" f i=0:0 s alias=$o(%link(qnum,cname,alias)) q:alias=""  d link1
- s cname="" f i=0:0 s cname=$o(%link(qnum,cname)) q:cname=""  i '$d(%link("done",qnum,cname)) d link4
- f i=1:1 q:'$d(^mgtmp($j,"sel",qnum,i))  s var=^(i) d links
-linkx ;
- q
- ;
-link1 ; expand where
- n tname,lnkat,strt,end
- s sqvar=alias_"."_cname,tname=%link(qnum,cname,alias),lnkat=$p(tname,".",2),tname=$p(tname,".",1)
- f i=1:1 q:'$d(word(0,i))  i i>1,word(0,i)="=",$d(word(0,i+1)) s x=word(0,i-1),y=word(0,i+1) d link2 i $d(cnst(0)) q
- i '$d(cnst(0)) q
- s %link("done",qnum,cname)=""
- s two=$d(%link(qnum,cname,alias,"man")) d link3
- f i=end+1:1 q:'$d(word(0,i))  s end(i-end)=word(0,i)
- s alias1=$o(%link(qnum,cname,alias,"a","")),alias2=$o(%link(qnum,cname,alias,"a",alias1)),%link("ord",qnum,alias1)="" i $l(alias2) s %link("ord",qnum,alias2)=""
- s l=strt
- s x="(" d link11 s x=%z("dsv")_alias1_"."_cname_%z("dsv") d link11 s x="=" d link11
- s i="" f  s i=$o(cnst(0,i)) q:i=""  s x=cnst(0,i) d link11
- s x=")" d link11 i '$l(alias2) d link12 g link13
- s x="&" d link11 s x="(" d link11 s x=%z("dsv")_alias2_"."_lnkat_%z("dsv") d link11 s x="=" d link11 s x=%z("dsv")_alias1_"."_lnkat_%z("dsv") d link11 s x=")" d link11
- s x="&" d link11 s x="(" d link11 s x=%z("dsv")_sqvar_%z("dsv") d link11 s x="=" d link11 s x=%z("dsv")_alias2_"."_cname_%z("dsv") d link11 s x=")" d link11
-link13 f i=1:1 q:'$d(end(i))  s x=end(i) d link11
- q
- ;
-link11 ; add processed word to where statement
- s word(0,l)=x,l=l+1
- q
- ;
-link12 ; specific and unique
- s x="&" d link11 s x="(" d link11 s x=%z("dsv")_sqvar_%z("dsv") d link11 s x="=" d link11 s x=%z("dsv")_alias1_"."_lnkat_%z("dsv") d link11 s x=")" d link11
- q
- ;
-link2 ; extract constant/expression
- n j,n,n1,n2,z,obr,cbr
- k cnst(0)
- s n1=0 i $e(x,1,3)=%z("dsv"),x'[" " s x=$p(x,%z("dsv"),2) i x?1a.e1"."1a.e,$d(%link(qnum,$p(x,".",2),$p(x,".",1))) s n1=i+1,n=1,cnst=y i y[%z("dsv") q
- i $e(y,1,3)=%z("dsv"),y'[" " s y=$p(y,%z("dsv"),2) i y?1a.e1"."1a.e,$d(%link(qnum,$p(y,".",2),$p(y,".",1))) s n1=i-1,n=-1,cnst=x i x[%z("dsv") q
- i 'n1 q
- i cnst[%z("dev") s cnst(0,1)=cnst,strt=i-1,end=i+1 q
- i cnst'="(",cnst'=")" q
- s (obr,cbr,n2)=0,ok=1 f j=n1:n q:'$d(word(0,j))  s z=word(0,j) s:z="(" obr=obr+1 s:z=")" cbr=cbr+1 s n2=n2+1,cnst(0,n2*n)=z s:z[%z("dsv") ok=0 i 'ok!obr=cbr q
- i n=1 s strt=i-1,end=j
- i n=-1 s strt=j,end=i+1
- i 'ok k cnst(0) q
- q
- ;
-link3 ; expand from statement for link
- n n,alias1,fct
- i '$d(%link("a")) s %link("a")=0
- s n=%link("a")+1,%link("a")=n
- f tnum=1:1 q:'$d(^mgtmp($j,"from",qnum,tnum))
- s alias1="y$"_n
-link31 s %link(qnum,cname,alias,"a",alias1)="",%link("ax",qnum,tname,alias1)="",^mgtmp($j,"from",qnum)=^mgtmp($j,"from",qnum)_","_tname_" "_alias1,^mgtmp($j,"from",qnum,tnum)=tname_"~"_alias1,^mgtmp($j,"from","x",qnum,alias1)=fct,^mgtmp($j,"from","x",qnum,tname)=fct
- i two s tnum=fct+1,alias1="z$"_n,two=0 g link31
- q
- ;
-link4 ; non specific joins
- n end
- s %link("done",qnum,cname)=""
- f i=1:1 q:'$d(word(0,i))  s end(i)=word(0,i)
- s l=1
- s x="(" d link11
- s alias="" f i=0:1 s alias=$o(%link(qnum,cname,alias)) q:alias=""  d link41
- i $d(end(1)) s x="&" d link11 f i=1:1 q:'$d(end(i))  s x=end(i) d link11
- s x=")" d link11
- q
- ;
-link41 ; add join
- s tname=%link(qnum,cname,alias),lnkat=$p(tname,".",2),tname=$p(tname,".",1)
-link42 s alias1=$o(%link("ax",qnum,tname,""))
- i '$l(alias1) s two=0 d link3 g link42
- i i s x="&" d link11
- s x="(" d link11 s x=%z("dsv")_alias_"."_cname_%z("dsv") d link11 s x="=" d link11 s x=%z("dsv")_alias1_"."_cname_%z("dsv") d link11 s x=")" d link11
- q
- ;
-links ; substitute select column
- n lvar,alias,alias1,tname1,cname,at1,var1,x
- i var'[%z("dsv") q
- s lvar=$p(var,%z("dsv"),2) i lvar'?1a.e1"."1a.e q
- s alias=$p(lvar,".",1),cname=$p(lvar,".",2) i '$d(%link(qnum,cname,alias)) q
- s tname1=%link(qnum,cname,alias),at1=$p(tname1,".",2),tname1=$p(tname1,".",1),alias1=$o(%link("ax",qnum,tname,""))
- i '$l(alias1) q
- s var1=%z("dsv")_"."_cname_%z("dsv")
- k ^mgtmp($j,"selx",qnum,var) s ^mgtmp($j,"sel",qnum,i)=var1,^mgtmp($j,"selx",qnum,var1)=i
- i $d(^mgtmp($j,"outsel",qnum,i)) k ^mgtmp($j,"outselx",qnum,var) s ^mgtmp($j,"outsel",qnum,i)=var1,^mgtmp($j,"outselx",qnum,var1)=i
- s item=%z("dsv")_alias1_"."_at1_%z("dsv") d addselx^%mgsqlv2
- s ln=$p(var1,%z("dsv"),2)_" <= "_alias1_"."_at1_" ;" d decex^%mgsqlv1
+link(dbid,sql,qnum,arg,error) ; expand where statement
  q
  ;
 
-%mgsqlw^INT^1^66017,64688.0^0
-%mgsqlw ;(CM) MGSQL HTTP ; 17 dec 2003  3:15 pm
+%mgsqlw^INT^1^66144,44773.0^0
+%mgsqlw ;(CM) MGSQL HTTP ; 28 Jan 2022  10:04 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -7473,13 +7519,13 @@ test ; test harness
  q
  ;
 
-%mgsqlx^INT^1^66017,64688.0^0
-%mgsqlx ;(CM) sql - MGSQL as a server ; 12 feb 2002  02:10pm
+%mgsqlx^INT^1^66144,44773.0^0
+%mgsqlx ;(CM) sql - MGSQL as a server ; 28 Jan 2022  10:04 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -7614,7 +7660,7 @@ comp(dbid,qid,rou,sql,line,error) ; compile query
  k ^mgsqlx(1,dbid,qid,"var")
  d delcalls(dbid,qid)
  d delupd(dbid,qid)
- d main^%mgsqlo i $l(error) g compx
+ d main^%mgsqlo(dbid,qid,.sql,.error) i $l(error) g compx
  d main^%mgsqlc i $l(error) g compx
 compx ; exit compilation process
  i $l(error) s ^mgsqlx(1,dbid,qid,"error")=error d del(dbid,qid)
@@ -7643,6 +7689,7 @@ gvars(vars) ; initialize global variables
  s vars("dl")="{l}"
  s vars("ds")="{$}"
  s vars("dc")="{z}"
+ s vars("db")="{b}"
  s vars("vok")=vars("dsv")_"__status"_vars("dsv")
  s vars("vdata")=vars("dsv")_"__data"_vars("dsv")
  s vars("vdatax")=vars("dsv")_"__datax"_vars("dsv")
@@ -7663,13 +7710,13 @@ gcvars(dbid,qid,vars) ; initialize global variables
  q
  ;
 
-%mgsqlz^INT^1^66017,64688.0^0
-%mgsqlz ;(CM) MGSQL : client-server computing ; 12 feb 2002  02:10pm
+%mgsqlz^INT^1^66144,44773.0^0
+%mgsqlz ;(CM) MGSQL : client-server computing ; 28 Jan 2022  10:04 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
