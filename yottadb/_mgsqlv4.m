@@ -1,9 +1,9 @@
-%mgsqlv4 ;(CM) sql - validate query part 5 ; 12 feb 2002  02:10pm
+%mgsqlv4 ;(CM) sql - validate query part 5 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -83,6 +83,7 @@ table(dbid,sql,error) ; create a new table
  . s value=$$trim^%mgsqls($p(item,"=",2)," ")
  . i name'="" s tname($$lcase^%mgsqls(name))=value
  . q
+ i '$d(cols(1)) s error="No columns specified" q
  s rc=$$ctable^%mgsqld(dbid,.tname,.cols)
  q
  ;

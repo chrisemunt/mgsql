@@ -1,9 +1,9 @@
-%mgsqle ;(CM) SQL : Embedded expressions ; 12 feb 2002  02:10pm
+%mgsqle ;(CM) SQL : Embedded expressions ; 28 Jan 2022  10:00 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -64,7 +64,7 @@ argx s args=an
  ;
 ops(ops) ; operator list
  n i,op
- s ops=":*:/:\:#:-:+:=:i=:<>:!=:'=:?:>:<:>:<:>=:'<:<=:'>:[:[:]:]:in:not in:like:not like:exists:not exists:between:not between:and:&:or:!:"
+ s ops=":*:/:\:#:-:+:=:i=:<>:!=:'=:?:>:<:>=:'<:<=:'>:[:[:]:]:in:not in:like:not like:exists:not exists:between:not between:and:&:or:!:"
  f i=2:1:$l(ops,":") s op=$p(ops,":",i) i op'="" s ops(op)=i
  q ops
  ;

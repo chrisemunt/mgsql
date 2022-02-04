@@ -1,9 +1,9 @@
-%mgsqlv5 ;(CM) sql - validate query - part 6 ; 12 feb 2002  02:10pm
+%mgsqlv5 ;(CM) sql - validate query - part 6 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -46,7 +46,7 @@ fromxx ; compile 'on' predicates
  q
  ;
 from1(dbid,qnum,tnum,tname) ; validate each table selected from
- n %ref,i,ii,j,x,y,z,z1,zz,ino,inof,exp,pn,nat,jtyp,ok,com
+ n %ref,i,ii,j,x,y,z,z1,zz,ino,inof,inop,exp,pn,nat,jtyp,ok,com
  f x="inner","left","right","full" s jtyp(x)=""
  s (exp,pn,obr,cbr)=0,y="",com="" f i=1:1:$l(tname," ") s x=$$trim^%mgsqls($p(tname," ",i)," ") i $l(x) d
  . i x["(" s obr=obr+1
@@ -115,17 +115,21 @@ from15 ; outer join
  s ^mgtmp($j,"from","z",qnum,"o",0,tnum+1)=y
  d nat(dbid,qnum,tnum,tname,nat,.exp,.error)
 from16 ; process table/alias
+ s inof=""
  i tname[" " s alias=$p(tname," ",2) s:'$l(alias) error="invalid component '"_tname_"' in 'from' statement",error(5)="HY000" q:$l(error)  s tname=$p(tname," ",1)
  i tname["." s dbid=$p(tname,".",1),tname=$p(tname,".",2)
+ i tname[":" s inof=$p(tname,":",2),tname=$p(tname,":",1)
  i '$l(dbid) s error="invalid 'from' statement",error(5)="HY000" q
  i '$l(tname) s error="invalid 'from' statement",error(5)="HY000" q
- s ino=$$pkey^%mgsqld(dbid,tname),inof="" i alias[":" s inof=$$from3(qnum,.alias) i inof'="" s ino=inof
+ s (ino,inop)=$$pkey^%mgsqld(dbid,tname)
+ i alias[":" s inof=$$from3(qnum,.alias)
+ i inof'="" s:inof="0" inof=inop s ino=inof
  s ok=$$fromv(dbid,tname,.error) i $l(error) q
  f ii=1:1 q:'$d(^mgtmp($j,"from","x",ii))  i $d(^mgtmp($j,"from","x",ii,alias)) s error="query contains duplication of table/alias '"_alias_"'",error(5)="HY000" q
  i $l(error) q
- s %ref=$$ref^%mgsqld(dbid,tname,ino) i %ref="" s error="invalid index number '"_ino_"' for table '"_tname_"'",error(5)="HY000" q
+ s %ref=$$ref^%mgsqld(dbid,tname,ino) i %ref="" s error="invalid index name '"_ino_"' for table '"_tname_"'",error(5)="HY000" q
  s tnum=tnum+1,^mgtmp($j,"from",qnum,tnum)=tname_"~"_alias,^mgtmp($j,"from","x",qnum,tname)=tnum,^mgtmp($j,"from","x",qnum,alias)=tnum
- s ^mgtmp($j,"from","i",0,alias)=ino i $l(inof) s ^mgtmp($j,"from","i","f",alias)=inof
+ s ^mgtmp($j,"from","i",0,alias)=ino i inof'="" s ^mgtmp($j,"from","i","f",$s(alias'="":alias,1:tname))=inof
  g from11
  ;
 from3(qnum,alias) ; index specification

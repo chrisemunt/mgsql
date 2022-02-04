@@ -1,9 +1,9 @@
-%mgsqlc1 ; was 2 (CM) sql compiler - parse files ; 12 feb 2002  02:10pm
+%mgsqlc1 ; was 2 (CM) sql compiler - parse files ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -114,7 +114,7 @@ or(grp,qnum,tnum,zkey,kno,got,data,cond,key,tagn) ; generate code to handle 'or'
  s var=$p(zkey,",",kno)
  s tag=%z("dl")_%z("pt")_qnum_tnum
  s lcase="abcdefghijklmnopqrstuvwxyz"
- s orn=0,tagv=%z("pv")_"("_tnum_","_i_")",tagvp=%z("pv")_"("_tnum_","_kno_",""p"")",datag=%z("dl")_%z("pt")_qnum_tnum_tagn_"x"_%z("dl")
+ s orn=0,tagv=%z("pv")_"("_tnum_","_kno_")",tagvp=%z("pv")_"("_tnum_","_kno_",""p"")",datag=%z("dl")_%z("pt")_qnum_tnum_tagn_"x"_%z("dl")
 or1 s orn=orn+1 i '$d(cond(var,"pre",orn)) g orx
  s pretag=%z("dl")_%z("pt")_qnum_tnum_tagn_"or"_orn_%z("dl"),pastag=%z("dl")_%z("pt")_qnum_tnum_tagn_"or"_$e(lcase,orn)_%z("dl")
  s nxtag=$s($d(cond(var,"pre",orn+1)):tag_tagn_"or"_(orn+1)_%z("dl"),1:%zq("tagp"))

@@ -1,9 +1,9 @@
-%mgsqld ;(CM) data model access points ; 14 aug 2002  4:08 pm
+%mgsqld ;(CM) data model access points ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -258,3 +258,4 @@ cno() ; next column name number
  l -^mgsqld(0)
  q x
  ;
+

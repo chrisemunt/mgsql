@@ -1,9 +1,9 @@
-%mgsqlv2 ;(CM) sql - validate query part 3 ; 14 aug 2002  6:24 pm
+%mgsqlv2 ;(CM) sql - validate query part 3 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |

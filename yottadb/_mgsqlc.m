@@ -1,9 +1,9 @@
-%mgsqlc ;(CM) sql compiler - main driver ; 12 feb 2002  02:10pm
+%mgsqlc ;(CM) sql compiler - main driver ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -153,7 +153,7 @@ query ; insert query (text) and variable substitution into routine
  s line=line_" s "_%z("vok")_"=$$sc^%mgsqlz(.%zi,.%zo)" d addline(grp,.line)
  s line=line_" q "_%z("vok") d addline(grp,.line)
 query1 s line=" ;" d addline(grp,.line) s line="query ;" d addline(grp,.line)
- f i=1:1 q:'$d(^mgsqlx(1,dbid,qid,"sql",i))  s line=" ; "_^(i) d addline(grp,.line)
+ f i=1:1 q:'$d(^mgsqlx(1,dbid,qid,"sql",i))  s line=" ; "_$tr(^(i),$c(13,10),"  ") d addline(grp,.line)
  s line="var ;" d addline(grp,.line)
  s x="" f  s x=$o(^mgtmp($j,"vsub",x)) q:x=""  s v(^mgtmp($j,"vsub",x))=x
  f i=1:1 q:'$d(v(i))  s line=" ;    "_%z("pv")_i_" = "_v(i) d addline(grp,.line)

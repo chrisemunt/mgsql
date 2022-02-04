@@ -1,9 +1,9 @@
-%mgsqlp1 ;(CM) sql language processor ; 14 aug 2002  6:15 pm
+%mgsqlp1 ;(CM) sql language processor ; 28 Jan 2022  10:02 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |

@@ -1,9 +1,9 @@
-%mgsqlx ;(CM) sql - MGSQL as a server ; 12 feb 2002  02:10pm
+%mgsqlx ;(CM) sql - MGSQL as a server ; 28 Jan 2022  10:04 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -138,7 +138,7 @@ comp(dbid,qid,rou,sql,line,error) ; compile query
  k ^mgsqlx(1,dbid,qid,"var")
  d delcalls(dbid,qid)
  d delupd(dbid,qid)
- d main^%mgsqlo i $l(error) g compx
+ d main^%mgsqlo(dbid,qid,.sql,.error) i $l(error) g compx
  d main^%mgsqlc i $l(error) g compx
 compx ; exit compilation process
  i $l(error) s ^mgsqlx(1,dbid,qid,"error")=error d del(dbid,qid)
@@ -167,6 +167,7 @@ gvars(vars) ; initialize global variables
  s vars("dl")="{l}"
  s vars("ds")="{$}"
  s vars("dc")="{z}"
+ s vars("db")="{b}"
  s vars("vok")=vars("dsv")_"__status"_vars("dsv")
  s vars("vdata")=vars("dsv")_"__data"_vars("dsv")
  s vars("vdatax")=vars("dsv")_"__datax"_vars("dsv")

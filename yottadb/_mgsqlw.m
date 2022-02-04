@@ -1,9 +1,9 @@
-%mgsqlw ;(CM) MGSQL HTTP ; 17 dec 2003  3:15 pm
+%mgsqlw ;(CM) MGSQL HTTP ; 28 Jan 2022  10:04 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |

@@ -1,9 +1,9 @@
-%mgsqlv1 ;(CM) sql - validate query part 2 ; 14 aug 2002  6:24 pm
+%mgsqlv1 ;(CM) sql - validate query part 2 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -35,7 +35,7 @@ where(dbid,sql,qnum,arg,error) ; validate 'where' statement
  s pred="" i $d(^mgtmp($j,"pred",qnum)) s pred=^(qnum)
  i $l(pred) s:$l(arg) arg=" and "_arg s arg="("_pred_")"_arg
  i $l(arg) s ex(1)=arg d where^%mgsqle(.ex,.word,.error) i $l(error) g wherex
- d link^%mgsqlv6
+ d link^%mgsqlv6(dbid,.sql,qnum,arg,.error)
  s wn=0
 where1 s wn=wn+1 i '$d(word(0,wn)) g wherex
  s wrd=word(0,wn)

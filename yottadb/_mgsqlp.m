@@ -1,9 +1,9 @@
-%mgsqlp ;(CM) sql language processor ; 14 aug 2002  6:16 pm
+%mgsqlp ;(CM) sql language processor ; 28 Jan 2022  10:02 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -35,6 +35,7 @@ main1 ; re-entry
  s error=""
  d cmnd(.sql2)
  d rips(.line,.wrk,.error) i $l(error) g exit
+ d crlf(.wrk)
  s qnummax=$$cdel(.sql2,.wrk,.sql,.error) i $l(error) g exit
  d main^%mgsqlp1(qnummax,.sql2,.wrk,.sql,.error) i $l(error) g exit
  i $g(sql(1,2))="from "_%z("dq")_2_%z("dq")_" t0" d cog i ok g main1
@@ -83,6 +84,11 @@ rips3 i instring,'(qno#2) s ^mgtmp($j,"string",sno)=string,instring=0,string=""
  s wrk(ln2)=$e(wrk(ln2),cn2+1,9999)
  g rips0
 ripsx ; exit
+ q
+ ;
+crlf(wrk) ; rip out CRLF sequences
+ n ln
+ s ln="" f  s ln=$o(wrk(ln)) q:ln=""  s wrk(ln)=$tr(wrk(ln),$c(13,10),"  ")
  q
  ;
 rstring(line) ; put strings back into line

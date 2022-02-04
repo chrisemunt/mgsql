@@ -1,9 +1,9 @@
-%mgsqlcd ;(CM) sql compiler - delete ; 12 feb 2002  02:10pm
+%mgsqlcd ;(CM) sql compiler - delete ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |

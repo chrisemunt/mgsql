@@ -1,9 +1,9 @@
-%mqsqlr ;(CM) MGSQL routine management ; 11 feb 2002  2:40 pm
+%mqsqlr ;(CM) MGSQL routine management ; 28 Jan 2022  10:02 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |

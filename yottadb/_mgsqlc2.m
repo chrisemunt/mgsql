@@ -1,9 +1,9 @@
-%mgsqlc2 ; was 3 (CM) sql compiler - sub driver ; 27 apr 2003  12:44 pm
+%mgsqlc2 ; was 3 (CM) sql compiler - sub driver ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |

@@ -1,9 +1,9 @@
-%mgsqlc5 ;(CM) sql compiler - get data ; 19 jan 2003  4:34 pm
+%mgsqlc5 ;(CM) sql compiler - get data ; 28 Jan 2022  9:58 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |

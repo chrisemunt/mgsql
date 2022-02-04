@@ -1,9 +1,9 @@
-%mgsql ;(CM) MGSQL Front end
+%mgsql ;(CM) MGSQL Front end ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2021 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -46,7 +46,8 @@ v() ; version and date
  ;s v="1.2",r=18,d="22 January 2021"
  ;s v="1.3",r=19,d="22 February 2021"
  ;s v="1.3",r=20,d="25 June 2021"
- s v="1.3",r=21,d="30 September 2021"
+ ;s v="1.3",r=21,d="30 September 2021"
+ s v="1.4",r=22,d="3 February 2022"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
@@ -64,7 +65,7 @@ upgrade(mode) ; upgrade this installation
 exec(dbid,sql,%zi,%zo)
  n (dbid,sql,%zi,%zo)
  new $ztrap set $ztrap="zgoto "_$zlevel_":exece^%mgsql"
- ;;s ok=$$upgrade(0)
+ ; s ok=$$upgrade(0)
  s error="",ok=0
  i $g(%zi("stmt"))'="" s %zi(0,"stmt")=$g(%zi("stmt")) ; for backwards compatibility
  i $g(%zi(0,"recompile"))'="" s info(0,"recompile")=$g(%zi(0,"recompile"))
@@ -176,59 +177,76 @@ ylink ; link all routines
  ;
 drop ; drop tables
  k %zi,%zo
- s ok=$$exec^%mgsql("","drop table patient",.%zi,.%zo)
- s ok=$$exec^%mgsql("","drop table admission",.%zi,.%zo)
- s ok=$$exec^%mgsql("","drop table labtest",.%zi,.%zo)
+ s sql="drop table patient"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s sql="drop table admission"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s sql="drop table labtest"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 create ; create tables
  k %zi,%zo
- s sql="create table patient ("
- s sql=sql_" num int not null,"
- s sql=sql_" name varchar(255),"
- s sql=sql_" address varchar(255) separate ('address'),"
- s sql=sql_" dob date,"
- s sql=sql_" age int derived age^%mgsqls(dob),"
- s sql=sql_" constraint pk_patient primary key (num))"
+ s sql="create table patient ("_$c(13,10)
+ s sql=sql_" num int not null,"_$c(13,10)
+ s sql=sql_" name varchar(255),"_$c(13,10)
+ s sql=sql_" address varchar(255) separate ('address'),"_$c(13,10)
+ s sql=sql_" dob date,"_$c(13,10)
+ s sql=sql_" age int derived age^%mgsqls(dob),"_$c(13,10)
+ s sql=sql_" constraint pk_patient primary key (num))"_$c(13,10)
  s sql=sql_" /*! global=mgpat, delimiter=# */"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  ;
- s sql="create table admission ("
- s sql=sql_" num int not null,"
- s sql=sql_" dadm date not null,"
- s sql=sql_" ward varchar(32),"
- s sql=sql_" con varchar(32),"
- s sql=sql_" constraint pk_admission primary key ('p', num, dadm))"
+ s sql="create table admission ("_$c(13,10)
+ s sql=sql_" num int not null,"_$c(13,10)
+ s sql=sql_" dadm date not null,"_$c(13,10)
+ s sql=sql_" ward varchar(32),"_$c(13,10)
+ s sql=sql_" con varchar(32),"_$c(13,10)
+ s sql=sql_" constraint pk_admission primary key ('p', num, dadm))"_$c(13,10)
  s sql=sql_" /*! global=mgadm, delimiter=# */"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  ;
- s sql="create table labtest ("
- s sql=sql_" num int not null,"
- s sql=sql_" dtest date not null,"
- s sql=sql_" test varchar(32),"
- s sql=sql_" result int,"
- s sql=sql_" constraint pk_labtest primary key ('p', num, dtest, test))"
+ s sql="create table labtest ("_$c(13,10)
+ s sql=sql_" num int not null,"_$c(13,10)
+ s sql=sql_" dtest date not null,"_$c(13,10)
+ s sql=sql_" test varchar(32),"_$c(13,10)
+ s sql=sql_" result int,"_$c(13,10)
+ s sql=sql_" constraint pk_labtest primary key ('p', num, dtest, test))"_$c(13,10)
  s sql=sql_" /*! global=mgtst, delimiter=# */"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 index ; create index
  k %zi,%zo
- s sql="create index index1 on admission ('index1', dadm, num)"
+ s sql="create index index1 on admission ('index1', dadm, num)"_$c(13,10)
  s sql=sql_" /*! global=mgadm */"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 delete ; delete records
  k %zi,%zo
+ s sql="delete from patient"
+ w !,sql,!
  s ok=$$exec^%mgsql("","delete from patient",.%zi,.%zo)
+ s sql="delete from admission"
+ w !,sql,!
  s ok=$$exec^%mgsql("","delete from admission",.%zi,.%zo)
+ s sql="delete from labtest"
+ w !,sql,!
  s ok=$$exec^%mgsql("","delete from labtest",.%zi,.%zo)
  q
  ;
 insert ; insert records
  k %zi,%zo
  s sql="insert into patient (num, name, address, dob) values (:num, :name, :address, {d:dob})"
+ w !,sql,!
  s %zi("num")=1,%zi("name")="Peter Davis",%zi("address")="Banstead",%zi("dob")="1974-08-12",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=2,%zi("name")="Sarah Jones",%zi("address")="Redhill",%zi("dob")="1967-07-13",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=3,%zi("name")="John Smith",%zi("address")="London",%zi("dob")="2002-04-21",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
@@ -236,6 +254,7 @@ insert ; insert records
  ;
  k %zi,%zo
  s sql="insert into admission (num, dadm, ward, con) values (:num, {d:dadm}, :ward, :con)"
+ w !,sql,!
  s %zi("num")=1,%zi("dadm")="2012-02-20",%zi("ward")="B1",%zi("con")="IES",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=1,%zi("dadm")="2012-03-21",%zi("ward")="B3",%zi("con")="JM",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=1,%zi("dadm")="2015-01-17",%zi("ward")="B1",%zi("con")="TJP",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
@@ -246,6 +265,7 @@ insert ; insert records
  ;
  k %zi,%zo
  s sql="insert into labtest (num, dtest, test, result) values (:num, {d:dtest}, :test, :result)"
+ w !,sql,!
  s %zi("num")=1,%zi("dtest")="2012-02-20",%zi("test")="HGB",%zi("result")="14.2",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=1,%zi("dtest")="2012-03-21",%zi("test")="HGB",%zi("result")="15.1",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=1,%zi("dtest")="2015-01-17",%zi("test")="HGB",%zi("result")="15.7",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
@@ -257,88 +277,115 @@ insert ; insert records
  ;
 update ; update a record
  k %zi,%zo
- s ok=$$exec^%mgsql("","update patient a set a.address = 'Cambridge' where a.num = 4",.%zi,.%zo)
+ s sql="update patient a set a.address = 'Cambridge' where a.num = 4"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel1 ; select all patient records
  k %zi,%zo
- s ok=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+ s sql="select * from patient"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel2 ; select all admitted patients and their admission records (joining the tables using a 'where' statement)
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,a.name,b.dadm,b.ward,b.con from patient a, admission b where a.num = b.num",.%zi,.%zo)
+ s sql="select a.num,a.name,b.dadm,b.ward,b.con from patient a, admission b where a.num = b.num"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel3 ; select all admitted patients and their admission records (using an 'inner join' construct)
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,a.name,b.dadm,b.ward,b.con from patient a inner join admission b using (num)",.%zi,.%zo)
+ s sql="select a.num,a.name,b.dadm,b.ward,b.con from patient a inner join admission b using (num)"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel4 ; select all patients and any associated admission records (using an 'outer join' construct)
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,a.name,b.dadm,b.ward,b.con from patient a left join admission b using (num)",.%zi,.%zo)
+ s sql="select a.num,a.name,b.dadm,b.ward,b.con from patient a left join admission b using (num)"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel5 ; select all patients who have been admitted more than 3 times
  k %zi,%zo
- s sql="select a.num,a.name,b.dadm,b.ward,b.con from patient a, admission b"
+ s sql="select a.num,a.name,b.dadm,b.ward,b.con from patient a, admission b"_$c(13,10)
  s sql=sql_" where a.num = b.num and 3 < select count(c.dadm) from admission c where c.num = a.num"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel6 ; count the number of times admitted patients have been admitted
  k %zi,%zo
- s sql="select a.num,a.name,count(b.dadm) from patient a, admission b"
- s sql=sql_" where a.num = b.num"
+ s sql="select a.num,a.name,count(b.dadm) from patient a, admission b"_$c(13,10)
+ s sql=sql_" where a.num = b.num"_$c(13,10)
  s sql=sql_" group by a.num"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel7 ; select all patients who have been admitted more that 3 times
  k %zi,%zo
- s sql="select a.num,a.name,count(*) from patient a, admission b"
- s sql=sql_" where a.num = b.num"
- s sql=sql_" group by a.num,a.name"
+ s sql="select a.num,a.name,count(*) from patient a, admission b"_$c(13,10)
+ s sql=sql_" where a.num = b.num"_$c(13,10)
+ s sql=sql_" group by a.num,a.name"_$c(13,10)
  s sql=sql_" having count(*) > 3"
+ w !,sql,!
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel8 ; select all patient records but just show each patient's surname
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,$p(a.name,"" "",2) from patient a",.%zi,.%zo)
+ s sql="select a.num,$p(a.name,"" "",2) from patient a"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel9 ; select all patients and any associated admission records, but only those for ward 'B3'
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,a.name,b.num,b.dadm,b.ward from patient a left join admission b on a.num = b.num and b.ward = 'B3'")
+ s sql="select a.num,a.name,b.num,b.dadm,b.ward from patient a left join admission b on a.num = b.num and b.ward = 'B3'"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel10 ; select all patients older than 40.  Convert names to upper case
  k %zi,%zo
- s ok=$$exec^%mgsql("","select a.num,upper(a.name),a.dob,a.age from patient a where a.age > 40")
+ s sql="select a.num,upper(a.name),a.dob,a.age from patient a where a.age > 40"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel11 ; select distinct patient names
  k %zi,%zo
- s ok=$$exec^%mgsql("","select distinct name from patient",.%zi,.%zo)
+ s sql="select distinct name from patient"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel12 ; select distinct patient names
  k %zi,%zo
- s ok=$$exec^%mgsql("","select distinct a.name from patient a where upper(a.address) like '%BANSTEAD%'",.%zi,.%zo)
+ s sql="select distinct a.name from patient a where upper(a.address) like '%BANSTEAD%'"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel13 ; providing variable inputs to a query
  k %zi,%zo
+ s sql="select * from patient where num = :number"
+ w !,sql,!
  s %zi("number")=1
- s ok=$$exec^%mgsql("","select * from patient where num = :number",.%zi,.%zo)
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel14 ; directing query output to a spool file
  k %zi,%zo,x1,x2,len1
  s %zi(0,"stmt")="MyQuery"
- s ok=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+ s sql="select * from patient"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  w !,"Query output will be in spool file: ^mgsqls($job,"""_%zi(0,"stmt")_""") ..."
  s x1="^mgsqls("_$j_","""_%zi(0,"stmt")_""""
  s len1=$l(x1)
@@ -348,7 +395,9 @@ sel14 ; directing query output to a spool file
 sel15 ; directing query output to a callback function
  k %zi,%zo,x1,x2,len1
  s %zi(0,"callback")="sel15cb^%mgsql"
- s ok=$$exec^%mgsql("","select * from patient",.%zi,.%zo)
+ s sql="select * from patient"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel15cb(%zi,%zo,rn) ; callback for query sel15
@@ -363,40 +412,59 @@ sel15cb(%zi,%zo,rn) ; callback for query sel15
  ;
 sel16 ; using 'or' in the where predicate
  k %zi,%zo
- s ok=$$exec^%mgsql("","select * from patient where num = 1 or num = 2 or num = 9 or num = 3",.%zi,.%zo)
+ s sql="select * from patient where num = 1 or num = 2 or num = 9 or num = 3"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 sel17 ; using 'in' in the where predicate
  k %zi,%zo
- s ok=$$exec^%mgsql("","select * from patient where num in (1,2,9,3)",.%zi,.%zo)
+ s sql="select * from patient where num in (1,2,9,3)"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 tp1 ; using transactions in line
  k %zi,%zo
- s ok=$$exec^%mgsql("","start transaction;",.%zi,.%zo) i ok<0 q
+ s sql="start transaction;"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo) i ok<0 q
  s sql="insert into patient (num, name, address, dob) values (:num, :name, :address, {d:dob})"
+ w !,sql,!
  s %zi("num")=11,%zi("name")="Trans Action-InLine1",%zi("address")="New York",%zi("dob")="1971-07-09",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=12,%zi("name")="Trans Action-InLine2",%zi("address")="London",%zi("dob")="1980-01-12",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
- s ok=$$exec^%mgsql("","commit;",.%zi,.%zo)
- ; s ok=$$exec^%mgsql("","rollback;",.%zi,.%zo)
+ s sql="commit;"
+ ; s sql="rollback;"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 tp2 ; using transactions in line
  k %zi,%zo
  s %zi(0,"callback")="tp2cb^%mgsql"
- s ok=$$exec^%mgsql("","start transaction;",.%zi,.%zo)
+ s sql="start transaction;"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
 tp2cb(%zi,%zo) ; using transactions in a callback (mandatory for YottaDB)
  s sql="insert into patient (num, name, address, dob) values (:num, :name, :address, {d:dob})"
+ w !,sql,!
  s %zi("num")=11,%zi("name")="Trans Action-CallBack1",%zi("address")="New York",%zi("dob")="1971-07-09",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  s %zi("num")=12,%zi("name")="Trans Action-CallBack2",%zi("address")="London",%zi("dob")="1980-01-12",ok=$$exec^%mgsql("",sql,.%zi,.%zo)
- s ok=$$exec^%mgsql("","commit;",.%zi,.%zo)
- ; s ok=$$exec^%mgsql("","rollback;",.%zi,.%zo)
+ s sql="commit;"
+ ; s sql="rollback;"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q ok
  ;
 proc ; create stored procedures
- s ok=$$exec^%mgsql("","CREATE PROCEDURE patient_getdata (num int, name varchar(255), address varchar(255))",.%zi,.%zo)
- s ok=$$exec^%mgsql("","CREATE PROCEDURE SelectAllPatients AS SELECT * FROM patient GO;",.%zi,.%zo)
+ s sql="CREATE PROCEDURE patient_getdata (num int, name varchar(255), address varchar(255))"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
+ s sql="CREATE PROCEDURE SelectAllPatients AS SELECT * FROM patient GO;"
+ w !,sql,!
+ s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
+
