@@ -3,9 +3,9 @@
 An SQL engine for **YottaDB** and other **M-like** databases.
 
 Chris Munt <cmunt@mgateway.com>  
-3 February 2022, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)
+8 June 2023, MGateway Ltd [http://www.mgateway.com](http://www.mgateway.com)
 
-* Current Release: Version: 1.4; Revision 22
+* Current Release: Version: 1.4; Revision 23
 * [Release Notes](#RelNotes) can be found at the end of this document.
 
 Contents
@@ -68,8 +68,8 @@ Link all the **mgsql** routines and check the installation:
 
        do ^%mgsql
 
-       MGSQL by M/Gateway Developments Ltd.
-       Version: 1.4; Revision 22 (3 February 2022) %mgsql
+       MGSQL by MGateway Ltd.
+       Version: 1.4; Revision 23 (8 June 2023) %mgsql
 
 Note that the version of **mgsql** is successfully displayed.
 
@@ -83,8 +83,8 @@ Change to your development Namespace and check the installation:
 
        do ^%mgsql
 
-       MGSQL by M/Gateway Developments Ltd.
-       Version: 1.4; Revision 22 (3 February 2022) %mgsql
+       MGSQL by MGateway Ltd.
+       Version: 1.4; Revision 23 (8 June 2023) %mgsql
 
 ### Other M systems
 
@@ -92,8 +92,8 @@ All routines are held in **/m/mgsql.ro**, use an appropriate utility to install 
 
        do ^%mgsql
 
-       MGSQL by M/Gateway Developments Ltd.
-       Version: 1.4; Revision 22 (3 February 2022) %mgsql
+       MGSQL by MGateway Ltd.
+       Version: 1.4; Revision 23 (8 June 2023) %mgsql
 
 
 ## <a name="ExecuteM"></a> Embedding SQL statements in M code
@@ -198,7 +198,7 @@ So far we have covered the basics of executing SQL statements from M code.  In o
 
 For most M systems, the **mgsql** Superserver can be started from the M command prompt.  For YottaDB there is the option of starting Superserver child processes via the **xinetd** service.
 
-* Note that if you are using the generic M/Gateway Superserver (**%zmgsi**) then no action is required here as the generic Superserver is able to serve **mgsql**.
+* Note that if you are using the generic MGateway Superserver (**%zmgsi**) then no action is required here as the generic Superserver is able to serve **mgsql**.
 
 
 ### Starting the mgsql Superserver
@@ -417,7 +417,7 @@ In the above example, **mgsql** will attempt to parse **table1** first using the
 
 ## <a name="License"></a> License
 
-Copyright (c) 2018-2022 M/Gateway Developments Ltd,
+Copyright (c) 2018-2023 MGateway Ltd,
 Surrey UK.                                                      
 All rights reserved.
  
@@ -529,3 +529,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 * Improved query optimisation together with a means through which queries can be explicitly optimised by specifying hints in the query text.
 	* See the section on **SQL Query Optimisation**.
 	* Run the upgrade procedure to force the recompilation (and re-optimisation) of all queries: **set status=$$upgrade^%mgsql(0)**
+
+### v1.4.23 (8 June 2023)
+
+* Documentation update,
