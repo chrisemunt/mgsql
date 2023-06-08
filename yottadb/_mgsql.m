@@ -3,7 +3,7 @@
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -47,13 +47,14 @@ v() ; version and date
  ;s v="1.3",r=19,d="22 February 2021"
  ;s v="1.3",r=20,d="25 June 2021"
  ;s v="1.3",r=21,d="30 September 2021"
- s v="1.4",r=22,d="3 February 2022"
+ ;s v="1.4",r=22,d="3 February 2022"
+ s v="1.4",r=23,d="8 June 2023"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
  n v
  s v=$$v()
- w !,"MGSQL by M/Gateway Developments Ltd."
+ w !,"MGSQL by MGateway Ltd."
  w !,"Version: "_$P(v,".",1,2)_"; Revision "_$P(v,".",3)_" ("_$P(v,".",4)_")"_" "_this
  w !
  Q
@@ -467,4 +468,3 @@ proc ; create stored procedures
  s ok=$$exec^%mgsql("",sql,.%zi,.%zo)
  q
  ;
-
