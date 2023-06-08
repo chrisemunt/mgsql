@@ -1,12 +1,12 @@
 Cache for Windows^INT^mgsql^~Format=Cache.S~^RAW
-%RO on 04 Feb 2022 01:00 AM
-%mgsql^INT^1^66144,44772.0^0
+%RO on 08 Jun 2023 01:00 AM
+%mgsql^INT^1^66633,53971.0^0
 %mgsql ;(CM) MGSQL Front end ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -50,13 +50,14 @@ v() ; version and date
  ;s v="1.3",r=19,d="22 February 2021"
  ;s v="1.3",r=20,d="25 June 2021"
  ;s v="1.3",r=21,d="30 September 2021"
- s v="1.4",r=22,d="3 February 2022"
+ ;s v="1.4",r=22,d="3 February 2022"
+ s v="1.4",r=23,d="8 June 2023"
  q v_"."_r_"."_d
  ;
 vers(this) ; version information
  n v
  s v=$$v()
- w !,"MGSQL by M/Gateway Developments Ltd."
+ w !,"MGSQL by MGateway Ltd."
  w !,"Version: "_$P(v,".",1,2)_"; Revision "_$P(v,".",3)_" ("_$P(v,".",4)_")"_" "_this
  w !
  Q
@@ -479,14 +480,13 @@ proc ; create stored procedures
  q
  ;
 
-
-%mgsqlc^INT^1^66144,44772.0^0
+%mgsqlc^INT^1^66633,53971.0^0
 %mgsqlc ;(CM) sql compiler - main driver ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -764,13 +764,13 @@ sort ; sort stand-alone sql code into contiguous routine
  q
  ;
 
-%mgsqlc1^INT^1^66144,44772.0^0
+%mgsqlc1^INT^1^66633,53971.0^0
 %mgsqlc1 ; was 2 (CM) sql compiler - parse files ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1005,13 +1005,13 @@ temps ; determine subscripts for order/group sort file
  q
  ;
 
-%mgsqlc2^INT^1^66144,44772.0^0
+%mgsqlc2^INT^1^66633,53971.0^0
 %mgsqlc2 ; was 3 (CM) sql compiler - sub driver ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1258,13 +1258,13 @@ delrec ; delete selected record
  q
  ;
 
-%mgsqlc3^INT^1^66144,44772.0^0
+%mgsqlc3^INT^1^66633,53971.0^0
 %mgsqlc3 ;(CM) sql compiler ; 28 Jan 2022  9:57 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1426,13 +1426,13 @@ top(grp,qnum,sort) ; sql top
  q
  ;
 
-%mgsqlc4^INT^1^66144,44772.0^0
+%mgsqlc4^INT^1^66633,53971.0^0
 %mgsqlc4 ;(CM) sql compiler - restrictions ; 28 Jan 2022  9:58 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1571,13 +1571,13 @@ mtype(dbid,qnum,tnum,item,other) ; determine sort of data
  q mtype
  ;
 
-%mgsqlc5^INT^1^66144,44772.0^0
+%mgsqlc5^INT^1^66633,53971.0^0
 %mgsqlc5 ;(CM) sql compiler - get data ; 28 Jan 2022  9:58 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1695,13 +1695,13 @@ klind(grp,qnum) ; kill off index to be created
  q
  ;
 
-%mgsqlc6^INT^1^66144,44772.0^0
+%mgsqlc6^INT^1^66633,53971.0^0
 %mgsqlc6 ;(CM) sql compiler - aggregates ; 28 Jan 2022  9:58 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1839,13 +1839,13 @@ init(grp,qnum) ; initialise select statement for unique queries
  q
  ;
 
-%mgsqlcd^INT^1^66144,44772.0^0
+%mgsqlcd^INT^1^66633,53971.0^0
 %mgsqlcd ;(CM) sql compiler - delete ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -1906,13 +1906,13 @@ hilev1 ; kill off single index
  q
  ;
 
-%mgsqlci^INT^1^66144,44772.0^0
+%mgsqlci^INT^1^66633,53971.0^0
 %mgsqlci ;(CM) sql compiler - insert ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -2169,13 +2169,13 @@ dbg ; set up referential actions audit trail
  q
  ;
 
-%mgsqlct^INT^1^66144,44772.0^0
+%mgsqlct^INT^1^66633,53971.0^0
 %mgsqlct ;(CM) sql compiler - get table details ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -2272,13 +2272,13 @@ dtyp ; get attribute details
  q
  ;
 
-%mgsqlcu^INT^1^66144,44772.0^0
+%mgsqlcu^INT^1^66633,53971.0^0
 %mgsqlcu ;(CM) sql compiler update ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -2346,13 +2346,13 @@ setto1 ; add to line
  q
  ;
 
-%mgsqld^INT^1^66144,44772.0^0
+%mgsqld^INT^1^66633,53971.0^0
 %mgsqld ;(CM) data model access points ; 28 Jan 2022  9:59 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -2608,14 +2608,13 @@ cno() ; next column name number
  q x
  ;
 
-
-%mgsqle^INT^1^66144,44772.0^0
+%mgsqle^INT^1^66633,53971.0^0
 %mgsqle ;(CM) SQL : Embedded expressions ; 28 Jan 2022  10:00 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -2756,13 +2755,13 @@ funlin(funlin,error) ; extract function & parameters wrd from funlin
  q wrd
  ;
 
-%mgsqle1^INT^1^66144,44772.0^0
+%mgsqle1^INT^1^66633,53971.0^0
 %mgsqle1 ;(CM) SQL : Bracket expression in word array ; 28 Jan 2022  10:00 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -3021,13 +3020,13 @@ tmpxk(tmp,sn,wrd,wn) ; remove node from snx array
  q
  ;
 
-%mgsqle2^INT^1^66144,44772.0^0
+%mgsqle2^INT^1^66633,53971.0^0
 %mgsqle2 ;(CM) SQL : Compile code for an expression ; 28 Jan 2022  10:00 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -3194,13 +3193,13 @@ mpmx i chr'?1a.u,chr'["""" s error="invalid pattern match "_wrd,error(5)="HY000"
  q ""
  ;
 
-%mgsqln^INT^1^66144,44773.0^0
+%mgsqln^INT^1^66633,53971.0^0
 %mgsqln ;(CM) MGSQL odbc ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -3705,13 +3704,13 @@ m ; test
  q
  ;
 
-%mgsqln1^INT^1^66144,44773.0^0
+%mgsqln1^INT^1^66633,53971.0^0
 %mgsqln1 ;(CM) MGSQL odbc ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -4236,13 +4235,13 @@ test ; test harness
  q
  ;
 
-%mgsqln2^INT^1^66144,44773.0^0
+%mgsqln2^INT^1^66633,53971.0^0
 %mgsqln2 ;(CM) MGSQL odbc ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -4630,13 +4629,13 @@ sqltypeid(type) ; get sql/odbc type ID
  q 12
  ;
 
-%mgsqlo^INT^1^66144,44773.0^0
+%mgsqlo^INT^1^66633,53971.0^0
 %mgsqlo ;(CM) query optimisation procedure ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -4719,13 +4718,13 @@ rec3(dbid,tname,alias,cname,ino,kno,rec,cum) ; record work involved at each leve
  q
  ;
 
-%mgsqlo1^INT^1^66144,44773.0^0
+%mgsqlo1^INT^1^66633,53971.0^0
 %mgsqlo1 ;(CM) query optimisation procedure ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -4974,14 +4973,13 @@ vrfyx ; exit
  q
  ;
 
-
-%mgsqlo2^INT^1^66144,44773.0^0
+%mgsqlo2^INT^1^66633,53971.0^0
 %mgsqlo2 ;(CM) query optimisation procedure ; 28 Jan 2022  10:01 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -5189,13 +5187,13 @@ compapi1(dbid,qnum,table,rstr,join,indxa,ord,ordn) ; disallow all indices except
  q
  ;
 
-%mgsqlp^INT^1^66144,44773.0^0
+%mgsqlp^INT^1^66633,53971.0^0
 %mgsqlp ;(CM) sql language processor ; 28 Jan 2022  10:02 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -5429,13 +5427,13 @@ test2 ;
  q
  ;
 
-%mgsqlp1^INT^1^66144,44773.0^0
+%mgsqlp1^INT^1^66633,53972.0^0
 %mgsqlp1 ;(CM) sql language processor ; 28 Jan 2022  10:02 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -5705,13 +5703,13 @@ unix2 s ln=ln+1 i '$d(sql(qnum,ln)) g unix1
  g unix2
  ;
 
-%mgsqlr^INT^1^66144,44773.0^0
+%mgsqlr^INT^1^66633,53972.0^0
 %mqsqlr ;(CM) MGSQL routine management ; 28 Jan 2022  10:02 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -5778,13 +5776,13 @@ zsydb ; yottadb
  q 1
  ;
 
-%mgsqls^INT^1^66144,44773.0^0
+%mgsqls^INT^1^66633,53972.0^0
 %mgsqls ;(CM) general utilities ; 28 Jan 2022  10:02 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -6063,13 +6061,13 @@ logarray(array,title,context) ; log event
  q
  ;
 
-%mgsqlv^INT^1^66144,44773.0^0
+%mgsqlv^INT^1^66633,53972.0^0
 %mqsqlv ;(CM) sql - validate query ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -6228,13 +6226,13 @@ trx(wrd) ; data translation
  q %z("dsv")_sqv_%z("dsv")
  ;
 
-%mgsqlv1^INT^1^66144,44773.0^0
+%mgsqlv1^INT^1^66633,53972.0^0
 %mgsqlv1 ;(CM) sql - validate query part 2 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -6353,13 +6351,13 @@ corelate(sql,qnum,item,error) ; determine if sql variable comes from different s
  q
  ;
 
-%mgsqlv2^INT^1^66144,44773.0^0
+%mgsqlv2^INT^1^66633,53972.0^0
 %mgsqlv2 ;(CM) sql - validate query part 3 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -6609,13 +6607,13 @@ sqlfun(sqlfun) ; translate SQL function name to M equivalent
  q mfun
  ;
 
-%mgsqlv3^INT^1^66144,44773.0^0
+%mgsqlv3^INT^1^66633,53972.0^0
 %mgsqlv3 ;(CM) sql - validate query part 4 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -6839,13 +6837,13 @@ asn21 s eq1(wrd)=set,eq1(wrd,"c")=setc,eq1(wrd,"f")=alias,eq1=eq1+1
  q
  ;
 
-%mgsqlv4^INT^1^66144,44773.0^0
+%mgsqlv4^INT^1^66633,53972.0^0
 %mgsqlv4 ;(CM) sql - validate query part 5 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -7069,13 +7067,13 @@ inssa ; select all items from table
  q
  ;
 
-%mgsqlv5^INT^1^66144,44773.0^0
+%mgsqlv5^INT^1^66633,53972.0^0
 %mgsqlv5 ;(CM) sql - validate query - part 6 ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -7269,13 +7267,13 @@ natv1(dbid,qnum,tname1,tname2,cname,error) ; column in tables test
  q
  ;
 
-%mgsqlv6^INT^1^66144,44773.0^0
+%mgsqlv6^INT^1^66633,53972.0^0
 %mgsqlv6 ;(CM) sql - set expansion ; 28 Jan 2022  10:03 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -7300,13 +7298,13 @@ link(dbid,sql,qnum,arg,error) ; expand where statement
  q
  ;
 
-%mgsqlw^INT^1^66144,44773.0^0
+%mgsqlw^INT^1^66633,53972.0^0
 %mgsqlw ;(CM) MGSQL HTTP ; 28 Jan 2022  10:04 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -7519,13 +7517,13 @@ test ; test harness
  q
  ;
 
-%mgsqlx^INT^1^66144,44773.0^0
+%mgsqlx^INT^1^66633,53972.0^0
 %mgsqlx ;(CM) sql - MGSQL as a server ; 28 Jan 2022  10:04 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
@@ -7710,13 +7708,13 @@ gcvars(dbid,qid,vars) ; initialize global variables
  q
  ;
 
-%mgsqlz^INT^1^66144,44773.0^0
+%mgsqlz^INT^1^66633,53972.0^0
 %mgsqlz ;(CM) MGSQL : client-server computing ; 28 Jan 2022  10:04 AM
  ;
  ;  ----------------------------------------------------------------------------
  ;  | MGSQL                                                                    |
  ;  | Author: Chris Munt cmunt@mgateway.com, chris.e.munt@gmail.com            |
- ;  | Copyright (c) 2016-2022 M/Gateway Developments Ltd,                      |
+ ;  | Copyright (c) 2016-2023 MGateway Ltd                                     |
  ;  | Surrey UK.                                                               |
  ;  | All rights reserved.                                                     |
  ;  |                                                                          |
