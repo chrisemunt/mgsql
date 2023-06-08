@@ -3,7 +3,7 @@
    | MGODBC: ODBC Driver for MGSQL                                            |
    | Author: Chris Munt cmunt@mgateway.com                                    |
    |                    chris.e.munt@gmail.com                                |
-   | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+   | Copyright (c) 2016-2023 MGateway Ltd                                     |
    | Surrey UK.                                                               |
    | All rights reserved.                                                     |
    |                                                                          |

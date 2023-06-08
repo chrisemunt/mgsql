@@ -3,7 +3,7 @@
    | MGODBC: ODBC Driver for MGSQL                                            |
    | Author: Chris Munt cmunt@mgateway.com                                    |
    |                    chris.e.munt@gmail.com                                |
-   | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+   | Copyright (c) 2016-2023 MGateway Ltd                                     |
    | Surrey UK.                                                               |
    | All rights reserved.                                                     |
    |                                                                          |
@@ -1719,7 +1719,7 @@ __except (EXCEPTION_EXECUTE_HANDLER) {
 
 /*
 
-   htype=SQL_HANDLE_STMT; RecNumber=1; BufferLength=256; TextLength=112; MessageText=[MG: M/Gateway Developments][MGODBC32.DLL][AAA YOTTIE]MG ODBC: SQLGetTypeInfo: <UNDEFINED>typ+7^%mgsqln2 *xxxyyy; NativeError=0; retcode=0;
+   htype=SQL_HANDLE_STMT; RecNumber=1; BufferLength=256; TextLength=112; MessageText=[MG: MGateway][MGODBC32.DLL][AAA YOTTIE]MG ODBC: SQLGetTypeInfo: <UNDEFINED>typ+7^%mgsqln2 *xxxyyy; NativeError=0; retcode=0;
 
  [ vendor-identifier ][ ODBC-component-identifier ] component-supplied-text
 
@@ -1854,7 +1854,7 @@ __try {
 
    if (error->status == 1) {
 
-      strcpy((char *) mtext, "[M/Gateway Developments Ltd][MGODBC32.DLL][");
+      strcpy((char *) mtext, "[MGateway Ltd][MGODBC32.DLL][");
       strcat((char *) mtext, dsn);
       strcat((char *) mtext, "]MGSQL: ");
 

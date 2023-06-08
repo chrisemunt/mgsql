@@ -3,7 +3,7 @@
    | MGODBC: ODBC Driver for MGSQL                                            |
    | Author: Chris Munt cmunt@mgateway.com                                    |
    |                    chris.e.munt@gmail.com                                |
-   | Copyright (c) 2016-2019 M/Gateway Developments Ltd,                      |
+   | Copyright (c) 2016-2023 MGateway Ltd                                     |
    | Surrey UK.                                                               |
    | All rights reserved.                                                     |
    |                                                                          |
@@ -63,10 +63,10 @@
 #define MG_VERSION_PN         1
 #define MG_DB_NAME            "MGSQL"
 #define MG_COMP_NAME          "mgodbc"
-#define MG_MANU_NAME          "M/Gateway Developments Ltd."
+#define MG_MANU_NAME          "MGateway Ltd."
 #define MG_TARG_OS            "Windows"
 #define MG_TARG_OS_REV        "5.0"
-#define MG_DATE_INSTALLED     "11 Jun 2019"
+#define MG_DATE_INSTALLED     "8 Jun 2023"
 
 #define MG_VERSION            MG_STR(MG_VERSION_MAJOR) "." MG_STR(MG_VERSION_MINOR) "." MG_STR(MG_VERSION_BUILD)
 
